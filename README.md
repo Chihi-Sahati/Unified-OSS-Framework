@@ -300,8 +300,8 @@ This project is licensed under the Apache 2.0 License - see the `LICENSE` file f
 
 ## 📞 Contact
 
-- **Technical Support**: unified-oss@example.com
-- **Research Inquiries**: dr.chihi@example.com
+- **Technical Support**: Hussein.alagore@gmail.com
+- **Research Inquiries**: houda.chihi@supcom.tn
 - **Issues**: GitHub Issues
 
 ---
