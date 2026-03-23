@@ -1,0 +1,613 @@
+# ============================================================================
+# Semantic Mapping Rules Configuration
+# Unified OSS Framework - YANG Integration & FCAPS Management
+# ============================================================================
+# 
+# This file defines semantic mapping rules for transforming vendor-specific
+# YANG data to Common Information Model (CIM) representation.
+#
+# Rule Types:
+# - DIRECT: Simple 1:1 field mapping
+# - ENUMERATION: Map vendor enum values to CIM standard values
+# - AGGREGATION: Combine multiple fields into single CIM field
+# - CONDITIONAL: Apply different mappings based on conditions
+# - UNIT_CONVERSION: Convert between different unit systems
+#
+# Version: 1.0.0
+# Date: 2024-03-01
+# ============================================================================
+
+metadata:
+  version: "1.0.0"
+  description: "Semantic mapping rules for Ericsson ENM and Huawei U2000 to CIM"
+  author: "Unified OSS Framework Consortium"
+  last_updated: "2024-03-01"
+
+# ============================================================================
+# ALARM SEVERITY MAPPINGS (Fault Management - FCAPS-F)
+# ============================================================================
+
+severity_mappings:
+  
+  ericsson:
+    vendor: ERICSSON
+    source_path: "/ericsson:alarms/alarm/perceivedSeverity"
+    target_path: "/cim:faults/alarm/severity"
+    mapping_type: ENUMERATION
+    priority: 100
+    enabled: true
+    description: "Map Ericsson alarm severity to CIM standard severity"
+    enumeration_map:
+      "critical": "CRITICAL"
+      "major": "MAJOR"
+      "minor": "MINOR"
+      "warning": "WARNING"
+      "indeterminate": "INDETERMINATE"
+      "cleared": "CLEARED"
+    default_value: "INDETERMINATE"
+    
+  huawei:
+    vendor: HUAWEI
+    source_path: "/huawei:alarms/alarm/severityLevel"
+    target_path: "/cim:faults/alarm/severity"
+    mapping_type: ENUMERATION
+    priority: 100
+    enabled: true
+    description: "Map Huawei alarm severity level to CIM standard severity"
+    enumeration_map:
+      1: "CRITICAL"
+      2: "MAJOR"
+      3: "MINOR"
+      4: "WARNING"
+      0: "INDETERMINATE"
+    default_value: "INDETERMINATE"
+
+# ============================================================================
+# ALARM STATE MAPPINGS
+# ============================================================================
+
+alarm_state_mappings:
+  
+  ericsson:
+    vendor: ERICSSON
+    source_path: "/ericsson:alarms/alarm/alarmStatus"
+    target_path: "/cim:faults/alarm/state"
+    mapping_type: ENUMERATION
+    priority: 100
+    enabled: true
+    description: "Map Ericsson alarm status to CIM alarm state"
+    enumeration_map:
+      "active": "ACTIVE"
+      "ack": "ACKNOWLEDGED"
+      "acknowledged": "ACKNOWLEDGED"
+      "cleared": "CLEARED"
+    default_value: "ACTIVE"
+    
+  huawei:
+    vendor: HUAWEI
+    source_path: "/huawei:alarms/alarm/alarmStatus"
+    target_path: "/cim:faults/alarm/state"
+    mapping_type: ENUMERATION
+    priority: 100
+    enabled: true
+    description: "Map Huawei alarm status to CIM alarm state"
+    enumeration_map:
+      "active": "ACTIVE"
+      "ack": "ACKNOWLEDGED"
+      "cleared": "CLEARED"
+      "resolved": "CLEARED"
+    default_value: "ACTIVE"
+
+# ============================================================================
+# ALARM TYPE MAPPINGS
+# ============================================================================
+
+alarm_type_mappings:
+  
+  ericsson_radio_alarm:
+    vendor: ERICSSON
+    source_path: "/ericsson:alarms/alarm/alarmType"
+    target_path: "/cim:faults/alarm/alarmType"
+    mapping_type: ENUMERATION
+    priority: 90
+    enabled: true
+    description: "Map Ericsson radio alarm types to CIM classification"
+    enumeration_map:
+      "equipmentAlarm": "HARDWARE_FAILURE"
+      "communicationsAlarm": "COMMUNICATION_FAILURE"
+      "processingErrorAlarm": "SOFTWARE_ERROR"
+      "environmentalAlarm": "ENVIRONMENTAL_ISSUE"
+      "qualityOfServiceAlarm": "PERFORMANCE_DEGRADATION"
+      "integrityViolation": "SECURITY_INCIDENT"
+      "operationalViolation": "CONFIGURATION_ERROR"
+    default_value: "UNKNOWN"
+    
+  huawei_alarm_category:
+    vendor: HUAWEI
+    source_path: "/huawei:alarms/alarm/alarmCategory"
+    target_path: "/cim:faults/alarm/alarmType"
+    mapping_type: ENUMERATION
+    priority: 90
+    enabled: true
+    description: "Map Huawei alarm categories to CIM classification"
+    enumeration_map:
+      "Communication": "COMMUNICATION_FAILURE"
+      "Equipment": "HARDWARE_FAILURE"
+      "Processing": "SOFTWARE_ERROR"
+      "Environment": "ENVIRONMENTAL_ISSUE"
+      "QualityOfService": "PERFORMANCE_DEGRADATION"
+      "Security": "SECURITY_INCIDENT"
+      "Configuration": "CONFIGURATION_ERROR"
+    default_value: "UNKNOWN"
+
+# ============================================================================
+# RESOURCE IDENTIFIER MAPPINGS
+# ============================================================================
+
+resource_identifier_mappings:
+  
+  ericsson_cell_id:
+    vendor: ERICSSON
+    source_path: "/ericsson:ran/site/eNodeB/cell/cellId"
+    target_path: "/cim:faults/alarm/affectedResourceId"
+    mapping_type: DIRECT
+    priority: 80
+    enabled: true
+    description: "Map Ericsson cell identifier"
+    transformation:
+      prefix: "ERICSSON_CELL_"
+      format: "{prefix}{value}"
+    
+  huawei_cell_id:
+    vendor: HUAWEI
+    source_path: "/huawei:ran/cell/cellId"
+    target_path: "/cim:faults/alarm/affectedResourceId"
+    mapping_type: DIRECT
+    priority: 80
+    enabled: true
+    description: "Map Huawei cell identifier"
+    transformation:
+      prefix: "HUAWEI_CELL_"
+      format: "{prefix}{value}"
+
+# ============================================================================
+# PERFORMANCE METRIC MAPPINGS (FCAPS-P)
+# ============================================================================
+
+performance_metric_mappings:
+  
+  ericsson_rrc_connected:
+    vendor: ERICSSON
+    source_path: "/ericsson:performance/cell/rrcConnection/rrcConnectedUsers"
+    target_path: "/cim:performance/metrics/RRC_CONNECTED_USERS"
+    mapping_type: DIRECT
+    priority: 100
+    enabled: true
+    description: "Ericsson RRC connected users counter"
+    unit_of_measure: "users"
+    aggregation_type: "GAUGE"
+    collection_interval_seconds: 60
+    
+  huawei_rrc_connected:
+    vendor: HUAWEI
+    source_path: "/huawei:performance/cell/rrcConnection/rrcConnNum"
+    target_path: "/cim:performance/metrics/RRC_CONNECTED_USERS"
+    mapping_type: DIRECT
+    priority: 100
+    enabled: true
+    description: "Huawei RRC connected users counter"
+    unit_of_measure: "users"
+    aggregation_type: "GAUGE"
+    collection_interval_seconds: 60
+    
+  ericsson_throughput_dl:
+    vendor: ERICSSON
+    source_path: "/ericsson:performance/cell/throughput/dlThroughput"
+    target_path: "/cim:performance/metrics/THROUGHPUT_DL_MBPS"
+    mapping_type: UNIT_CONVERSION
+    priority: 100
+    enabled: true
+    description: "Ericsson downlink throughput"
+    source_unit: "kbps"
+    target_unit: "Mbps"
+    conversion_factor: 0.001
+    aggregation_type: "GAUGE"
+    
+  huawei_throughput_dl:
+    vendor: HUAWEI
+    source_path: "/huawei:performance/cell/throughput/dlThp"
+    target_path: "/cim:performance/metrics/THROUGHPUT_DL_MBPS"
+    mapping_type: UNIT_CONVERSION
+    priority: 100
+    enabled: true
+    description: "Huawei downlink throughput"
+    source_unit: "kbps"
+    target_unit: "Mbps"
+    conversion_factor: 0.001
+    aggregation_type: "GAUGE"
+    
+  ericsson_cpu_utilization:
+    vendor: ERICSSON
+    source_path: "/ericsson:performance/node/cpu/cpuUtilization"
+    target_path: "/cim:performance/metrics/CPU_UTILIZATION_PERCENT"
+    mapping_type: UNIT_CONVERSION
+    priority: 100
+    enabled: true
+    description: "Ericsson CPU utilization (centipercent to percent)"
+    source_unit: "centipercent"
+    target_unit: "percent"
+    conversion_factor: 0.01
+    aggregation_type: "GAUGE"
+    thresholds:
+      warning: 70.0
+      critical: 90.0
+      
+  huawei_cpu_utilization:
+    vendor: HUAWEI
+    source_path: "/huawei:performance/node/cpu/cpuUsage"
+    target_path: "/cim:performance/metrics/CPU_UTILIZATION_PERCENT"
+    mapping_type: DIRECT
+    priority: 100
+    enabled: true
+    description: "Huawei CPU utilization (already in percent)"
+    source_unit: "percent"
+    target_unit: "percent"
+    aggregation_type: "GAUGE"
+    thresholds:
+      warning: 70.0
+      critical: 90.0
+      
+  ericsson_memory_utilization:
+    vendor: ERICSSON
+    source_path: "/ericsson:performance/node/memory/memoryUtilization"
+    target_path: "/cim:performance/metrics/MEMORY_UTILIZATION_PERCENT"
+    mapping_type: UNIT_CONVERSION
+    priority: 100
+    enabled: true
+    description: "Ericsson memory utilization"
+    source_unit: "centipercent"
+    target_unit: "percent"
+    conversion_factor: 0.01
+    aggregation_type: "GAUGE"
+    thresholds:
+      warning: 80.0
+      critical: 95.0
+      
+  huawei_memory_utilization:
+    vendor: HUAWEI
+    source_path: "/huawei:performance/node/memory/memUsage"
+    target_path: "/cim:performance/metrics/MEMORY_UTILIZATION_PERCENT"
+    mapping_type: DIRECT
+    priority: 100
+    enabled: true
+    description: "Huawei memory utilization"
+    source_unit: "percent"
+    target_unit: "percent"
+    aggregation_type: "GAUGE"
+    thresholds:
+      warning: 80.0
+      critical: 95.0
+
+# ============================================================================
+# KPI CALCULATION MAPPINGS
+# ============================================================================
+
+kpi_calculation_mappings:
+  
+  network_availability:
+    kpi_id: "KPI_001"
+    kpi_name: "Network Availability"
+    description: "Overall network availability percentage"
+    calculation_type: AGGREGATION
+    source_metrics:
+      - "/cim:performance/metrics/SITE_UP_COUNT"
+      - "/cim:performance/metrics/SITE_TOTAL_COUNT"
+    calculation_formula: "(SITE_UP_COUNT / SITE_TOTAL_COUNT) * 100"
+    unit_of_measure: "percent"
+    aggregation_window_seconds: 86400
+    thresholds:
+      warning: 99.5
+      critical: 99.0
+      
+  average_throughput:
+    kpi_id: "KPI_002"
+    kpi_name: "Average Downlink Throughput"
+    description: "Average downlink throughput across all cells"
+    calculation_type: AGGREGATION
+    source_metrics:
+      - "/cim:performance/metrics/THROUGHPUT_DL_MBPS"
+    calculation_formula: "AVG(THROUGHPUT_DL_MBPS)"
+    unit_of_measure: "Mbps"
+    aggregation_window_seconds: 900
+    thresholds:
+      warning: 50.0
+      critical: 25.0
+      
+  connection_success_rate:
+    kpi_id: "KPI_003"
+    kpi_name: "RRC Connection Success Rate"
+    description: "RRC connection establishment success rate"
+    calculation_type: AGGREGATION
+    source_metrics:
+      - "/cim:performance/metrics/RRC_CONN_SUCCESS"
+      - "/cim:performance/metrics/RRC_CONN_ATTEMPT"
+    calculation_formula: "(RRC_CONN_SUCCESS / RRC_CONN_ATTEMPT) * 100"
+    unit_of_measure: "percent"
+    aggregation_window_seconds: 900
+    thresholds:
+      warning: 95.0
+      critical: 90.0
+
+# ============================================================================
+# CONFIGURATION PARAMETER MAPPINGS (FCAPS-C)
+# ============================================================================
+
+configuration_parameter_mappings:
+  
+  ericsson_cell_pci:
+    vendor: ERICSSON
+    source_path: "/ericsson:ran/cell/physicalCellId"
+    target_path: "/cim:configuration/cell/pci"
+    mapping_type: DIRECT
+    priority: 80
+    enabled: true
+    description: "Physical Cell ID configuration"
+    validation:
+      type: "integer"
+      min: 0
+      max: 503
+      
+  huawei_cell_pci:
+    vendor: HUAWEI
+    source_path: "/huawei:ran/cell/pci"
+    target_path: "/cim:configuration/cell/pci"
+    mapping_type: DIRECT
+    priority: 80
+    enabled: true
+    description: "Physical Cell ID configuration"
+    validation:
+      type: "integer"
+      min: 0
+      max: 503
+      
+  ericsson_tx_power:
+    vendor: ERICSSON
+    source_path: "/ericsson:ran/cell/txPower"
+    target_path: "/cim:configuration/cell/txPower"
+    mapping_type: UNIT_CONVERSION
+    priority: 80
+    enabled: true
+    description: "Transmit power configuration"
+    source_unit: "dBm"
+    target_unit: "dBm"
+    
+  huawei_tx_power:
+    vendor: HUAWEI
+    source_path: "/huawei:ran/cell/referenceSignalPower"
+    target_path: "/cim:configuration/cell/txPower"
+    mapping_type: DIRECT
+    priority: 80
+    enabled: true
+    description: "Reference signal power configuration"
+    
+  ericsson_qos_profile:
+    vendor: ERICSSON
+    source_path: "/ericsson:qos/profile"
+    target_path: "/cim:configuration/qos/profile"
+    mapping_type: AGGREGATION
+    priority: 70
+    enabled: true
+    description: "QoS profile mapping"
+    aggregation_fields:
+      - source: "profileName"
+        target: "profileId"
+      - source: "priorityLevel"
+        target: "priority"
+      - source: "packetDelayBudget"
+        target: "delayBudget"
+    transformation:
+      delayUnit: "ms"
+
+# ============================================================================
+# SECURITY EVENT MAPPINGS (FCAPS-S)
+# ============================================================================
+
+security_event_mappings:
+  
+  ericsson_security_alarm:
+    vendor: ERICSSON
+    source_path: "/ericsson:alarms/alarm[alarmType='securityAlarm']"
+    target_path: "/cim:security/threats/event"
+    mapping_type: CONDITIONAL
+    priority: 100
+    enabled: true
+    description: "Map Ericsson security alarms to security events"
+    condition:
+      field: "alarmType"
+      operator: "equals"
+      value: "securityAlarm"
+    mapping:
+      severity: "CRITICAL"
+      category: "SECURITY_INCIDENT"
+      
+  huawei_security_alarm:
+    vendor: HUAWEI
+    source_path: "/huawei:alarms/alarm[alarmCategory='Security']"
+    target_path: "/cim:security/threats/event"
+    mapping_type: CONDITIONAL
+    priority: 100
+    enabled: true
+    description: "Map Huawei security alarms to security events"
+    condition:
+      field: "alarmCategory"
+      operator: "equals"
+      value: "Security"
+    mapping:
+      severity: "CRITICAL"
+      category: "SECURITY_INCIDENT"
+
+# ============================================================================
+# ACCOUNTING/USAGE MAPPINGS (FCAPS-A)
+# ============================================================================
+
+accounting_mappings:
+  
+  ericsson_license_usage:
+    vendor: ERICSSON
+    source_path: "/ericsson:license/usage"
+    target_path: "/cim:accounting/licenses/usage"
+    mapping_type: DIRECT
+    priority: 80
+    enabled: true
+    description: "License usage tracking"
+    fields:
+      - source: "licenseKey"
+        target: "licenseId"
+      - source: "usedCapacity"
+        target: "usedCapacity"
+      - source: "totalCapacity"
+        target: "totalCapacity"
+        
+  huawei_license_usage:
+    vendor: HUAWEI
+    source_path: "/huawei:license/usageInfo"
+    target_path: "/cim:accounting/licenses/usage"
+    mapping_type: DIRECT
+    priority: 80
+    enabled: true
+    description: "License usage tracking"
+    fields:
+      - source: "licenseId"
+        target: "licenseId"
+      - source: "usedCount"
+        target: "usedCapacity"
+      - source: "totalCount"
+        target: "totalCapacity"
+
+# ============================================================================
+# CORRELATION RULES
+# ============================================================================
+
+correlation_rules:
+  
+  transmission_failure_correlation:
+    rule_id: "CORR_TRANSMISSION_001"
+    description: "Correlate transmission alarms across vendors"
+    enabled: true
+    priority: 90
+    time_window_seconds: 300
+    match_criteria:
+      alarm_types:
+        - "COMMUNICATION_FAILURE"
+        - "TRANSMISSION_FAILURE"
+      resource_pattern: "/network/*/transmission/*"
+    correlation_action:
+      type: "CREATE_COMPOSITE"
+      root_cause_detection: "HIGHEST_SEVERITY"
+      
+  site_power_correlation:
+    rule_id: "CORR_POWER_001"
+    description: "Correlate power-related alarms"
+    enabled: true
+    priority: 95
+    time_window_seconds: 600
+    match_criteria:
+      alarm_types:
+        - "ENVIRONMENTAL_ISSUE"
+        - "POWER_FAILURE"
+      severity_filter:
+        - "CRITICAL"
+        - "MAJOR"
+    correlation_action:
+      type: "AGGREGATE"
+      root_cause_detection: "FIRST_OCCURRENCE"
+      
+  cross_vendor_site_correlation:
+    rule_id: "CORR_CROSS_VENDOR_001"
+    description: "Correlate alarms for same site across vendors"
+    enabled: true
+    priority: 80
+    time_window_seconds: 300
+    match_criteria:
+      vendor_filter: "CROSS_VENDOR"
+      location_match: true
+    correlation_action:
+      type: "SUPPRESS_SECONDARY"
+      secondary_vendor: "HUAWEI"
+      primary_vendor: "ERICSSON"
+
+# ============================================================================
+# THRESHOLD CONFIGURATIONS
+# ============================================================================
+
+threshold_configurations:
+  
+  cpu_threshold:
+    metric_path: "/cim:performance/metrics/CPU_UTILIZATION_PERCENT"
+    warning_threshold: 70.0
+    critical_threshold: 90.0
+    threshold_direction: "ABOVE_THRESHOLD"
+    sustained_violation_window_seconds: 300
+    hysteresis_percent: 5.0
+    
+  memory_threshold:
+    metric_path: "/cim:performance/metrics/MEMORY_UTILIZATION_PERCENT"
+    warning_threshold: 80.0
+    critical_threshold: 95.0
+    threshold_direction: "ABOVE_THRESHOLD"
+    sustained_violation_window_seconds: 300
+    hysteresis_percent: 5.0
+    
+  rrc_success_threshold:
+    metric_path: "/cim:performance/metrics/RRC_CONNECTION_SUCCESS_RATE"
+    warning_threshold: 95.0
+    critical_threshold: 90.0
+    threshold_direction: "BELOW_THRESHOLD"
+    sustained_violation_window_seconds: 900
+    hysteresis_percent: 2.0
+    
+  throughput_threshold:
+    metric_path: "/cim:performance/metrics/THROUGHPUT_DL_MBPS"
+    warning_threshold: 50.0
+    critical_threshold: 25.0
+    threshold_direction: "BELOW_THRESHOLD"
+    sustained_violation_window_seconds: 900
+    hysteresis_percent: 5.0
+
+# ============================================================================
+# VALIDATION RULES
+# ============================================================================
+
+validation_rules:
+  
+  pci_range_validation:
+    target_path: "/cim:configuration/cell/pci"
+    validation_type: "RANGE"
+    parameters:
+      min: 0
+      max: 503
+    error_message: "PCI must be between 0 and 503"
+    
+  tx_power_range_validation:
+    target_path: "/cim:configuration/cell/txPower"
+    validation_type: "RANGE"
+    parameters:
+      min: -20
+      max: 50
+    error_message: "TX Power must be between -20 and 50 dBm"
+    
+  severity_validation:
+    target_path: "/cim:faults/alarm/severity"
+    validation_type: "ENUMERATION"
+    parameters:
+      allowed_values:
+        - "CRITICAL"
+        - "MAJOR"
+        - "MINOR"
+        - "WARNING"
+        - "INDETERMINATE"
+    error_message: "Invalid severity value"
+
+# ============================================================================
+# END OF CONFIGURATION
+# ============================================================================

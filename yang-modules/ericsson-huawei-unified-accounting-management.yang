@@ -1,0 +1,6850 @@
+module ericsson-huawei-unified-accounting-management {
+  yang-version 1.1;
+  namespace "urn:cim:fcaps:accounting:v1";
+  prefix "fcaps-acct";
+  
+  import ietf-yang-types {
+    prefix yang;
+  }
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import ietf-datastores {
+    prefix ds;
+  }
+
+  organization "Unified OSS Framework Consortium";
+  contact "oss-framework@example.com";
+  
+  description
+    "YANG data model for Accounting Management within the Unified OSS Framework.
+     This module provides vendor-neutral resource accounting, usage tracking,
+     billing data collection, and cost allocation for multi-vendor network 
+     environments including Ericsson ENM and Huawei U2000.
+     
+     Key capabilities:
+     - Resource consumption tracking and metering
+     - License management and compliance monitoring
+     - Billing record generation and invoice management
+     - Cost allocation and chargeback mechanisms
+     - Rate card management and pricing rules
+     - Usage analytics and reporting
+     - Quota management and enforcement
+     - Budget tracking and alerting
+     
+     Copyright (c) 2024 Unified OSS Framework Consortium.
+     All rights reserved.";
+  
+  revision 2024-03-01 {
+    description 
+      "Initial version - Accounting Management YANG model for Ericsson/Huawei
+       multi-vendor network element management.
+       
+       Key features:
+       - Multi-vendor resource usage normalization
+       - Billing data aggregation and reconciliation
+       - Cost center allocation and chargeback
+       - License tracking and compliance
+       - Rate card management
+       - Budget and quota management
+       - Comprehensive reporting capabilities";
+    reference 
+      "IEEE Transactions on Network and Service Management;
+       3GPP TS 28.554 - 5G End to End Key Performance Indicators;
+       TM Forum GB922 - Information Framework (SID);
+       ITU-T X.733 - Alarm Reporting Function;
+       TM Forum TMF622 - Product Order Management API";
+  }
+
+  /***************************************************************************
+   * FEATURE DEFINITIONS
+   ***************************************************************************/
+  
+  feature resource-tracking {
+    description 
+      "Enable comprehensive resource consumption tracking and metering.
+       When enabled, the system tracks usage metrics for all billable
+       resources including bandwidth, storage, compute, and API calls.";
+  }
+  
+  feature license-management {
+    description 
+      "Enable software license tracking and compliance monitoring.
+       Provides license inventory management, utilization tracking,
+       and compliance alerting capabilities.";
+  }
+  
+  feature billing-integration {
+    description 
+      "Enable billing system integration and invoice generation.
+       Supports automated invoice creation, payment tracking,
+       and billing system synchronization.";
+  }
+  
+  feature cost-allocation {
+    description 
+      "Enable cost allocation and chargeback mechanisms.
+       Allows costs to be distributed across cost centers,
+       departments, and projects based on configurable rules.";
+  }
+  
+  feature usage-analytics {
+    description 
+      "Enable advanced usage analytics and trend analysis.
+       Provides historical analysis, forecasting, and
+       anomaly detection for usage patterns.";
+  }
+  
+  feature quota-management {
+    description 
+      "Enable quota definition and enforcement capabilities.
+       Supports setting usage limits with automated enforcement
+       and threshold alerting.";
+  }
+  
+  feature chargeback {
+    description 
+      "Enable chargeback calculation and reporting.
+       Calculates costs to be charged back to cost centers
+       based on actual resource consumption.";
+  }
+  
+  feature budget-tracking {
+    description 
+      "Enable budget definition and tracking capabilities.
+       Supports budget allocation, monitoring, variance analysis,
+       and threshold-based alerting.";
+  }
+
+  /***************************************************************************
+   * IDENTITY DEFINITIONS
+   ***************************************************************************/
+  
+  identity accounting-event-base {
+    description "Base identity for accounting event classification";
+  }
+  
+  identity usage-event {
+    base accounting-event-base;
+    description "Resource usage measurement event";
+  }
+  
+  identity billing-event {
+    base accounting-event-base;
+    description "Billing-related event";
+  }
+  
+  identity license-event {
+    base accounting-event-base;
+    description "License-related event";
+  }
+  
+  identity budget-event {
+    base accounting-event-base;
+    description "Budget-related event";
+  }
+  
+  identity quota-event {
+    base accounting-event-base;
+    description "Quota-related event";
+  }
+  
+  identity resource-type-base {
+    description "Base identity for resource type classification";
+  }
+  
+  identity network-resource {
+    base resource-type-base;
+    description "Network infrastructure resource";
+  }
+  
+  identity compute-resource {
+    base resource-type-base;
+    description "Computational resource";
+  }
+  
+  identity storage-resource {
+    base resource-type-base;
+    description "Storage resource";
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Resource Types
+   ***************************************************************************/
+  
+  typedef resource-type-accounting {
+    description 
+      "Classification of resources for accounting purposes.
+       Maps vendor-specific resource types to normalized categories.";
+    type enumeration {
+      enum BANDWIDTH {
+        value 1;
+        description "Network bandwidth consumption";
+      }
+      enum STORAGE {
+        value 2;
+        description "Storage capacity usage";
+      }
+      enum COMPUTE {
+        value 3;
+        description "Compute resource consumption";
+      }
+      enum LICENSE {
+        value 4;
+        description "Software license utilization";
+      }
+      enum API_CALL {
+        value 5;
+        description "API invocation count";
+      }
+      enum DATA_TRANSFER {
+        value 6;
+        description "Data transfer volume";
+      }
+      enum SESSION {
+        value 7;
+        description "Active session count/duration";
+      }
+      enum RADIO_RESOURCE {
+        value 8;
+        description "Radio access network resources";
+      }
+      enum SPECTRUM {
+        value 9;
+        description "Spectrum utilization";
+      }
+      enum MEMORY {
+        value 10;
+        description "Memory allocation and usage";
+      }
+      enum CPU_CORES {
+        value 11;
+        description "CPU core allocation";
+      }
+      enum GPU_UNITS {
+        value 12;
+        description "GPU unit allocation";
+      }
+      enum NETWORK_INTERFACE {
+        value 13;
+        description "Network interface usage";
+      }
+      enum LOAD_BALANCER {
+        value 14;
+        description "Load balancer resource usage";
+      }
+      enum DATABASE_INSTANCE {
+        value 15;
+        description "Database instance consumption";
+      }
+      enum CACHE_SERVICE {
+        value 16;
+        description "Cache service utilization";
+      }
+      enum MESSAGE_QUEUE {
+        value 17;
+        description "Message queue operations";
+      }
+      enum VPN_CONNECTION {
+        value 18;
+        description "VPN connection usage";
+      }
+      enum IP_ADDRESS {
+        value 19;
+        description "IP address allocation";
+      }
+    }
+  }
+  
+  typedef billing-period-type {
+    description 
+      "Standard billing period definitions for invoice generation
+       and accounting cycles.";
+    type enumeration {
+      enum DAILY {
+        value 1;
+        description "Daily billing cycle";
+      }
+      enum WEEKLY {
+        value 2;
+        description "Weekly billing cycle";
+      }
+      enum BI_WEEKLY {
+        value 3;
+        description "Bi-weekly billing cycle";
+      }
+      enum MONTHLY {
+        value 4;
+        description "Monthly billing cycle";
+      }
+      enum QUARTERLY {
+        value 5;
+        description "Quarterly billing cycle";
+      }
+      enum SEMI_ANNUALLY {
+        value 6;
+        description "Semi-annual billing cycle";
+      }
+      enum ANNUALLY {
+        value 7;
+        description "Annual billing cycle";
+      }
+      enum USAGE_BASED {
+        value 8;
+        description "Usage-triggered billing";
+      }
+      enum ON_DEMAND {
+        value 9;
+        description "On-demand billing";
+      }
+    }
+  }
+  
+  typedef invoice-status-type {
+    description 
+      "Invoice lifecycle status tracking from creation to payment.
+       Supports standard accounting workflow states.";
+    type enumeration {
+      enum DRAFT {
+        value 1;
+        description "Invoice being prepared, not yet finalized";
+      }
+      enum PENDING_REVIEW {
+        value 2;
+        description "Invoice awaiting review approval";
+      }
+      enum APPROVED {
+        value 3;
+        description "Invoice approved for issuance";
+      }
+      enum ISSUED {
+        value 4;
+        description "Invoice sent to customer";
+      }
+      enum PAID {
+        value 5;
+        description "Invoice fully paid";
+      }
+      enum PARTIAL {
+        value 6;
+        description "Invoice partially paid";
+      }
+      enum OVERDUE {
+        value 7;
+        description "Invoice past due date";
+      }
+      enum DISPUTED {
+        value 8;
+        description "Invoice under dispute";
+      }
+      enum CANCELLED {
+        value 9;
+        description "Invoice cancelled";
+      }
+      enum CREDITED {
+        value 10;
+        description "Credit note issued";
+      }
+      enum REFUNDED {
+        value 11;
+        description "Payment refunded";
+      }
+      enum WRITE_OFF {
+        value 12;
+        description "Invoice written off";
+      }
+    }
+  }
+  
+  typedef usage-measurement-unit {
+    description 
+      "Standard units for usage measurement and billing.
+       Supports SI prefixes and common IT units.";
+    type enumeration {
+      enum BYTES {
+        value 1;
+        description "Bytes";
+      }
+      enum KILOBYTES {
+        value 2;
+        description "Kilobytes (10^3 bytes)";
+      }
+      enum MEGABYTES {
+        value 3;
+        description "Megabytes (10^6 bytes)";
+      }
+      enum GIGABYTES {
+        value 4;
+        description "Gigabytes (10^9 bytes)";
+      }
+      enum TERABYTES {
+        value 5;
+        description "Terabytes (10^12 bytes)";
+      }
+      enum PETABYTES {
+        value 6;
+        description "Petabytes (10^15 bytes)";
+      }
+      enum BITS_PER_SECOND {
+        value 7;
+        description "Bits per second";
+      }
+      enum KILOBITS_PER_SECOND {
+        value 8;
+        description "Kilobits per second";
+      }
+      enum MEGABITS_PER_SECOND {
+        value 9;
+        description "Megabits per second";
+      }
+      enum GIGABITS_PER_SECOND {
+        value 10;
+        description "Gigabits per second";
+      }
+      enum SECONDS {
+        value 11;
+        description "Seconds";
+      }
+      enum MINUTES {
+        value 12;
+        description "Minutes";
+      }
+      enum HOURS {
+        value 13;
+        description "Hours";
+      }
+      enum DAYS {
+        value 14;
+        description "Days";
+      }
+      enum COUNT {
+        value 15;
+        description "Simple count";
+      }
+      enum PERCENT {
+        value 16;
+        description "Percentage";
+      }
+      enum CORE_HOURS {
+        value 17;
+        description "CPU core-hours";
+      }
+      enum GPU_HOURS {
+        value 18;
+        description "GPU hours";
+      }
+      enum IOPS {
+        value 19;
+        description "I/O operations per second";
+      }
+      enum REQUESTS {
+        value 20;
+        description "API request count";
+      }
+    }
+  }
+  
+  typedef cost-center-type {
+    description 
+      "Cost center classification for organizational cost tracking.";
+    type enumeration {
+      enum DEPARTMENT {
+        value 1;
+        description "Department-based cost center";
+      }
+      enum PROJECT {
+        value 2;
+        description "Project-based cost center";
+      }
+      enum BUSINESS_UNIT {
+        value 3;
+        description "Business unit cost center";
+      }
+      enum PRODUCT_LINE {
+        value 4;
+        description "Product line cost center";
+      }
+      enum REGION {
+        value 5;
+        description "Regional cost center";
+      }
+      enum CUSTOMER {
+        value 6;
+        description "Customer-specific cost center";
+      }
+      enum SERVICE {
+        value 7;
+        description "Service-based cost center";
+      }
+      enum INFRASTRUCTURE {
+        value 8;
+        description "Infrastructure cost center";
+      }
+    }
+  }
+  
+  typedef license-type-enum {
+    description 
+      "Software license model classification for tracking and billing.";
+    type enumeration {
+      enum PERPETUAL {
+        value 1;
+        description "Perpetual license, one-time purchase";
+      }
+      enum SUBSCRIPTION_MONTHLY {
+        value 2;
+        description "Monthly subscription license";
+      }
+      enum SUBSCRIPTION_ANNUAL {
+        value 3;
+        description "Annual subscription license";
+      }
+      enum USAGE_BASED {
+        value 4;
+        description "Pay-per-use licensing model";
+      }
+      enum PER_NODE {
+        value 5;
+        description "Per-node licensing";
+      }
+      enum PER_USER {
+        value 6;
+        description "Per-user licensing";
+      }
+      enum PER_CORE {
+        value 7;
+        description "Per-CPU-core licensing";
+      }
+      enum PER_SOCKET {
+        value 8;
+        description "Per-socket licensing";
+      }
+      enum PER_INSTANCE {
+        value 9;
+        description "Per-instance licensing";
+      }
+      enum TRIAL {
+        value 10;
+        description "Trial/evaluation license";
+      }
+      enum OPEN_SOURCE {
+        value 11;
+        description "Open source license";
+      }
+      enum VOLUME_LICENSE {
+        value 12;
+        description "Volume licensing agreement";
+      }
+      enum SITE_LICENSE {
+        value 13;
+        description "Site-wide license";
+      }
+      enum ENTERPRISE_LICENSE {
+        value 14;
+        description "Enterprise-wide license";
+      }
+    }
+  }
+  
+  typedef currency-type {
+    description 
+      "ISO 4217 currency codes for billing and cost tracking.";
+    type enumeration {
+      enum USD {
+        value 1;
+        description "US Dollar";
+      }
+      enum EUR {
+        value 2;
+        description "Euro";
+      }
+      enum GBP {
+        value 3;
+        description "British Pound Sterling";
+      }
+      enum JPY {
+        value 4;
+        description "Japanese Yen";
+      }
+      enum CNY {
+        value 5;
+        description "Chinese Yuan Renminbi";
+      }
+      enum INR {
+        value 6;
+        description "Indian Rupee";
+      }
+      enum AUD {
+        value 7;
+        description "Australian Dollar";
+      }
+      enum CAD {
+        value 8;
+        description "Canadian Dollar";
+      }
+      enum CHF {
+        value 9;
+        description "Swiss Franc";
+      }
+      enum HKD {
+        value 10;
+        description "Hong Kong Dollar";
+      }
+      enum SGD {
+        value 11;
+        description "Singapore Dollar";
+      }
+      enum SEK {
+        value 12;
+        description "Swedish Krona";
+      }
+      enum KRW {
+        value 13;
+        description "South Korean Won";
+      }
+      enum MXN {
+        value 14;
+        description "Mexican Peso";
+      }
+      enum BRL {
+        value 15;
+        description "Brazilian Real";
+      }
+    }
+  }
+  
+  typedef quota-type {
+    description 
+      "Quota type classification for resource limits and thresholds.";
+    type enumeration {
+      enum HARD_LIMIT {
+        value 1;
+        description "Hard limit that cannot be exceeded";
+      }
+      enum SOFT_LIMIT {
+        value 2;
+        description "Soft limit with grace period";
+      }
+      enum TIERED_LIMIT {
+        value 3;
+        description "Multi-tier quota structure";
+      }
+      enum BURST_LIMIT {
+        value 4;
+        description "Burst-capable quota with temporary overage";
+      }
+      enum DAILY_LIMIT {
+        value 5;
+        description "Daily reset quota";
+      }
+      enum MONTHLY_LIMIT {
+        value 6;
+        description "Monthly reset quota";
+      }
+      enum ANNUAL_LIMIT {
+        value 7;
+        description "Annual reset quota";
+      }
+      enum ROLLING_WINDOW {
+        value 8;
+        description "Rolling time window quota";
+      }
+    }
+  }
+  
+  typedef allocation-method-type {
+    description 
+      "Cost allocation method for distributing charges to cost centers.";
+    type enumeration {
+      enum FIXED_AMOUNT {
+        value 1;
+        description "Fixed amount allocation";
+      }
+      enum PERCENTAGE {
+        value 2;
+        description "Percentage-based allocation";
+      }
+      enum PROPORTIONAL {
+        value 3;
+        description "Proportional to usage";
+      }
+      enum TIERED {
+        value 4;
+        description "Tiered allocation based on volume";
+      }
+      enum WEIGHTED {
+        value 5;
+        description "Weighted allocation";
+      }
+      enum EQUAL_SPLIT {
+        value 6;
+        description "Equal split among recipients";
+      }
+      enum USAGE_BASED {
+        value 7;
+        description "Based on actual usage metrics";
+      }
+      enum HEADCOUNT {
+        value 8;
+        description "Based on personnel headcount";
+      }
+    }
+  }
+  
+  typedef rate-card-type {
+    description 
+      "Rate card classification for pricing structures.";
+    type enumeration {
+      enum STANDARD {
+        value 1;
+        description "Standard published rates";
+      }
+      enum NEGOTIATED {
+        value 2;
+        description "Negotiated contract rates";
+      }
+      enum VOLUME_DISCOUNT {
+        value 3;
+        description "Volume-based discount rates";
+      }
+      enum PROMOTIONAL {
+        value 4;
+        description "Promotional/discounted rates";
+      }
+      enum ENTERPRISE {
+        value 5;
+        description "Enterprise agreement rates";
+      }
+      enum WHOLESALE {
+        value 6;
+        description "Wholesale/reseller rates";
+      }
+      enum RETAIL {
+        value 7;
+        description "Retail customer rates";
+      }
+      enum INTERNAL {
+        value 8;
+        description "Internal transfer pricing";
+      }
+    }
+  }
+  
+  typedef budget-status-type {
+    description 
+      "Budget status tracking for financial planning.";
+    type enumeration {
+      enum DRAFT {
+        value 1;
+        description "Budget in draft state";
+      }
+      enum SUBMITTED {
+        value 2;
+        description "Budget submitted for approval";
+      }
+      enum APPROVED {
+        value 3;
+        description "Budget approved";
+      }
+      enum ACTIVE {
+        value 4;
+        description "Budget currently active";
+      }
+      enum SUSPENDED {
+        value 5;
+        description "Budget temporarily suspended";
+      }
+      enum EXHAUSTED {
+        value 6;
+        description "Budget fully consumed";
+      }
+      enum EXPIRED {
+        value 7;
+        description "Budget period expired";
+      }
+      enum CLOSED {
+        value 8;
+        description "Budget closed for period";
+      }
+    }
+  }
+  
+  typedef usage-record-type {
+    description 
+      "Usage record classification for data collection.";
+    type enumeration {
+      enum RAW {
+        value 1;
+        description "Raw usage measurement";
+      }
+      enum AGGREGATED {
+        value 2;
+        description "Aggregated usage summary";
+      }
+      enum BILLED {
+        value 3;
+        description "Billed usage record";
+      }
+      enum ESTIMATED {
+        value 4;
+        description "Estimated usage";
+      }
+      enum CORRECTED {
+        value 5;
+        description "Corrected usage record";
+      }
+      enum ADJUSTED {
+        value 6;
+        description "Adjusted usage record";
+      }
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Identifiers
+   ***************************************************************************/
+  
+  typedef accounting-id-type {
+    description 
+      "Unique identifier for accounting records.
+       UUID v4 format for global uniqueness.";
+    type string {
+      length "36..36";
+      pattern "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}";
+    }
+  }
+  
+  typedef invoice-number-type {
+    description 
+      "Human-readable invoice number format.";
+    type string {
+      length "1..32";
+      pattern "INV-[0-9]{4}-[0-9]{6}";
+    }
+  }
+  
+  typedef cost-center-id-type {
+    description 
+      "Cost center identifier format.";
+    type string {
+      length "1..64";
+      pattern "CC-[A-Z0-9]{2,4}-[0-9]{4,8}";
+    }
+  }
+  
+  typedef license-id-type {
+    description 
+      "License identifier format for tracking.";
+    type string {
+      length "1..128";
+      pattern "[A-Za-z0-9_\\-\\.:]+";
+    }
+  }
+  
+  typedef rate-card-id-type {
+    description 
+      "Rate card identifier format.";
+    type string {
+      length "1..64";
+      pattern "RC-[A-Z]{2,4}-[0-9]{4,8}";
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Financial Types
+   ***************************************************************************/
+  
+  typedef monetary-amount {
+    description 
+      "Monetary amount with high precision for financial calculations.
+       Supports values up to billions with cent precision.";
+    type decimal64 {
+      fraction-digits 4;
+      range "-999999999999.9999..999999999999.9999";
+    }
+  }
+  
+  typedef positive-monetary-amount {
+    description 
+      "Positive monetary amount for charges and costs.";
+    type decimal64 {
+      fraction-digits 4;
+      range "0.0000..999999999999.9999";
+    }
+  }
+  
+  typedef percentage-value {
+    description 
+      "Percentage value for rates, discounts, and allocations.
+       Supports values from 0 to 100 with two decimal precision.";
+    type decimal64 {
+      fraction-digits 2;
+      range "0.00..100.00";
+    }
+  }
+  
+  typedef discount-percentage {
+    description 
+      "Discount percentage for billing adjustments.";
+    type decimal64 {
+      fraction-digits 2;
+      range "0.00..100.00";
+    }
+  }
+  
+  typedef tax-rate {
+    description 
+      "Tax rate percentage for invoice calculations.";
+    type decimal64 {
+      fraction-digits 3;
+      range "0.000..100.000";
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Time and Duration
+   ***************************************************************************/
+  
+  typedef duration-seconds {
+    description "Duration in seconds";
+    type uint32 {
+      range "0..4294967295";
+    }
+  }
+  
+  typedef duration-minutes {
+    description "Duration in minutes";
+    type uint32 {
+      range "0..525600";
+    }
+  }
+  
+  typedef duration-hours {
+    description "Duration in hours";
+    type uint16 {
+      range "0..8760";
+    }
+  }
+  
+  typedef duration-days {
+    description "Duration in days";
+    type uint16 {
+      range "0..365";
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Vendor Specifics
+   ***************************************************************************/
+  
+  typedef vendor-accounting-type {
+    description "Vendor system enumeration for accounting sources";
+    type enumeration {
+      enum ERICSSON {
+        value 1;
+        description "Ericsson ENM system";
+      }
+      enum HUAWEI {
+        value 2;
+        description "Huawei U2000/iManager system";
+      }
+      enum NOKIA {
+        value 3;
+        description "Nokia NFM-T/NSP system";
+      }
+      enum ZTE {
+        value 4;
+        description "ZTE NetNumen system";
+      }
+      enum SAMSUNG {
+        value 5;
+        description "Samsung NetManager system";
+      }
+      enum CISCO {
+        value 6;
+        description "Cisco Prime/NSO system";
+      }
+      enum CALCULATED {
+        value 99;
+        description "Calculated or derived data";
+      }
+    }
+  }
+  
+  typedef data-collection-method {
+    description 
+      "Method used to collect accounting data from vendor systems.";
+    type enumeration {
+      enum SNMP_POLL {
+        value 1;
+        description "SNMP polling-based collection";
+      }
+      enum NETCONF_STREAM {
+        value 2;
+        description "NETCONF telemetry streaming";
+      }
+      enum FILE_UPLOAD {
+        value 3;
+        description "File-based data upload (CSV, XML)";
+      }
+      enum API_QUERY {
+        value 4;
+        description "REST/GraphQL API query";
+      }
+      enum LOG_PARSING {
+        value 5;
+        description "Log file parsing";
+      }
+      enum KAFKA_STREAM {
+        value 6;
+        description "Kafka message streaming";
+      }
+      enum SYSLOG {
+        value 7;
+        description "Syslog message collection";
+      }
+      enum DATABASE_REPLICATION {
+        value 8;
+        description "Database replication/sync";
+      }
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Status and State
+   ***************************************************************************/
+  
+  typedef compliance-status-type {
+    description 
+      "Compliance status for license and quota tracking.";
+    type enumeration {
+      enum COMPLIANT {
+        value 1;
+        description "Within allowed limits";
+      }
+      enum WARNING {
+        value 2;
+        description "Approaching limit threshold";
+      }
+      enum OVER_LIMIT {
+        value 3;
+        description "Over allowed limits";
+      }
+      enum VIOLATION {
+        value 4;
+        description "Compliance violation detected";
+      }
+      enum EXEMPT {
+        value 5;
+        description "Exempt from compliance checks";
+      }
+    }
+  }
+  
+  typedef report-status-type {
+    description 
+      "Status of report generation operations.";
+    type enumeration {
+      enum PENDING {
+        value 1;
+        description "Report generation pending";
+      }
+      enum IN_PROGRESS {
+        value 2;
+        description "Report being generated";
+      }
+      enum COMPLETED {
+        value 3;
+        description "Report generation completed";
+      }
+      enum FAILED {
+        value 4;
+        description "Report generation failed";
+      }
+      enum CANCELLED {
+        value 5;
+        description "Report generation cancelled";
+      }
+    }
+  }
+  
+  typedef export-format-type {
+    description 
+      "Export format for reports and billing data.";
+    type enumeration {
+      enum PDF {
+        value 1;
+        description "PDF document format";
+      }
+      enum EXCEL {
+        value 2;
+        description "Microsoft Excel format";
+      }
+      enum CSV {
+        value 3;
+        description "Comma-separated values";
+      }
+      enum JSON {
+        value 4;
+        description "JSON format";
+      }
+      enum XML {
+        value 5;
+        description "XML format";
+      }
+      enum PARQUET {
+        value 6;
+        description "Apache Parquet format";
+      }
+    }
+  }
+  
+  typedef payment-method-type {
+    description 
+      "Payment method classification for billing.";
+    type enumeration {
+      enum BANK_TRANSFER {
+        value 1;
+        description "Bank/wire transfer";
+      }
+      enum CREDIT_CARD {
+        value 2;
+        description "Credit card payment";
+      }
+      enum DEBIT_CARD {
+        value 3;
+        description "Debit card payment";
+      }
+      enum ACH {
+        value 4;
+        description "ACH direct debit";
+      }
+      enum CHECK {
+        value 5;
+        description "Paper check payment";
+      }
+      enum CASH {
+        value 6;
+        description "Cash payment";
+      }
+      enum CRYPTO {
+        value 7;
+        description "Cryptocurrency payment";
+      }
+      enum INTERNAL_TRANSFER {
+        value 8;
+        description "Internal account transfer";
+      }
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Metrics and Measurements
+   ***************************************************************************/
+  
+  typedef utilization-percentage {
+    description 
+      "Utilization percentage for resource tracking.";
+    type decimal64 {
+      fraction-digits 2;
+      range "0.00..100.00";
+    }
+  }
+  
+  typedef confidence-score {
+    description 
+      "Confidence score for estimated or calculated values.
+       0.00 = No confidence, 1.00 = Full confidence.";
+    type decimal64 {
+      fraction-digits 2;
+      range "0.00..1.00";
+    }
+  }
+  
+  typedef quality-indicator {
+    description 
+      "Data quality indicator for accounting records.";
+    type enumeration {
+      enum MEASURED {
+        value 1;
+        description "Directly measured value";
+      }
+      enum ESTIMATED {
+        value 2;
+        description "Estimated value";
+      }
+      enum INTERPOLATED {
+        value 3;
+        description "Interpolated from adjacent values";
+      }
+      enum CALCULATED {
+        value 4;
+        description "Calculated from other metrics";
+      }
+      enum PROJECTED {
+        value 5;
+        description "Projected/forecasted value";
+      }
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Alerting and Thresholds
+   ***************************************************************************/
+  
+  typedef threshold-operator-type {
+    description 
+      "Comparison operator for threshold evaluation.";
+    type enumeration {
+      enum GREATER_THAN {
+        value 1;
+        description "Value exceeds threshold";
+      }
+      enum GREATER_OR_EQUAL {
+        value 2;
+        description "Value at or above threshold";
+      }
+      enum LESS_THAN {
+        value 3;
+        description "Value below threshold";
+      }
+      enum LESS_OR_EQUAL {
+        value 4;
+        description "Value at or below threshold";
+      }
+      enum EQUAL {
+        value 5;
+        description "Value equals threshold";
+      }
+    }
+  }
+  
+  typedef alert-severity-type {
+    description 
+      "Severity level for accounting-related alerts.";
+    type enumeration {
+      enum CRITICAL {
+        value 1;
+        description "Critical alert requiring immediate action";
+      }
+      enum HIGH {
+        value 2;
+        description "High priority alert";
+      }
+      enum MEDIUM {
+        value 3;
+        description "Medium priority alert";
+      }
+      enum LOW {
+        value 4;
+        description "Low priority alert";
+      }
+      enum INFORMATIONAL {
+        value 5;
+        description "Informational notification";
+      }
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS - Base Information
+   ***************************************************************************/
+  
+  grouping usage-base-info {
+    description 
+      "Base information for usage records and measurements.";
+    
+    leaf measurement-period-start {
+      type yang:date-and-time;
+      mandatory true;
+      description "Start of measurement period";
+    }
+    
+    leaf measurement-period-end {
+      type yang:date-and-time;
+      mandatory true;
+      description "End of measurement period";
+    }
+    
+    leaf measurement-interval-seconds {
+      type duration-seconds;
+      description "Duration of measurement interval in seconds";
+    }
+    
+    leaf collection-timestamp {
+      type yang:date-and-time;
+      description "When the data was collected from source system";
+    }
+    
+    leaf data-quality {
+      type quality-indicator;
+      description "Quality indicator for the measurement data";
+    }
+  }
+  
+  grouping cost-allocation-info {
+    description 
+      "Cost allocation and chargeback information for resources.";
+    
+    leaf cost-center {
+      type cost-center-id-type;
+      description "Cost center code for chargeback";
+    }
+    
+    leaf department {
+      type string {
+        length "1..128";
+      }
+      description "Department responsible for cost";
+    }
+    
+    leaf project-code {
+      type string {
+        length "1..64";
+      }
+      description "Project code for allocation";
+    }
+    
+    leaf business-unit {
+      type string {
+        length "1..128";
+      }
+      description "Business unit for cost allocation";
+    }
+    
+    leaf organization {
+      type string {
+        length "1..128";
+      }
+      description "Organization/division";
+    }
+    
+    leaf region {
+      type string {
+        length "1..64";
+      }
+      description "Geographic region";
+    }
+    
+    leaf environment {
+      type enumeration {
+        enum PRODUCTION;
+        enum STAGING;
+        enum DEVELOPMENT;
+        enum TEST;
+        enum SANDBOX;
+      }
+      description "Environment classification";
+    }
+  }
+  
+  grouping financial-amount {
+    description 
+      "Financial amount with currency specification.";
+    
+    leaf amount {
+      type monetary-amount;
+      description "Monetary amount value";
+    }
+    
+    leaf currency {
+      type currency-type;
+      default USD;
+      description "ISO 4217 currency code";
+    }
+    
+    leaf exchange-rate {
+      type decimal64 {
+        fraction-digits 6;
+      }
+      description "Exchange rate if converted from another currency";
+    }
+    
+    leaf original-currency {
+      type currency-type;
+      description "Original currency before conversion";
+    }
+    
+    leaf original-amount {
+      type monetary-amount;
+      description "Original amount before currency conversion";
+    }
+  }
+  
+  grouping vendor-source-info {
+    description 
+      "Vendor source information for accounting data.";
+    
+    leaf source-vendor {
+      type vendor-accounting-type;
+      mandatory true;
+      description "Source vendor system";
+    }
+    
+    leaf source-system-id {
+      type string {
+        length "1..64";
+      }
+      description "Identifier of source system instance";
+    }
+    
+    leaf source-collection-method {
+      type data-collection-method;
+      description "How usage data was collected";
+    }
+    
+    leaf source-record-id {
+      type string {
+        length "1..128";
+      }
+      description "Original record ID in source system";
+    }
+    
+    leaf source-timestamp {
+      type yang:date-and-time;
+      description "Timestamp from source system";
+    }
+    
+    leaf collection-latency-ms {
+      type uint32;
+      description "Latency in milliseconds from source to collection";
+    }
+  }
+  
+  grouping audit-trail-entry {
+    description 
+      "Audit trail entry for tracking changes.";
+    
+    leaf entry-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When the change occurred";
+    }
+    
+    leaf action-type {
+      type enumeration {
+        enum CREATE;
+        enum UPDATE;
+        enum DELETE;
+        enum APPROVE;
+        enum REJECT;
+        enum CANCEL;
+      }
+      mandatory true;
+      description "Type of action performed";
+    }
+    
+    leaf changed-by {
+      type string {
+        length "1..128";
+      }
+      mandatory true;
+      description "User or system that made the change";
+    }
+    
+    leaf previous-value {
+      type string;
+      description "Value before change";
+    }
+    
+    leaf new-value {
+      type string;
+      description "Value after change";
+    }
+    
+    leaf change-reason {
+      type string;
+      description "Reason for the change";
+    }
+    
+    leaf source-ip {
+      type inet:ip-address;
+      description "IP address of client initiating change";
+    }
+    
+    leaf session-id {
+      type string;
+      description "Session identifier for audit correlation";
+    }
+  }
+  
+  grouping threshold-configuration {
+    description 
+      "Threshold configuration for alerts and notifications.";
+    
+    leaf threshold-value {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      mandatory true;
+      description "Threshold value";
+    }
+    
+    leaf threshold-operator {
+      type threshold-operator-type;
+      default GREATER_OR_EQUAL;
+      description "Comparison operator";
+    }
+    
+    leaf notification-enabled {
+      type boolean;
+      default true;
+      description "Whether notifications are enabled";
+    }
+    
+    leaf notification-recipients {
+      type string;
+      description "Comma-separated list of notification recipients";
+    }
+    
+    leaf cooldown-period-minutes {
+      type uint16;
+      default 60;
+      description "Minimum time between repeated notifications";
+    }
+    
+    leaf auto-action {
+      type enumeration {
+        enum NONE;
+        enum NOTIFY_ONLY;
+        enum SCALE_UP;
+        enum THROTTLE;
+        enum BLOCK;
+      }
+      description "Automatic action to take when threshold exceeded";
+    }
+  }
+
+  /***************************************************************************
+   * CONTAINER DEFINITIONS - Accounting Management Root
+   ***************************************************************************/
+  
+  container accounting-management {
+    description 
+      "Root container for multi-vendor resource accounting and billing.
+       Contains usage tracking, billing records, cost allocation,
+       license management, and reporting capabilities.";
+    
+    leaf schema-version {
+      type string {
+        pattern "[0-9]+\\.[0-9]+\\.[0-9]+";
+      }
+      config false;
+      description "Accounting management schema version";
+    }
+    
+    leaf accounting-period {
+      type billing-period-type;
+      description "Current accounting period type";
+    }
+    
+    leaf last-collection-timestamp {
+      type yang:date-and-time;
+      config false;
+      description "Timestamp of last data collection";
+    }
+    
+    leaf total-usage-records {
+      type uint64;
+      config false;
+      description "Total number of usage records in system";
+    }
+    
+    leaf total-invoices-generated {
+      type uint64;
+      config false;
+      description "Total invoices generated since system start";
+    }
+
+    /*************************************************************************
+     * RESOURCE CONSUMPTION TRACKING
+     *************************************************************************/
+    
+    container resource-consumption-tracking {
+      if-feature resource-tracking;
+      description 
+        "Per-resource usage metrics and consumption tracking.
+         Aggregates usage data from vendor systems for billing and analytics.";
+      
+      leaf total-resources-tracked {
+        type uint32;
+        config false;
+        description "Number of resources currently being tracked";
+      }
+      
+      leaf last-aggregation-timestamp {
+        type yang:date-and-time;
+        config false;
+        description "When usage was last aggregated";
+      }
+      
+      list resource-usage-record {
+        key "usage-id";
+        config false;
+        description 
+          "Individual resource usage measurement record.
+           Each record represents usage over a defined time period.";
+        
+        leaf usage-id {
+          type accounting-id-type;
+          description "Usage record UUID";
+        }
+        
+        leaf resource-id {
+          type string {
+            length "1..256";
+          }
+          mandatory true;
+          description "CIM path of resource being measured";
+        }
+        
+        leaf resource-name {
+          type string {
+            length "1..256";
+          }
+          description "Human-readable resource name";
+        }
+        
+        leaf resource-type {
+          type resource-type-accounting;
+          mandatory true;
+          description "Classification of resource";
+        }
+        
+        uses usage-base-info;
+        
+        leaf quantity-consumed {
+          type decimal64 {
+            fraction-digits 6;
+          }
+          mandatory true;
+          description "Consumption quantity in specified units";
+        }
+        
+        leaf unit-of-measure {
+          type usage-measurement-unit;
+          mandatory true;
+          description "Unit of measurement";
+        }
+        
+        leaf peak-consumption {
+          type decimal64 {
+            fraction-digits 6;
+          }
+          description "Peak consumption during period";
+        }
+        
+        leaf average-consumption {
+          type decimal64 {
+            fraction-digits 6;
+          }
+          description "Average consumption over period";
+        }
+        
+        leaf minimum-consumption {
+          type decimal64 {
+            fraction-digits 6;
+          }
+          description "Minimum consumption during period";
+        }
+        
+        leaf allocated-capacity {
+          type decimal64 {
+            fraction-digits 6;
+          }
+          description "Total allocated capacity";
+        }
+        
+        leaf utilization-percent {
+          type utilization-percentage;
+          description "Utilization percentage";
+        }
+        
+        uses vendor-source-info;
+        
+        uses cost-allocation-info;
+        
+        leaf billing-applicable {
+          type boolean;
+          default true;
+          description "Whether this usage is billable";
+        }
+        
+        leaf rate-card-id {
+          type rate-card-id-type;
+          description "Pricing rate card applied";
+        }
+        
+        container calculated-cost {
+          description "Calculated cost for this usage";
+          uses financial-amount;
+        }
+        
+        container quality-metrics {
+          description "Data quality indicators for this record";
+          
+          leaf data-completeness-percent {
+            type utilization-percentage;
+            description "Percentage of data points available";
+          }
+          
+          leaf estimated-vs-measured {
+            type quality-indicator;
+            description "Whether data is measured or estimated";
+          }
+          
+          leaf confidence-score {
+            type confidence-score;
+            description "Confidence in accuracy";
+          }
+          
+          leaf missing-data-intervals {
+            type uint16;
+            description "Number of missing data intervals";
+          }
+          
+          leaf correction-applied {
+            type boolean;
+            description "Whether data corrections were applied";
+          }
+        }
+        
+        list tag {
+          key "name";
+          description "Resource tags for categorization";
+          
+          leaf name {
+            type string {
+              length "1..64";
+            }
+            description "Tag name";
+          }
+          
+          leaf value {
+            type string {
+              length "1..256";
+            }
+            description "Tag value";
+          }
+        }
+      }
+      
+      container usage-summaries {
+        description "Aggregated usage summaries by resource type";
+        
+        list summary-by-type {
+          key "resource-type period-start";
+          
+          leaf resource-type {
+            type resource-type-accounting;
+            description "Resource type being summarized";
+          }
+          
+          leaf period-start {
+            type yang:date-and-time;
+            description "Summary period start";
+          }
+          
+          leaf period-end {
+            type yang:date-and-time;
+            description "Summary period end";
+          }
+          
+          leaf total-consumption {
+            type decimal64 {
+              fraction-digits 6;
+            }
+            description "Total consumption in period";
+          }
+          
+          leaf unit-of-measure {
+            type usage-measurement-unit;
+            description "Unit of measurement";
+          }
+          
+          leaf resource-count {
+            type uint32;
+            description "Number of resources in summary";
+          }
+          
+          leaf record-count {
+            type uint32;
+            description "Number of usage records summarized";
+          }
+          
+          container total-cost {
+            description "Total cost for this summary";
+            uses financial-amount;
+          }
+          
+          leaf average-utilization {
+            type utilization-percentage;
+            description "Average utilization across resources";
+          }
+          
+          leaf peak-utilization {
+            type utilization-percentage;
+            description "Peak utilization recorded";
+          }
+        }
+        
+        list summary-by-cost-center {
+          key "cost-center period-start";
+          
+          leaf cost-center {
+            type cost-center-id-type;
+            description "Cost center being summarized";
+          }
+          
+          leaf period-start {
+            type yang:date-and-time;
+            description "Summary period start";
+          }
+          
+          leaf period-end {
+            type yang:date-and-time;
+            description "Summary period end";
+          }
+          
+          leaf total-usage-records {
+            type uint32;
+            description "Total usage records";
+          }
+          
+          container total-cost {
+            description "Total cost for cost center";
+            uses financial-amount;
+          }
+          
+          list breakdown-by-type {
+            key "resource-type";
+            
+            leaf resource-type {
+              type resource-type-accounting;
+            }
+            
+            leaf quantity {
+              type decimal64 {
+                fraction-digits 6;
+              }
+            }
+            
+            container cost {
+              uses financial-amount;
+            }
+          }
+        }
+      }
+      
+      container collection-jobs {
+        description "Data collection job configuration and status";
+        
+        list collection-job {
+          key "job-id";
+          
+          leaf job-id {
+            type string {
+              length "1..64";
+            }
+            description "Collection job identifier";
+          }
+          
+          leaf job-name {
+            type string {
+              length "1..128";
+            }
+            description "Human-readable job name";
+          }
+          
+          leaf enabled {
+            type boolean;
+            default true;
+            description "Whether job is active";
+          }
+          
+          leaf collection-interval {
+            type uint16;
+            units "minutes";
+            description "Collection interval in minutes";
+          }
+          
+          leaf source-vendor {
+            type vendor-accounting-type;
+            description "Target vendor system";
+          }
+          
+          leaf collection-method {
+            type data-collection-method;
+            description "Collection method to use";
+          }
+          
+          leaf resource-filter {
+            type string;
+            description "Filter for resource selection";
+          }
+          
+          leaf last-execution-timestamp {
+            type yang:date-and-time;
+            config false;
+            description "When job last executed";
+          }
+          
+          leaf last-execution-status {
+            type enumeration {
+              enum SUCCESS;
+              enum PARTIAL_SUCCESS;
+              enum FAILURE;
+              enum TIMEOUT;
+            }
+            config false;
+            description "Status of last execution";
+          }
+          
+          leaf records-collected {
+            type uint32;
+            config false;
+            description "Records collected in last execution";
+          }
+          
+          leaf last-error-message {
+            type string;
+            config false;
+            description "Error message if last execution failed";
+          }
+          
+          leaf next-scheduled-execution {
+            type yang:date-and-time;
+            config false;
+            description "Next scheduled execution time";
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * LICENSE MANAGEMENT
+     *************************************************************************/
+    
+    container license-management {
+      if-feature license-management;
+      description 
+        "Software license tracking and utilization.
+         Manages license inventory, compliance monitoring, and optimization.";
+      
+      leaf total-licenses {
+        type uint32;
+        config false;
+        description "Total number of licenses tracked";
+      }
+      
+      leaf compliance-status {
+        type compliance-status-type;
+        config false;
+        description "Overall license compliance status";
+      }
+      
+      leaf licenses-near-expiry {
+        type uint32;
+        config false;
+        description "Number of licenses expiring within 90 days";
+      }
+      
+      leaf licenses-over-utilized {
+        type uint32;
+        config false;
+        description "Number of over-utilized licenses";
+      }
+      
+      list license {
+        key "license-id";
+        description "Software license record";
+        
+        leaf license-id {
+          type license-id-type;
+          description "License identifier";
+        }
+        
+        leaf license-name {
+          type string {
+            length "1..256";
+          }
+          mandatory true;
+          description "License display name";
+        }
+        
+        leaf license-description {
+          type string;
+          description "Detailed license description";
+        }
+        
+        leaf vendor {
+          type vendor-accounting-type;
+          mandatory true;
+          description "License vendor";
+        }
+        
+        leaf license-type {
+          type license-type-enum;
+          description "Type of license model";
+        }
+        
+        leaf product-name {
+          type string {
+            length "1..256";
+          }
+          description "Product covered by license";
+        }
+        
+        leaf product-version {
+          type string {
+            length "1..64";
+          }
+          description "Product version";
+        }
+        
+        leaf feature-name {
+          type string;
+          description "Specific feature licensed";
+        }
+        
+        leaf total-capacity {
+          type uint32;
+          description "Total license capacity (units based on license type)";
+        }
+        
+        leaf used-capacity {
+          type uint32;
+          description "Currently used capacity";
+        }
+        
+        leaf available-capacity {
+          type uint32;
+          description "Available license capacity";
+        }
+        
+        leaf reserved-capacity {
+          type uint32;
+          description "Reserved but unused capacity";
+        }
+        
+        leaf utilization-percent {
+          type utilization-percentage;
+          description "License utilization percentage";
+        }
+        
+        leaf purchase-date {
+          type yang:date-and-time;
+          description "When license was purchased";
+        }
+        
+        leaf effective-date {
+          type yang:date-and-time;
+          description "When license became effective";
+        }
+        
+        leaf expiry-date {
+          type yang:date-and-time;
+          description "License expiration date";
+        }
+        
+        leaf renewal-date {
+          type yang:date-and-time;
+          description "Scheduled renewal date";
+        }
+        
+        leaf auto-renew {
+          type boolean;
+          default false;
+          description "Whether license auto-renews";
+        }
+        
+        container annual-cost {
+          description "Annual license cost";
+          uses financial-amount;
+        }
+        
+        container one-time-cost {
+          description "One-time purchase cost";
+          uses financial-amount;
+        }
+        
+        leaf contract-number {
+          type string {
+            length "1..64";
+          }
+          description "Associated contract number";
+        }
+        
+        leaf contract-start-date {
+          type yang:date-and-time;
+          description "Contract start date";
+        }
+        
+        leaf contract-end-date {
+          type yang:date-and-time;
+          description "Contract end date";
+        }
+        
+        leaf purchase-order-number {
+          type string;
+          description "Purchase order reference";
+        }
+        
+        leaf vendor-support-level {
+          type enumeration {
+            enum BASIC;
+            enum STANDARD;
+            enum PREMIUM;
+            enum ENTERPRISE;
+          }
+          description "Vendor support level";
+        }
+        
+        leaf support-expiry-date {
+          type yang:date-and-time;
+          description "Support contract expiry date";
+        }
+        
+        leaf-list assigned-resources {
+          type string {
+            length "1..256";
+          }
+          description "Resources using this license";
+        }
+        
+        leaf-list authorized-users {
+          type string {
+            length "1..128";
+          }
+          description "Authorized users for this license";
+        }
+        
+        container compliance-status {
+          description "License compliance tracking";
+          
+          leaf is-compliant {
+            type boolean;
+            description "Whether usage is within license";
+          }
+          
+          leaf compliance-status {
+            type compliance-status-type;
+            description "Detailed compliance status";
+          }
+          
+          leaf overage-quantity {
+            type uint32;
+            description "Amount over license capacity";
+          }
+          
+          container overage-cost {
+            description "Cost of license overage";
+            uses financial-amount;
+          }
+          
+          leaf last-compliance-check {
+            type yang:date-and-time;
+            description "When compliance was last checked";
+          }
+          
+          uses threshold-configuration {
+            refine threshold-value {
+              description "Utilization threshold for alerts (percentage)";
+            }
+          }
+          
+          leaf alert-sent {
+            type boolean;
+            description "Whether threshold alert was sent";
+          }
+          
+          leaf last-alert-timestamp {
+            type yang:date-and-time;
+            description "When last alert was sent";
+          }
+        }
+        
+        container usage-history {
+          description "License usage history";
+          config false;
+          
+          list daily-usage {
+            key "date";
+            
+            leaf date {
+              type yang:date-and-time;
+              description "Usage date";
+            }
+            
+            leaf peak-usage {
+              type uint32;
+              description "Peak usage for day";
+            }
+            
+            leaf average-usage {
+              type decimal64 {
+                fraction-digits 2;
+              }
+              description "Average usage for day";
+            }
+          }
+        }
+        
+        list audit-entry {
+          key "entry-timestamp";
+          config false;
+          description "Audit trail for license changes";
+          uses audit-trail-entry;
+        }
+      }
+      
+      container license-pools {
+        description "License pool management for shared licenses";
+        
+        list license-pool {
+          key "pool-id";
+          
+          leaf pool-id {
+            type string {
+              length "1..64";
+            }
+            description "License pool identifier";
+          }
+          
+          leaf pool-name {
+            type string {
+              length "1..128";
+            }
+            description "Pool display name";
+          }
+          
+          leaf license-id {
+            type license-id-type;
+            description "Associated license";
+          }
+          
+          leaf total-pool-capacity {
+            type uint32;
+            description "Total pool capacity";
+          }
+          
+          leaf used-pool-capacity {
+            type uint32;
+            description "Used pool capacity";
+          }
+          
+          list allocation {
+            key "cost-center";
+            
+            leaf cost-center {
+              type cost-center-id-type;
+              description "Cost center allocation";
+            }
+            
+            leaf allocated-capacity {
+              type uint32;
+              description "Allocated capacity";
+            }
+            
+            leaf used-capacity {
+              type uint32;
+              description "Used capacity from allocation";
+            }
+            
+            leaf allocation-percent {
+              type percentage-value;
+              description "Percentage of pool allocated";
+            }
+          }
+        }
+      }
+      
+      container license-optimization {
+        description "License optimization recommendations";
+        config false;
+        
+        list optimization-recommendation {
+          key "recommendation-id";
+          
+          leaf recommendation-id {
+            type string;
+            description "Recommendation identifier";
+          }
+          
+          leaf license-id {
+            type license-id-type;
+            description "Affected license";
+          }
+          
+          leaf recommendation-type {
+            type enumeration {
+              enum REDUCE_CAPACITY;
+              enum CONSOLIDATE;
+              enum UPGRADE;
+              enum DOWNGRADE;
+              enum CANCEL;
+              enum REALLOCATE;
+            }
+            description "Type of recommendation";
+          }
+          
+          leaf description {
+            type string;
+            description "Recommendation description";
+          }
+          
+          container potential-savings {
+            description "Potential cost savings";
+            uses financial-amount;
+          }
+          
+          leaf impact-level {
+            type enumeration {
+              enum LOW;
+              enum MEDIUM;
+              enum HIGH;
+            }
+            description "Implementation impact level";
+          }
+          
+          leaf created-timestamp {
+            type yang:date-and-time;
+            description "When recommendation was generated";
+          }
+          
+          leaf status {
+            type enumeration {
+              enum PENDING;
+              enum APPROVED;
+              enum REJECTED;
+              enum IMPLEMENTED;
+            }
+            description "Recommendation status";
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * BILLING RECORDS
+     *************************************************************************/
+    
+    container billing-records {
+      if-feature billing-integration;
+      description 
+        "Aggregated billing information and invoice management.
+         Generates billing data from usage records and manages invoice lifecycle.";
+      
+      leaf total-invoices {
+        type uint32;
+        config false;
+        description "Total invoices in system";
+      }
+      
+      leaf pending-invoices {
+        type uint32;
+        config false;
+        description "Pending invoice count";
+      }
+      
+      container total-outstanding {
+        description "Total outstanding balance";
+        config false;
+        uses financial-amount;
+      }
+      
+      container rate-cards {
+        description "Pricing rate card definitions";
+        
+        list rate-card {
+          key "rate-card-id";
+          
+          leaf rate-card-id {
+            type rate-card-id-type;
+            description "Rate card identifier";
+          }
+          
+          leaf rate-card-name {
+            type string {
+              length "1..128";
+            }
+            description "Rate card display name";
+          }
+          
+          leaf rate-card-description {
+            type string;
+            description "Rate card description";
+          }
+          
+          leaf rate-card-type {
+            type rate-card-type;
+            description "Rate card classification";
+          }
+          
+          leaf customer-id {
+            type string {
+              length "1..64";
+            }
+            description "Associated customer if applicable";
+          }
+          
+          leaf contract-id {
+            type string {
+              length "1..64";
+            }
+            description "Associated contract if applicable";
+          }
+          
+          leaf effective-start-date {
+            type yang:date-and-time;
+            description "When rates become effective";
+          }
+          
+          leaf effective-end-date {
+            type yang:date-and-time;
+            description "When rates expire";
+          }
+          
+          leaf billing-period {
+            type billing-period-type;
+            description "Associated billing period";
+          }
+          
+          container currency {
+            description "Default currency for rates";
+            uses financial-amount;
+          }
+          
+          leaf status {
+            type enumeration {
+              enum DRAFT;
+              enum ACTIVE;
+              enum INACTIVE;
+              enum EXPIRED;
+            }
+            description "Rate card status";
+          }
+          
+          list rate-entry {
+            key "resource-type tier-start";
+            
+            leaf resource-type {
+              type resource-type-accounting;
+              description "Resource type for rate";
+            }
+            
+            leaf tier-start {
+              type decimal64 {
+                fraction-digits 2;
+              }
+              description "Tier start quantity";
+            }
+            
+            leaf tier-end {
+              type decimal64 {
+                fraction-digits 2;
+              }
+              description "Tier end quantity (null = unlimited)";
+            }
+            
+            leaf unit-price {
+              type decimal64 {
+                fraction-digits 6;
+              }
+              description "Price per unit";
+            }
+            
+            leaf unit-of-measure {
+              type usage-measurement-unit;
+              description "Unit of measurement";
+            }
+            
+            leaf minimum-charge {
+              type monetary-amount;
+              description "Minimum charge per billing period";
+            }
+            
+            leaf description {
+              type string;
+              description "Rate description";
+            }
+          }
+          
+          list discount-rule {
+            key "rule-id";
+            
+            leaf rule-id {
+              type string;
+              description "Discount rule identifier";
+            }
+            
+            leaf rule-name {
+              type string;
+              description "Discount rule name";
+            }
+            
+            leaf discount-type {
+              type enumeration {
+                enum PERCENTAGE;
+                enum FIXED_AMOUNT;
+                enum TIERED;
+              }
+              description "Type of discount";
+            }
+            
+            leaf discount-value {
+              type decimal64 {
+                fraction-digits 2;
+              }
+              description "Discount value (percentage or amount)";
+            }
+            
+            leaf condition-type {
+              type enumeration {
+                enum VOLUME_THRESHOLD;
+                enum COMMITMENT_LEVEL;
+                enum PROMOTIONAL;
+                enum LOYALTY;
+              }
+              description "Condition for discount application";
+            }
+            
+            leaf condition-threshold {
+              type decimal64 {
+                fraction-digits 2;
+              }
+              description "Threshold for discount qualification";
+            }
+            
+            leaf valid-from {
+              type yang:date-and-time;
+              description "Discount validity start";
+            }
+            
+            leaf valid-to {
+              type yang:date-and-time;
+              description "Discount validity end";
+            }
+          }
+          
+          leaf created-timestamp {
+            type yang:date-and-time;
+            config false;
+            description "When rate card was created";
+          }
+          
+          leaf created-by {
+            type string {
+              length "1..128";
+            }
+            config false;
+            description "User who created rate card";
+          }
+          
+          leaf last-modified-timestamp {
+            type yang:date-and-time;
+            config false;
+            description "When rate card was last modified";
+          }
+          
+          leaf last-modified-by {
+            type string {
+              length "1..128";
+            }
+            config false;
+            description "User who last modified rate card";
+          }
+        }
+      }
+      
+      list invoice {
+        key "invoice-id";
+        description 
+          "Billing invoice containing line items for a billing period.
+           Generated from aggregated usage records.";
+        
+        leaf invoice-id {
+          type accounting-id-type;
+          description "Invoice UUID identifier";
+        }
+        
+        leaf invoice-number {
+          type invoice-number-type;
+          description "Human-readable invoice number";
+        }
+        
+        leaf invoice-type {
+          type enumeration {
+            enum STANDARD;
+            enum CREDIT_NOTE;
+            enum DEBIT_NOTE;
+            enum PRO_FORMA;
+            enum CORRECTION;
+          }
+          description "Type of invoice";
+        }
+        
+        leaf billing-period-start {
+          type yang:date-and-time;
+          mandatory true;
+          description "Start of billing period";
+        }
+        
+        leaf billing-period-end {
+          type yang:date-and-time;
+          mandatory true;
+          description "End of billing period";
+        }
+        
+        leaf issue-date {
+          type yang:date-and-time;
+          description "Date invoice was issued";
+        }
+        
+        leaf due-date {
+          type yang:date-and-time;
+          description "Payment due date";
+        }
+        
+        leaf customer-id {
+          type string {
+            length "1..64";
+          }
+          mandatory true;
+          description "Customer or tenant identifier";
+        }
+        
+        leaf customer-name {
+          type string {
+            length "1..256";
+          }
+          description "Customer display name";
+        }
+        
+        leaf customer-email {
+          type inet:email-address;
+          description "Customer email address";
+        }
+        
+        leaf billing-contact {
+          type string {
+            length "1..128";
+          }
+          description "Billing contact name";
+        }
+        
+        leaf billing-address {
+          type string;
+          description "Billing address";
+        }
+        
+        leaf tax-id {
+          type string {
+            length "1..32";
+          }
+          description "Customer tax identification number";
+        }
+        
+        container line-items {
+          description "Invoice line items";
+          
+          list line-item {
+            key "item-id";
+            
+            leaf item-id {
+              type string {
+                length "1..32";
+              }
+              description "Line item identifier";
+            }
+            
+            leaf description {
+              type string {
+                length "1..256";
+              }
+              mandatory true;
+              description "Line item description";
+            }
+            
+            leaf resource-type {
+              type resource-type-accounting;
+              description "Resource type for this item";
+            }
+            
+            leaf resource-id {
+              type string;
+              description "Specific resource identifier";
+            }
+            
+            leaf quantity {
+              type decimal64 {
+                fraction-digits 4;
+              }
+              mandatory true;
+              description "Quantity consumed";
+            }
+            
+            leaf unit-of-measure {
+              type usage-measurement-unit;
+              description "Unit of measurement";
+            }
+            
+            leaf unit-price {
+              type decimal64 {
+                fraction-digits 6;
+              }
+              mandatory true;
+              description "Price per unit";
+            }
+            
+            leaf line-total {
+              type monetary-amount;
+              mandatory true;
+              description "Total for this line item";
+            }
+            
+            leaf cost-center {
+              type cost-center-id-type;
+              description "Cost center allocation";
+            }
+            
+            leaf project-code {
+              type string;
+              description "Project code";
+            }
+            
+            leaf source-vendor {
+              type vendor-accounting-type;
+              description "Source vendor for charges";
+            }
+            
+            leaf usage-start-date {
+              type yang:date-and-time;
+              description "Start of usage period for this line";
+            }
+            
+            leaf usage-end-date {
+              type yang:date-and-time;
+              description "End of usage period for this line";
+            }
+            
+            leaf discount-percent {
+              type discount-percentage;
+              description "Discount applied to line item";
+            }
+            
+            leaf discount-amount {
+              type monetary-amount;
+              description "Discount amount applied";
+            }
+            
+            leaf taxable {
+              type boolean;
+              default true;
+              description "Whether line item is taxable";
+            }
+            
+            leaf tax-rate {
+              type tax-rate;
+              description "Tax rate applied";
+            }
+            
+            leaf tax-amount {
+              type monetary-amount;
+              description "Tax amount for line item";
+            }
+          }
+        }
+        
+        leaf subtotal {
+          type monetary-amount;
+          mandatory true;
+          description "Sum of line items before adjustments";
+        }
+        
+        container adjustments {
+          description "Invoice adjustments";
+          
+          list adjustment {
+            key "adjustment-id";
+            
+            leaf adjustment-id {
+              type string {
+                length "1..32";
+              }
+              description "Adjustment identifier";
+            }
+            
+            leaf adjustment-type {
+              type enumeration {
+                enum DISCOUNT;
+                enum CREDIT;
+                enum SURCHARGE;
+                enum TAX;
+                enum ROUNDING;
+                enum PENALTY;
+                enum CREDIT_MEMO;
+              }
+              description "Type of adjustment";
+            }
+            
+            leaf description {
+              type string;
+              description "Adjustment description";
+            }
+            
+            leaf amount {
+              type monetary-amount;
+              description "Adjustment amount";
+            }
+            
+            leaf reference {
+              type string;
+              description "Reference number or code";
+            }
+            
+            leaf created-by {
+              type string;
+              description "User who created adjustment";
+            }
+            
+            leaf created-timestamp {
+              type yang:date-and-time;
+              description "When adjustment was created";
+            }
+          }
+        }
+        
+        container total-discounts {
+          description "Total discounts applied";
+          uses financial-amount;
+        }
+        
+        container tax-summary {
+          description "Tax summary by jurisdiction";
+          
+          list tax-entry {
+            key "jurisdiction";
+            
+            leaf jurisdiction {
+              type string;
+              description "Tax jurisdiction";
+            }
+            
+            leaf tax-type {
+              type string;
+              description "Type of tax (VAT, GST, Sales)";
+            }
+            
+            leaf tax-rate {
+              type tax-rate;
+              description "Tax rate applied";
+            }
+            
+            leaf taxable-amount {
+              type monetary-amount;
+              description "Taxable base amount";
+            }
+            
+            leaf tax-amount {
+              type monetary-amount;
+              description "Tax amount";
+            }
+          }
+        }
+        
+        leaf total-tax-amount {
+          type monetary-amount;
+          description "Total tax amount";
+        }
+        
+        leaf total-amount-due {
+          type monetary-amount;
+          mandatory true;
+          description "Final amount due";
+        }
+        
+        leaf currency {
+          type currency-type;
+          default USD;
+          description "Invoice currency";
+        }
+        
+        leaf payment-status {
+          type invoice-status-type;
+          mandatory true;
+          description "Current payment status";
+        }
+        
+        container amount-paid {
+          description "Amount already paid";
+          uses financial-amount;
+        }
+        
+        container amount-outstanding {
+          description "Remaining balance";
+          uses financial-amount;
+        }
+        
+        list payment-record {
+          key "payment-id";
+          config false;
+          description "Payment records for this invoice";
+          
+          leaf payment-id {
+            type string;
+            description "Payment transaction ID";
+          }
+          
+          container payment-amount {
+            uses financial-amount;
+          }
+          
+          leaf payment-method {
+            type payment-method-type;
+            description "Payment method used";
+          }
+          
+          leaf payment-timestamp {
+            type yang:date-and-time;
+            description "When payment was received";
+          }
+          
+          leaf payment-reference {
+            type string;
+            description "Payment transaction reference";
+          }
+          
+          leaf processor {
+            type string;
+            description "Payment processor used";
+          }
+          
+          leaf status {
+            type enumeration {
+              enum PENDING;
+              enum COMPLETED;
+              enum FAILED;
+              enum REFUNDED;
+              enum REVERSED;
+            }
+            description "Payment status";
+          }
+        }
+        
+        container discounts {
+          description "Applied discounts summary";
+          
+          leaf early-payment-discount-percent {
+            type discount-percentage;
+            description "Early payment discount offered";
+          }
+          
+          leaf early-payment-deadline {
+            type yang:date-and-time;
+            description "Deadline for early payment discount";
+          }
+          
+          leaf loyalty-discount-percent {
+            type discount-percentage;
+            description "Loyalty discount percentage";
+          }
+          
+          leaf volume-discount-percent {
+            type discount-percentage;
+            description "Volume-based discount";
+          }
+          
+          leaf promotional-discount-percent {
+            type discount-percentage;
+            description "Promotional discount";
+          }
+        }
+        
+        leaf notes {
+          type string;
+          description "Additional invoice notes";
+        }
+        
+        leaf terms-conditions {
+          type string;
+          description "Invoice terms and conditions";
+        }
+        
+        leaf payment-terms {
+          type string;
+          description "Payment terms description";
+        }
+        
+        leaf generated-by {
+          type string;
+          config false;
+          description "System or user that generated invoice";
+        }
+        
+        leaf generation-timestamp {
+          type yang:date-and-time;
+          config false;
+          description "When invoice was generated";
+        }
+        
+        leaf sent-timestamp {
+          type yang:date-and-time;
+          config false;
+          description "When invoice was sent to customer";
+        }
+        
+        leaf pdf-url {
+          type inet:uri;
+          config false;
+          description "URL to download PDF invoice";
+        }
+        
+        list audit-entry {
+          key "entry-timestamp";
+          config false;
+          description "Invoice audit trail";
+          uses audit-trail-entry;
+        }
+      }
+      
+      container billing-configuration {
+        description "Global billing configuration";
+        
+        leaf default-currency {
+          type currency-type;
+          default USD;
+          description "Default billing currency";
+        }
+        
+        leaf default-payment-terms-days {
+          type uint8 {
+            range "1..90";
+          }
+          default 30;
+          description "Default payment terms in days";
+        }
+        
+        leaf auto-generate-invoices {
+          type boolean;
+          default true;
+          description "Automatically generate invoices";
+        }
+        
+        leaf invoice-generation-day {
+          type uint8 {
+            range "1..28";
+          }
+          default 1;
+          description "Day of month for invoice generation";
+        }
+        
+        leaf send-automated-reminders {
+          type boolean;
+          default true;
+          description "Send automated payment reminders";
+        }
+        
+        leaf reminder-days-before-due {
+          type uint8 {
+            range "1..14";
+          }
+          default 7;
+          description "Days before due date to send reminder";
+        }
+        
+        leaf late-payment-penalty-percent {
+          type decimal64 {
+            fraction-digits 2;
+            range "0.00..100.00";
+          }
+          description "Late payment penalty percentage";
+        }
+      }
+    }
+
+    /*************************************************************************
+     * COST ALLOCATION
+     *************************************************************************/
+    
+    container cost-allocation {
+      if-feature cost-allocation;
+      description 
+        "Cost center and chargeback configuration.
+         Defines how costs are distributed across organizations.";
+      
+      leaf total-cost-centers {
+        type uint32;
+        config false;
+        description "Total number of cost centers";
+      }
+      
+      leaf total-allocation-rules {
+        type uint32;
+        config false;
+        description "Total allocation rules configured";
+      }
+      
+      list cost-center {
+        key "cost-center-id";
+        description "Cost center definition";
+        
+        leaf cost-center-id {
+          type cost-center-id-type;
+          description "Cost center identifier";
+        }
+        
+        leaf cost-center-name {
+          type string {
+            length "1..256";
+          }
+          mandatory true;
+          description "Cost center display name";
+        }
+        
+        leaf cost-center-type {
+          type cost-center-type;
+          description "Cost center classification";
+        }
+        
+        leaf description {
+          type string;
+          description "Cost center description";
+        }
+        
+        leaf department {
+          type string {
+            length "1..128";
+          }
+          description "Associated department";
+        }
+        
+        leaf business-unit {
+          type string {
+            length "1..128";
+          }
+          description "Business unit";
+        }
+        
+        leaf division {
+          type string {
+            length "1..128";
+          }
+          description "Division";
+        }
+        
+        leaf region {
+          type string {
+            length "1..64";
+          }
+          description "Geographic region";
+        }
+        
+        leaf manager {
+          type string {
+            length "1..128";
+          }
+          description "Cost center manager";
+        }
+        
+        leaf manager-email {
+          type inet:email-address;
+          description "Manager email for notifications";
+        }
+        
+        leaf parent-cost-center {
+          type cost-center-id-type;
+          description "Parent cost center for hierarchy";
+        }
+        
+        container allocated-budget {
+          description "Allocated budget amount";
+          uses financial-amount;
+        }
+        
+        leaf budget-period {
+          type billing-period-type;
+          description "Budget period";
+        }
+        
+        leaf budget-start-date {
+          type yang:date-and-time;
+          description "Budget period start date";
+        }
+        
+        leaf budget-end-date {
+          type yang:date-and-time;
+          description "Budget period end date";
+        }
+        
+        container spent-amount {
+          description "Amount spent in current period";
+          uses financial-amount;
+        }
+        
+        container committed-amount {
+          description "Committed but not yet spent";
+          uses financial-amount;
+        }
+        
+        container remaining-budget {
+          description "Remaining budget";
+          uses financial-amount;
+        }
+        
+        leaf budget-utilization-percent {
+          type utilization-percentage;
+          description "Budget utilization percentage";
+        }
+        
+        uses threshold-configuration {
+          refine threshold-value {
+            description "Budget utilization threshold for alerts";
+          }
+        }
+        
+        leaf alert-enabled {
+          type boolean;
+          default true;
+          description "Enable budget alerts";
+        }
+        
+        leaf status {
+          type enumeration {
+            enum ACTIVE;
+            enum INACTIVE;
+            enum SUSPENDED;
+            enum ARCHIVED;
+          }
+          description "Cost center status";
+        }
+        
+        leaf created-timestamp {
+          type yang:date-and-time;
+          config false;
+          description "When cost center was created";
+        }
+        
+        list tag {
+          key "name";
+          description "Cost center tags";
+          
+          leaf name {
+            type string {
+              length "1..64";
+            }
+          }
+          
+          leaf value {
+            type string {
+              length "1..256";
+            }
+          }
+        }
+        
+        list audit-entry {
+          key "entry-timestamp";
+          config false;
+          description "Cost center audit trail";
+          uses audit-trail-entry;
+        }
+      }
+      
+      container allocation-rules {
+        description "Rules for cost allocation";
+        
+        list allocation-rule {
+          key "rule-id";
+          
+          leaf rule-id {
+            type string {
+              length "1..64";
+            }
+            description "Rule identifier";
+          }
+          
+          leaf rule-name {
+            type string {
+              length "1..128";
+            }
+            description "Rule display name";
+          }
+          
+          leaf rule-description {
+            type string;
+            description "Rule description";
+          }
+          
+          leaf rule-priority {
+            type uint16 {
+              range "1..1000";
+            }
+            description "Rule evaluation priority (lower = higher priority)";
+          }
+          
+          leaf resource-pattern {
+            type string;
+            description "Resource pattern to match (glob or regex)";
+          }
+          
+          leaf resource-type-filter {
+            type resource-type-accounting;
+            description "Filter by resource type";
+          }
+          
+          leaf vendor-filter {
+            type vendor-accounting-type;
+            description "Filter by vendor";
+          }
+          
+          leaf allocation-method {
+            type allocation-method-type;
+            mandatory true;
+            description "Allocation method";
+          }
+          
+          list allocation-target {
+            key "cost-center";
+            description "Target cost centers for allocation";
+            
+            leaf cost-center {
+              type cost-center-id-type;
+              description "Target cost center";
+            }
+            
+            leaf allocation-percent {
+              type percentage-value;
+              mandatory true;
+              description "Percentage of cost to allocate";
+            }
+            
+            leaf allocation-amount {
+              type monetary-amount;
+              description "Fixed amount to allocate (for FIXED_AMOUNT method)";
+            }
+          }
+          
+          leaf effective-start-date {
+            type yang:date-and-time;
+            description "When rule becomes effective";
+          }
+          
+          leaf effective-end-date {
+            type yang:date-and-time;
+            description "When rule expires";
+          }
+          
+          leaf enabled {
+            type boolean;
+            default true;
+            description "Whether rule is active";
+          }
+          
+          leaf created-timestamp {
+            type yang:date-and-time;
+            config false;
+            description "When rule was created";
+          }
+          
+          leaf last-applied-timestamp {
+            type yang:date-and-time;
+            config false;
+            description "When rule was last applied";
+          }
+          
+          leaf application-count {
+            type uint32;
+            config false;
+            description "Number of times rule has been applied";
+          }
+        }
+      }
+      
+      container chargeback-history {
+        description "Historical chargeback records";
+        config false;
+        
+        list chargeback-record {
+          key "chargeback-id";
+          
+          leaf chargeback-id {
+            type accounting-id-type;
+            description "Chargeback record identifier";
+          }
+          
+          leaf cost-center {
+            type cost-center-id-type;
+            description "Cost center charged";
+          }
+          
+          container chargeback-amount {
+            description "Amount charged back";
+            uses financial-amount;
+          }
+          
+          leaf period-start {
+            type yang:date-and-time;
+            description "Chargeback period start";
+          }
+          
+          leaf period-end {
+            type yang:date-and-time;
+            description "Chargeback period end";
+          }
+          
+          leaf invoice-id {
+            type accounting-id-type;
+            description "Associated invoice";
+          }
+          
+          leaf status {
+            type enumeration {
+              enum PENDING;
+              enum PROCESSED;
+              enum DISPUTED;
+              enum ADJUSTED;
+            }
+            description "Chargeback status";
+          }
+          
+          list resource-breakdown {
+            key "resource-type";
+            
+            leaf resource-type {
+              type resource-type-accounting;
+            }
+            
+            container amount {
+              uses financial-amount;
+            }
+            
+            leaf quantity {
+              type decimal64 {
+                fraction-digits 4;
+              }
+            }
+          }
+          
+          leaf created-timestamp {
+            type yang:date-and-time;
+            description "When chargeback was created";
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * RATE CARDS (Top-level)
+     *************************************************************************/
+    
+    container rate-cards {
+      description 
+        "Top-level rate card management container.
+         Provides quick access to rate card operations.";
+      
+      leaf total-rate-cards {
+        type uint32;
+        config false;
+        description "Total number of rate cards";
+      }
+      
+      leaf active-rate-cards {
+        type uint32;
+        config false;
+        description "Number of active rate cards";
+      }
+    }
+
+    /*************************************************************************
+     * USAGE SUMMARIES (Top-level)
+     *************************************************************************/
+    
+    container usage-summaries {
+      if-feature usage-analytics;
+      description 
+        "Aggregated usage summaries and analytics.
+         Provides historical analysis and trend detection.";
+      
+      leaf last-summary-timestamp {
+        type yang:date-and-time;
+        config false;
+        description "When summaries were last updated";
+      }
+      
+      container daily-summaries {
+        description "Daily usage aggregations";
+        
+        list daily-summary {
+          key "summary-date";
+          
+          leaf summary-date {
+            type yang:date-and-time;
+            description "Summary date";
+          }
+          
+          leaf total-usage-records {
+            type uint32;
+            description "Total usage records for day";
+          }
+          
+          container total-cost {
+            description "Total cost for day";
+            uses financial-amount;
+          }
+          
+          list by-resource-type {
+            key "resource-type";
+            
+            leaf resource-type {
+              type resource-type-accounting;
+            }
+            
+            leaf total-quantity {
+              type decimal64 {
+                fraction-digits 6;
+              }
+            }
+            
+            leaf unit-of-measure {
+              type usage-measurement-unit;
+            }
+            
+            container cost {
+              uses financial-amount;
+            }
+          }
+          
+          list by-vendor {
+            key "vendor";
+            
+            leaf vendor {
+              type vendor-accounting-type;
+            }
+            
+            leaf record-count {
+              type uint32;
+            }
+            
+            container cost {
+              uses financial-amount;
+            }
+          }
+          
+          list by-cost-center {
+            key "cost-center";
+            
+            leaf cost-center {
+              type cost-center-id-type;
+            }
+            
+            container cost {
+              uses financial-amount;
+            }
+          }
+        }
+      }
+      
+      container monthly-summaries {
+        description "Monthly usage aggregations";
+        
+        list monthly-summary {
+          key "year month";
+          
+          leaf year {
+            type uint16;
+            description "Year";
+          }
+          
+          leaf month {
+            type uint8 {
+              range "1..12";
+            }
+            description "Month";
+          }
+          
+          leaf total-usage-records {
+            type uint32;
+            description "Total usage records for month";
+          }
+          
+          container total-cost {
+            description "Total cost for month";
+            uses financial-amount;
+          }
+          
+          leaf average-daily-cost {
+            type monetary-amount;
+            description "Average daily cost";
+          }
+          
+          leaf peak-day-cost {
+            type monetary-amount;
+            description "Highest daily cost";
+          }
+          
+          leaf peak-day {
+            type uint8 {
+              range "1..31";
+            }
+            description "Day with highest cost";
+          }
+          
+          list by-resource-type {
+            key "resource-type";
+            
+            leaf resource-type {
+              type resource-type-accounting;
+            }
+            
+            leaf total-quantity {
+              type decimal64 {
+                fraction-digits 6;
+              }
+            }
+            
+            container cost {
+              uses financial-amount;
+            }
+            
+            leaf trend-vs-previous-month {
+              type decimal64 {
+                fraction-digits 2;
+              }
+              units "percent";
+              description "Percentage change from previous month";
+            }
+          }
+        }
+      }
+      
+      container usage-trends {
+        description "Usage trend analysis";
+        config false;
+        
+        list trend-analysis {
+          key "resource-type";
+          
+          leaf resource-type {
+            type resource-type-accounting;
+          }
+          
+          leaf trend-direction {
+            type enumeration {
+              enum INCREASING;
+              enum DECREASING;
+              enum STABLE;
+              enum VOLATILE;
+            }
+            description "Overall trend direction";
+          }
+          
+          leaf growth-rate-percent {
+            type decimal64 {
+              fraction-digits 2;
+            }
+            description "Month-over-month growth rate";
+          }
+          
+          container forecast-next-month {
+            description "Forecasted usage for next month";
+            uses financial-amount;
+          }
+          
+          leaf forecast-confidence {
+            type confidence-score;
+            description "Confidence in forecast";
+          }
+          
+          leaf anomaly-detected {
+            type boolean;
+            description "Whether usage anomaly was detected";
+          }
+          
+          leaf anomaly-description {
+            type string;
+            description "Description of detected anomaly";
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * BUDGET MANAGEMENT
+     *************************************************************************/
+    
+    container budget-management {
+      if-feature budget-tracking;
+      description 
+        "Budget definition, tracking, and variance analysis.
+         Supports budget allocation, monitoring, and alerting.";
+      
+      leaf total-budgets {
+        type uint32;
+        config false;
+        description "Total budgets defined";
+      }
+      
+      leaf active-budgets {
+        type uint32;
+        config false;
+        description "Currently active budgets";
+      }
+      
+      container total-allocated-budget {
+        description "Total allocated budget across all budgets";
+        config false;
+        uses financial-amount;
+      }
+      
+      container total-consumed-budget {
+        description "Total consumed budget";
+        config false;
+        uses financial-amount;
+      }
+      
+      list budget {
+        key "budget-id";
+        description "Budget definition and tracking";
+        
+        leaf budget-id {
+          type string {
+            length "1..64";
+          }
+          description "Budget identifier";
+        }
+        
+        leaf budget-name {
+          type string {
+            length "1..128";
+          }
+          mandatory true;
+          description "Budget display name";
+        }
+        
+        leaf budget-description {
+          type string;
+          description "Detailed budget description";
+        }
+        
+        leaf budget-type {
+          type enumeration {
+            enum OPERATIONAL;
+            enum CAPITAL;
+            enum PROJECT;
+            enum DEPARTMENT;
+            enum RESOURCE_TYPE;
+          }
+          description "Type of budget";
+        }
+        
+        leaf cost-center {
+          type cost-center-id-type;
+          description "Associated cost center";
+        }
+        
+        leaf department {
+          type string;
+          description "Associated department";
+        }
+        
+        leaf project-code {
+          type string;
+          description "Associated project";
+        }
+        
+        container budget-amount {
+          description "Total budget amount";
+          uses financial-amount;
+        }
+        
+        leaf budget-period {
+          type billing-period-type;
+          description "Budget period type";
+        }
+        
+        leaf period-start-date {
+          type yang:date-and-time;
+          description "Budget period start";
+        }
+        
+        leaf period-end-date {
+          type yang:date-and-time;
+          description "Budget period end";
+        }
+        
+        leaf auto-renew {
+          type boolean;
+          default false;
+          description "Auto-renew budget for next period";
+        }
+        
+        container consumed-amount {
+          description "Amount consumed to date";
+          uses financial-amount;
+        }
+        
+        container committed-amount {
+          description "Committed but not yet consumed";
+          uses financial-amount;
+        }
+        
+        container remaining-amount {
+          description "Remaining budget";
+          uses financial-amount;
+        }
+        
+        leaf consumption-percent {
+          type utilization-percentage;
+          description "Budget consumption percentage";
+        }
+        
+        leaf projected-consumption-percent {
+          type utilization-percentage;
+          description "Projected consumption at period end";
+        }
+        
+        leaf status {
+          type budget-status-type;
+          description "Budget status";
+        }
+        
+        container thresholds {
+          description "Budget threshold configuration";
+          
+          container warning-threshold {
+            description "Warning threshold configuration";
+            uses threshold-configuration;
+          }
+          
+          container critical-threshold {
+            description "Critical threshold configuration";
+            uses threshold-configuration;
+          }
+        }
+        
+        leaf alert-enabled {
+          type boolean;
+          default true;
+          description "Enable budget alerts";
+        }
+        
+        leaf-list alert-recipients {
+          type inet:email-address;
+          description "Alert notification recipients";
+        }
+        
+        container variance-analysis {
+          description "Budget variance analysis";
+          config false;
+          
+          container variance-amount {
+            description "Variance from planned budget";
+            uses financial-amount;
+          }
+          
+          leaf variance-percent {
+            type decimal64 {
+              fraction-digits 2;
+            }
+            description "Variance percentage";
+          }
+          
+          leaf variance-trend {
+            type enumeration {
+              enum FAVORABLE;
+              enum UNFAVORABLE;
+              enum ON_TRACK;
+            }
+            description "Variance trend assessment";
+          }
+          
+          list variance-by-category {
+            key "category";
+            
+            leaf category {
+              type string;
+              description "Variance category";
+            }
+            
+            container planned {
+              uses financial-amount;
+            }
+            
+            container actual {
+              uses financial-amount;
+            }
+            
+            container variance {
+              uses financial-amount;
+            }
+            
+            leaf explanation {
+              type string;
+              description "Explanation for variance";
+            }
+          }
+        }
+        
+        list budget-adjustment {
+          key "adjustment-id";
+          description "Budget adjustments history";
+          
+          leaf adjustment-id {
+            type string;
+            description "Adjustment identifier";
+          }
+          
+          leaf adjustment-type {
+            type enumeration {
+              enum INCREASE;
+              enum DECREASE;
+              enum REALLOCATION;
+              enum TRANSFER_IN;
+              enum TRANSFER_OUT;
+            }
+            description "Type of adjustment";
+          }
+          
+          container adjustment-amount {
+            description "Adjustment amount";
+            uses financial-amount;
+          }
+          
+          leaf reason {
+            type string;
+            description "Reason for adjustment";
+          }
+          
+          leaf approved-by {
+            type string;
+            description "Approver";
+          }
+          
+          leaf adjustment-timestamp {
+            type yang:date-and-time;
+            description "When adjustment was made";
+          }
+        }
+        
+        leaf created-timestamp {
+          type yang:date-and-time;
+          config false;
+          description "When budget was created";
+        }
+        
+        leaf created-by {
+          type string;
+          config false;
+          description "User who created budget";
+        }
+        
+        leaf last-modified-timestamp {
+          type yang:date-and-time;
+          config false;
+          description "When budget was last modified";
+        }
+        
+        list audit-entry {
+          key "entry-timestamp";
+          config false;
+          description "Budget audit trail";
+          uses audit-trail-entry;
+        }
+      }
+      
+      container budget-forecasts {
+        description "Budget forecasting and projections";
+        config false;
+        
+        list forecast {
+          key "budget-id forecast-date";
+          
+          leaf budget-id {
+            type string;
+            description "Associated budget";
+          }
+          
+          leaf forecast-date {
+            type yang:date-and-time;
+            description "Forecast generation date";
+          }
+          
+          container projected-consumption {
+            description "Projected consumption at period end";
+            uses financial-amount;
+          }
+          
+          container projected-remaining {
+            description "Projected remaining budget";
+            uses financial-amount;
+          }
+          
+          leaf projected-overrun {
+            type boolean;
+            description "Whether budget overrun is projected";
+          }
+          
+          container projected-overrun-amount {
+            description "Projected overrun amount if applicable";
+            uses financial-amount;
+          }
+          
+          leaf confidence-level {
+            type confidence-score;
+            description "Confidence in forecast";
+          }
+          
+          list scenario-analysis {
+            key "scenario";
+            
+            leaf scenario {
+              type enumeration {
+                enum OPTIMISTIC;
+                enum NOMINAL;
+                enum PESSIMISTIC;
+              }
+            }
+            
+            container projected-consumption {
+              uses financial-amount;
+            }
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * QUOTA MANAGEMENT
+     *************************************************************************/
+    
+    container quota-management {
+      if-feature quota-management;
+      description 
+        "Quota definition, enforcement, and tracking.
+         Supports hard limits, soft limits, and tiered quotas.";
+      
+      leaf total-quotas {
+        type uint32;
+        config false;
+        description "Total quotas defined";
+      }
+      
+      leaf active-quotas {
+        type uint32;
+        config false;
+        description "Currently active quotas";
+      }
+      
+      leaf exceeded-quotas {
+        type uint32;
+        config false;
+        description "Quotas currently exceeded";
+      }
+      
+      list quota {
+        key "quota-id";
+        description "Quota definition";
+        
+        leaf quota-id {
+          type string {
+            length "1..64";
+          }
+          description "Quota identifier";
+        }
+        
+        leaf quota-name {
+          type string {
+            length "1..128";
+          }
+          mandatory true;
+          description "Quota display name";
+        }
+        
+        leaf quota-description {
+          type string;
+          description "Detailed quota description";
+        }
+        
+        leaf quota-type {
+          type quota-type;
+          description "Type of quota limit";
+        }
+        
+        leaf resource-type {
+          type resource-type-accounting;
+          description "Resource type for quota";
+        }
+        
+        leaf cost-center {
+          type cost-center-id-type;
+          description "Associated cost center";
+        }
+        
+        leaf customer-id {
+          type string;
+          description "Customer/tenant for quota";
+        }
+        
+        leaf quota-limit {
+          type decimal64 {
+            fraction-digits 4;
+          }
+          mandatory true;
+          description "Quota limit value";
+        }
+        
+        leaf unit-of-measure {
+          type usage-measurement-unit;
+          description "Unit of measurement";
+        }
+        
+        leaf quota-period {
+          type billing-period-type;
+          description "Quota reset period";
+        }
+        
+        leaf period-start {
+          type yang:date-and-time;
+          description "Current period start";
+        }
+        
+        leaf period-end {
+          type yang:date-and-time;
+          description "Current period end";
+        }
+        
+        leaf current-usage {
+          type decimal64 {
+            fraction-digits 4;
+          }
+          description "Current usage against quota";
+        }
+        
+        leaf remaining-quota {
+          type decimal64 {
+            fraction-digits 4;
+          }
+          description "Remaining quota";
+        }
+        
+        leaf utilization-percent {
+          type utilization-percentage;
+          description "Quota utilization percentage";
+        }
+        
+        leaf status {
+          type enumeration {
+            enum ACTIVE;
+            enum EXCEEDED;
+            enum EXHAUSTED;
+            enum SUSPENDED;
+            enum EXPIRED;
+          }
+          description "Quota status";
+        }
+        
+        container enforcement-actions {
+          description "Actions to take when quota exceeded";
+          
+          leaf on-exceeded-action {
+            type enumeration {
+              enum BLOCK;
+              enum THROTTLE;
+              enum NOTIFY_ONLY;
+              enum WARN_CONTINUE;
+            }
+            description "Action when quota exceeded";
+          }
+          
+          leaf throttle-percent {
+            type percentage-value;
+            description "Throttle to this percentage when exceeded";
+          }
+          
+          leaf grace-period-minutes {
+            type uint16;
+            description "Grace period before enforcement";
+          }
+        }
+        
+        container thresholds {
+          description "Quota threshold alerts";
+          
+          list threshold {
+            key "threshold-percent";
+            
+            leaf threshold-percent {
+              type utilization-percentage;
+              description "Threshold percentage";
+            }
+            
+            leaf notify {
+              type boolean;
+              default true;
+              description "Send notification";
+            }
+            
+            leaf-list recipients {
+              type inet:email-address;
+              description "Notification recipients";
+            }
+          }
+        }
+        
+        leaf enabled {
+          type boolean;
+          default true;
+          description "Whether quota is active";
+        }
+        
+        leaf created-timestamp {
+          type yang:date-and-time;
+          config false;
+          description "When quota was created";
+        }
+        
+        leaf last-reset-timestamp {
+          type yang:date-and-time;
+          config false;
+          description "When quota was last reset";
+        }
+        
+        list usage-history {
+          key "period-start";
+          config false;
+          description "Historical quota usage";
+          
+          leaf period-start {
+            type yang:date-and-time;
+          }
+          
+          leaf period-end {
+            type yang:date-and-time;
+          }
+          
+          leaf usage-amount {
+            type decimal64 {
+              fraction-digits 4;
+            }
+          }
+          
+          leaf exceeded {
+            type boolean;
+          }
+          
+          leaf exceeded-timestamp {
+            type yang:date-and-time;
+          }
+        }
+      }
+      
+      container quota-exceptions {
+        description "Quota exception management";
+        
+        list exception {
+          key "exception-id";
+          
+          leaf exception-id {
+            type string;
+            description "Exception identifier";
+          }
+          
+          leaf quota-id {
+            type string;
+            description "Associated quota";
+          }
+          
+          leaf exception-type {
+            type enumeration {
+              enum TEMPORARY_INCREASE;
+              enum PERMANENT_INCREASE;
+              enum EXEMPTION;
+              enum BURST_ALLOWANCE;
+            }
+            description "Type of exception";
+          }
+          
+          container additional-quota {
+            description "Additional quota amount";
+            uses financial-amount;
+          }
+          
+          leaf effective-start {
+            type yang:date-and-time;
+            description "When exception becomes effective";
+          }
+          
+          leaf effective-end {
+            type yang:date-and-time;
+            description "When exception expires";
+          }
+          
+          leaf reason {
+            type string;
+            description "Reason for exception";
+          }
+          
+          leaf approved-by {
+            type string;
+            description "Approver";
+          }
+          
+          leaf status {
+            type enumeration {
+              enum PENDING;
+              enum APPROVED;
+              enum REJECTED;
+              enum EXPIRED;
+              enum CANCELLED;
+            }
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * ACCOUNTING REPORTS
+     *************************************************************************/
+    
+    container accounting-reports {
+      description 
+        "Accounting and billing reports container.
+         Contains generated reports and report templates.";
+      
+      leaf total-reports {
+        type uint32;
+        config false;
+        description "Total reports in system";
+      }
+      
+      container report-templates {
+        description "Report template definitions";
+        
+        list template {
+          key "template-id";
+          
+          leaf template-id {
+            type string {
+              length "1..64";
+            }
+            description "Template identifier";
+          }
+          
+          leaf template-name {
+            type string {
+              length "1..128";
+            }
+            description "Template display name";
+          }
+          
+          leaf template-description {
+            type string;
+            description "Template description";
+          }
+          
+          leaf report-type {
+            type enumeration {
+              enum USAGE_SUMMARY;
+              enum COST_ANALYSIS;
+              enum BILLING_RECONCILIATION;
+              enum LICENSE_UTILIZATION;
+              enum BUDGET_VARIANCE;
+              enum CHARGEBACK_REPORT;
+              enum TREND_ANALYSIS;
+              enum ANOMALY_REPORT;
+              enum CUSTOM;
+            }
+            description "Type of report";
+          }
+          
+          leaf default-format {
+            type export-format-type;
+            description "Default output format";
+          }
+          
+          leaf default-period {
+            type billing-period-type;
+            description "Default reporting period";
+          }
+          
+          list parameter {
+            key "parameter-name";
+            description "Report parameters";
+            
+            leaf parameter-name {
+              type string {
+                length "1..64";
+              }
+            }
+            
+            leaf parameter-type {
+              type enumeration {
+                enum DATE;
+                enum STRING;
+                enum NUMBER;
+                enum ENUMERATION;
+                enum BOOLEAN;
+                enum RESOURCE_TYPE;
+                enum COST_CENTER;
+                enum VENDOR;
+              }
+            }
+            
+            leaf mandatory {
+              type boolean;
+              default false;
+            }
+            
+            leaf default-value {
+              type string;
+            }
+            
+            leaf description {
+              type string;
+            }
+          }
+          
+          leaf schedule-enabled {
+            type boolean;
+            default false;
+            description "Enable scheduled generation";
+          }
+          
+          leaf schedule-frequency {
+            type billing-period-type;
+            description "Generation frequency";
+          }
+          
+          leaf-list recipients {
+            type inet:email-address;
+            description "Default report recipients";
+          }
+        }
+      }
+      
+      list report {
+        key "report-id";
+        config false;
+        description "Generated reports";
+        
+        leaf report-id {
+          type accounting-id-type;
+          description "Report identifier";
+        }
+        
+        leaf report-name {
+          type string {
+            length "1..256";
+          }
+          description "Report display name";
+        }
+        
+        leaf report-type {
+          type enumeration {
+            enum USAGE_SUMMARY;
+            enum COST_ANALYSIS;
+            enum BILLING_RECONCILIATION;
+            enum LICENSE_UTILIZATION;
+            enum BUDGET_VARIANCE;
+            enum CHARGEBACK_REPORT;
+            enum TREND_ANALYSIS;
+            enum ANOMALY_REPORT;
+            enum CUSTOM;
+          }
+          description "Type of report";
+        }
+        
+        leaf template-id {
+          type string;
+          description "Template used if applicable";
+        }
+        
+        leaf status {
+          type report-status-type;
+          description "Report generation status";
+        }
+        
+        leaf generation-timestamp {
+          type yang:date-and-time;
+          description "When report was generated";
+        }
+        
+        leaf generation-duration-ms {
+          type uint32;
+          description "Time taken to generate report";
+        }
+        
+        leaf report-period-start {
+          type yang:date-and-time;
+          description "Report period start";
+        }
+        
+        leaf report-period-end {
+          type yang:date-and-time;
+          description "Report period end";
+        }
+        
+        leaf generated-by {
+          type string {
+            length "1..128";
+          }
+          description "User or system that generated report";
+        }
+        
+        leaf report-format {
+          type export-format-type;
+          description "Output format";
+        }
+        
+        leaf file-size-bytes {
+          type uint64;
+          description "Report file size";
+        }
+        
+        leaf report-url {
+          type inet:uri;
+          description "URL to download report";
+        }
+        
+        leaf expiry-timestamp {
+          type yang:date-and-time;
+          description "When report file expires";
+        }
+        
+        leaf download-count {
+          type uint32;
+          description "Number of times downloaded";
+        }
+        
+        leaf last-download-timestamp {
+          type yang:date-and-time;
+          description "When report was last downloaded";
+        }
+        
+        container parameters-used {
+          description "Parameters used for generation";
+          
+          list parameter {
+            key "name";
+            
+            leaf name {
+              type string;
+            }
+            
+            leaf value {
+              type string;
+            }
+          }
+        }
+        
+        container summary-statistics {
+          description "Report summary statistics";
+          
+          leaf total-records {
+            type uint32;
+          }
+          
+          leaf total-resources {
+            type uint32;
+          }
+          
+          container total-cost {
+            uses financial-amount;
+          }
+          
+          leaf data-points {
+            type uint32;
+          }
+        }
+        
+        leaf error-message {
+          type string;
+          description "Error message if generation failed";
+        }
+      }
+      
+      container scheduled-reports {
+        description "Scheduled report generation";
+        
+        list scheduled-report {
+          key "schedule-id";
+          
+          leaf schedule-id {
+            type string {
+              length "1..64";
+            }
+            description "Schedule identifier";
+          }
+          
+          leaf schedule-name {
+            type string {
+              length "1..128";
+            }
+            description "Schedule display name";
+          }
+          
+          leaf template-id {
+            type string;
+            description "Report template to use";
+          }
+          
+          leaf enabled {
+            type boolean;
+            default true;
+            description "Whether schedule is active";
+          }
+          
+          leaf schedule-type {
+            type enumeration {
+              enum PERIODIC;
+              enum CALENDAR;
+              enum EVENT_TRIGGERED;
+            }
+            description "Type of schedule";
+          }
+          
+          leaf frequency {
+            type billing-period-type;
+            description "Generation frequency";
+          }
+          
+          leaf preferred-time {
+            type string {
+              pattern "[0-9]{2}:[0-9]{2}";
+            }
+            description "Preferred generation time (HH:MM)";
+          }
+          
+          leaf timezone {
+            type string;
+            default "UTC";
+            description "Schedule timezone";
+          }
+          
+          leaf-list recipients {
+            type inet:email-address;
+            description "Report recipients";
+          }
+          
+          leaf last-generation-timestamp {
+            type yang:date-and-time;
+            config false;
+            description "When last report was generated";
+          }
+          
+          leaf next-generation-timestamp {
+            type yang:date-and-time;
+            config false;
+            description "Next scheduled generation";
+          }
+          
+          leaf generation-count {
+            type uint32;
+            config false;
+            description "Number of reports generated";
+          }
+          
+          list parameter-override {
+            key "parameter-name";
+            description "Override template parameters";
+            
+            leaf parameter-name {
+              type string;
+            }
+            
+            leaf parameter-value {
+              type string;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /***************************************************************************
+   * RPC DEFINITIONS FOR ACCOUNTING MANAGEMENT
+   ***************************************************************************/
+  
+  rpc generate-usage-report {
+    if-feature resource-tracking;
+    description 
+      "Generate usage report for specified period and resources.
+       Creates a detailed or summary report of resource consumption.";
+    
+    input {
+      leaf report-name {
+        type string {
+          length "1..128";
+        }
+        description "Optional name for the report";
+      }
+      leaf report-type {
+        type enumeration {
+          enum USAGE_SUMMARY;
+          enum COST_ANALYSIS;
+          enum DETAILED_USAGE;
+          enum TREND_ANALYSIS;
+          enum COMPARISON_REPORT;
+        }
+        mandatory true;
+        description "Type of report to generate";
+      }
+      leaf start-time {
+        type yang:date-and-time;
+        mandatory true;
+        description "Report period start";
+      }
+      leaf end-time {
+        type yang:date-and-time;
+        mandatory true;
+        description "Report period end";
+      }
+      leaf resource-type-filter {
+        type resource-type-accounting;
+        description "Filter by resource type";
+      }
+      leaf cost-center-filter {
+        type cost-center-id-type;
+        description "Filter by cost center";
+      }
+      leaf vendor-filter {
+        type vendor-accounting-type;
+        description "Filter by vendor";
+      }
+      leaf customer-filter {
+        type string;
+        description "Filter by customer/tenant";
+      }
+      leaf output-format {
+        type export-format-type;
+        default PDF;
+        description "Output format for report";
+      }
+      leaf include-charts {
+        type boolean;
+        default true;
+        description "Include visualization charts";
+      }
+      leaf group-by {
+        type enumeration {
+          enum RESOURCE_TYPE;
+          enum COST_CENTER;
+          enum VENDOR;
+          enum CUSTOMER;
+          enum DAY;
+          enum WEEK;
+          enum MONTH;
+        }
+        description "Grouping dimension for report";
+      }
+      leaf-list recipients {
+        type inet:email-address;
+        description "Email recipients for report delivery";
+      }
+    }
+    
+    output {
+      leaf report-id {
+        type accounting-id-type;
+        description "Generated report ID";
+      }
+      leaf report-url {
+        type inet:uri;
+        description "URL to download report";
+      }
+      leaf estimated-completion-time {
+        type yang:date-and-time;
+        description "Estimated completion time for async generation";
+      }
+      leaf status {
+        type report-status-type;
+        description "Report generation status";
+      }
+    }
+  }
+  
+  rpc calculate-chargeback {
+    if-feature chargeback;
+    description 
+      "Calculate chargeback amounts for cost centers.
+       Distributes costs based on allocation rules and actual usage.";
+    
+    input {
+      leaf billing-period-start {
+        type yang:date-and-time;
+        mandatory true;
+        description "Start of chargeback period";
+      }
+      leaf billing-period-end {
+        type yang:date-and-time;
+        mandatory true;
+        description "End of chargeback period";
+      }
+      leaf cost-center-id {
+        type cost-center-id-type;
+        description "Specific cost center (optional, all if not specified)";
+      }
+      leaf apply-allocation-rules {
+        type boolean;
+        default true;
+        description "Apply configured allocation rules";
+      }
+      leaf generate-invoice {
+        type boolean;
+        default false;
+        description "Generate invoice for chargeback amounts";
+      }
+      leaf preview-only {
+        type boolean;
+        default false;
+        description "Preview without committing chargebacks";
+      }
+    }
+    
+    output {
+      leaf calculation-id {
+        type accounting-id-type;
+        description "Chargeback calculation ID";
+      }
+      list chargeback-result {
+        description "Chargeback results by cost center";
+        
+        leaf cost-center-id {
+          type cost-center-id-type;
+          description "Cost center identifier";
+        }
+        leaf cost-center-name {
+          type string;
+          description "Cost center name";
+        }
+        container total-charge {
+          description "Total chargeback amount";
+          uses financial-amount;
+        }
+        list breakdown-by-resource {
+          key "resource-type";
+          description "Breakdown by resource type";
+          
+          leaf resource-type {
+            type resource-type-accounting;
+          }
+          container amount {
+            uses financial-amount;
+          }
+          leaf quantity {
+            type decimal64 {
+              fraction-digits 4;
+            }
+          }
+          leaf unit-of-measure {
+            type usage-measurement-unit;
+          }
+        }
+        leaf calculated-timestamp {
+          type yang:date-and-time;
+          description "When calculation was performed";
+        }
+      }
+      container grand-total {
+        description "Total chargeback across all cost centers";
+        uses financial-amount;
+      }
+      leaf records-processed {
+        type uint32;
+        description "Number of usage records processed";
+      }
+    }
+  }
+  
+  rpc generate-invoice {
+    if-feature billing-integration;
+    description 
+      "Generate invoice for billing period.
+       Creates invoice from aggregated usage records and rate cards.";
+    
+    input {
+      leaf customer-id {
+        type string;
+        mandatory true;
+        description "Customer/tenant identifier";
+      }
+      leaf billing-period-start {
+        type yang:date-and-time;
+        mandatory true;
+        description "Billing period start";
+      }
+      leaf billing-period-end {
+        type yang:date-and-time;
+        mandatory true;
+        description "Billing period end";
+      }
+      leaf rate-card-id {
+        type rate-card-id-type;
+        description "Override rate card if specified";
+      }
+      leaf invoice-type {
+        type enumeration {
+          enum STANDARD;
+          enum PRO_FORMA;
+          enum CREDIT_NOTE;
+          enum DEBIT_NOTE;
+        }
+        default STANDARD;
+        description "Type of invoice to generate";
+      }
+      leaf include-detailed-usage {
+        type boolean;
+        default true;
+        description "Include detailed usage breakdown";
+      }
+      leaf apply-discounts {
+        type boolean;
+        default true;
+        description "Apply eligible discounts";
+      }
+      leaf draft-mode {
+        type boolean;
+        default false;
+        description "Create as draft without issuing";
+      }
+      leaf notes {
+        type string;
+        description "Additional invoice notes";
+      }
+    }
+    
+    output {
+      leaf invoice-id {
+        type accounting-id-type;
+        description "Generated invoice ID";
+      }
+      leaf invoice-number {
+        type invoice-number-type;
+        description "Human-readable invoice number";
+      }
+      container subtotal {
+        description "Invoice subtotal";
+        uses financial-amount;
+      }
+      container total-discounts {
+        description "Total discounts applied";
+        uses financial-amount;
+      }
+      container total-tax {
+        description "Total tax amount";
+        uses financial-amount;
+      }
+      container total-amount {
+        description "Total amount due";
+        uses financial-amount;
+      }
+      leaf invoice-url {
+        type inet:uri;
+        description "URL to view/download invoice";
+      }
+      leaf line-items-count {
+        type uint32;
+        description "Number of line items";
+      }
+      leaf status {
+        type invoice-status-type;
+        description "Invoice status";
+      }
+    }
+  }
+  
+  rpc query-usage {
+    if-feature resource-tracking;
+    description 
+      "Query usage records with filters.
+       Returns usage data for analysis and reporting.";
+    
+    input {
+      leaf resource-id {
+        type string;
+        description "Filter by specific resource";
+      }
+      leaf resource-type {
+        type resource-type-accounting;
+        description "Filter by resource type";
+      }
+      leaf cost-center {
+        type cost-center-id-type;
+        description "Filter by cost center";
+      }
+      leaf vendor {
+        type vendor-accounting-type;
+        description "Filter by vendor";
+      }
+      leaf start-time {
+        type yang:date-and-time;
+        mandatory true;
+        description "Query period start";
+      }
+      leaf end-time {
+        type yang:date-and-time;
+        mandatory true;
+        description "Query period end";
+      }
+      leaf aggregation {
+        type enumeration {
+          enum NONE;
+          enum HOURLY;
+          enum DAILY;
+          enum WEEKLY;
+          enum MONTHLY;
+        }
+        default NONE;
+        description "Aggregation level";
+      }
+      leaf limit {
+        type uint32 {
+          range "1..10000";
+        }
+        default 100;
+        description "Maximum records to return";
+      }
+      leaf offset {
+        type uint32;
+        default 0;
+        description "Pagination offset";
+      }
+      leaf sort-by {
+        type enumeration {
+          enum TIMESTAMP;
+          enum QUANTITY;
+          enum COST;
+          enum RESOURCE;
+        }
+        default TIMESTAMP;
+        description "Sort field";
+      }
+      leaf sort-order {
+        type enumeration {
+          enum ASCENDING;
+          enum DESCENDING;
+        }
+        default DESCENDING;
+        description "Sort order";
+      }
+      leaf include-cost {
+        type boolean;
+        default true;
+        description "Include calculated costs";
+      }
+    }
+    
+    output {
+      list usage-record {
+        description "Usage records matching query";
+        
+        leaf usage-id {
+          type accounting-id-type;
+          description "Usage record ID";
+        }
+        leaf resource-id {
+          type string;
+          description "Resource identifier";
+        }
+        leaf resource-name {
+          type string;
+          description "Resource name";
+        }
+        leaf resource-type {
+          type resource-type-accounting;
+          description "Resource type";
+        }
+        leaf timestamp {
+          type yang:date-and-time;
+          description "Record timestamp";
+        }
+        leaf quantity {
+          type decimal64 {
+            fraction-digits 6;
+          }
+          description "Usage quantity";
+        }
+        leaf unit {
+          type usage-measurement-unit;
+          description "Unit of measurement";
+        }
+        container cost {
+          description "Calculated cost";
+          uses financial-amount;
+        }
+        leaf cost-center {
+          type cost-center-id-type;
+          description "Associated cost center";
+        }
+        leaf vendor {
+          type vendor-accounting-type;
+          description "Source vendor";
+        }
+        leaf quality {
+          type quality-indicator;
+          description "Data quality indicator";
+        }
+      }
+      leaf total-records {
+        type uint32;
+        description "Total matching records";
+      }
+      leaf has-more {
+        type boolean;
+        description "More records available";
+      }
+      container summary {
+        description "Query summary statistics";
+        
+        leaf record-count {
+          type uint32;
+        }
+        container total-quantity {
+          uses financial-amount;
+        }
+        container total-cost {
+          uses financial-amount;
+        }
+      }
+    }
+  }
+  
+  rpc create-rate-card {
+    if-feature billing-integration;
+    description 
+      "Create a new rate card for pricing.";
+    
+    input {
+      leaf rate-card-name {
+        type string {
+          length "1..128";
+        }
+        mandatory true;
+        description "Rate card display name";
+      }
+      leaf rate-card-type {
+        type rate-card-type;
+        description "Rate card classification";
+      }
+      leaf customer-id {
+        type string;
+        description "Associated customer if applicable";
+      }
+      leaf contract-id {
+        type string;
+        description "Associated contract if applicable";
+      }
+      leaf effective-start-date {
+        type yang:date-and-time;
+        mandatory true;
+        description "When rates become effective";
+      }
+      leaf effective-end-date {
+        type yang:date-and-time;
+        description "When rates expire (optional)";
+      }
+      leaf default-currency {
+        type currency-type;
+        default USD;
+        description "Default currency for rates";
+      }
+      list rate-entry {
+        key "resource-type";
+        description "Rate entries";
+        
+        leaf resource-type {
+          type resource-type-accounting;
+        }
+        leaf unit-price {
+          type decimal64 {
+            fraction-digits 6;
+          }
+          mandatory true;
+        }
+        leaf unit-of-measure {
+          type usage-measurement-unit;
+          mandatory true;
+        }
+        leaf minimum-charge {
+          type monetary-amount;
+        }
+      }
+    }
+    
+    output {
+      leaf rate-card-id {
+        type rate-card-id-type;
+        description "Created rate card ID";
+      }
+      leaf status {
+        type enumeration {
+          enum CREATED;
+          enum ACTIVE;
+          enum DRAFT;
+        }
+        description "Rate card status";
+      }
+      leaf created-timestamp {
+        type yang:date-and-time;
+        description "Creation timestamp";
+      }
+    }
+  }
+  
+  rpc update-rate-card {
+    if-feature billing-integration;
+    description 
+      "Update an existing rate card.";
+    
+    input {
+      leaf rate-card-id {
+        type rate-card-id-type;
+        mandatory true;
+        description "Rate card to update";
+      }
+      leaf rate-card-name {
+        type string {
+          length "1..128";
+        }
+        description "New rate card name";
+      }
+      leaf effective-end-date {
+        type yang:date-and-time;
+        description "New effective end date";
+      }
+      leaf status {
+        type enumeration {
+          enum ACTIVE;
+          enum INACTIVE;
+          enum DRAFT;
+        }
+        description "New status";
+      }
+      list rate-entry-update {
+        key "resource-type";
+        description "Rate entries to update or add";
+        
+        leaf resource-type {
+          type resource-type-accounting;
+        }
+        leaf unit-price {
+          type decimal64 {
+            fraction-digits 6;
+          }
+        }
+        leaf action {
+          type enumeration {
+            enum UPDATE;
+            enum ADD;
+            enum DELETE;
+          }
+          default UPDATE;
+        }
+      }
+    }
+    
+    output {
+      leaf rate-card-id {
+        type rate-card-id-type;
+        description "Updated rate card ID";
+      }
+      leaf modified-timestamp {
+        type yang:date-and-time;
+        description "Modification timestamp";
+      }
+      leaf entries-modified {
+        type uint32;
+        description "Number of rate entries modified";
+      }
+    }
+  }
+  
+  rpc get-license-usage {
+    if-feature license-management;
+    description 
+      "Retrieve license utilization information.";
+    
+    input {
+      leaf license-id {
+        type license-id-type;
+        description "Specific license (all if not specified)";
+      }
+      leaf vendor {
+        type vendor-accounting-type;
+        description "Filter by vendor";
+      }
+      leaf include-history {
+        type boolean;
+        default false;
+        description "Include usage history";
+      }
+      leaf history-days {
+        type uint16 {
+          range "1..365";
+        }
+        default 30;
+        description "Days of history to include";
+      }
+      leaf include-optimization {
+        type boolean;
+        default false;
+        description "Include optimization recommendations";
+      }
+    }
+    
+    output {
+      list license-info {
+        description "License usage information";
+        
+        leaf license-id {
+          type license-id-type;
+        }
+        leaf license-name {
+          type string;
+        }
+        leaf vendor {
+          type vendor-accounting-type;
+        }
+        leaf total-capacity {
+          type uint32;
+        }
+        leaf used-capacity {
+          type uint32;
+        }
+        leaf available-capacity {
+          type uint32;
+        }
+        leaf utilization-percent {
+          type utilization-percentage;
+        }
+        leaf compliance-status {
+          type compliance-status-type;
+        }
+        leaf expiry-date {
+          type yang:date-and-time;
+        }
+        leaf days-until-expiry {
+          type int32;
+          description "Days until expiry (negative if expired)";
+        }
+        list usage-history {
+          key "date";
+          
+          leaf date {
+            type yang:date-and-time;
+          }
+          leaf peak-usage {
+            type uint32;
+          }
+          leaf average-usage {
+            type decimal64 {
+              fraction-digits 2;
+            }
+          }
+        }
+        list optimization-recommendation {
+          key "recommendation-id";
+          
+          leaf recommendation-id {
+            type string;
+          }
+          leaf recommendation-type {
+            type enumeration {
+              enum REDUCE_CAPACITY;
+              enum CONSOLIDATE;
+              enum UPGRADE;
+              enum DOWNGRADE;
+              enum CANCEL;
+            }
+          }
+          leaf description {
+            type string;
+          }
+          container potential-savings {
+            uses financial-amount;
+          }
+        }
+      }
+      leaf total-licenses {
+        type uint32;
+        description "Total licenses matching query";
+      }
+      leaf over-utilized-count {
+        type uint32;
+        description "Count of over-utilized licenses";
+      }
+      leaf expiring-count {
+        type uint32;
+        description "Count of licenses expiring soon";
+      }
+    }
+  }
+  
+  rpc allocate-costs {
+    if-feature cost-allocation;
+    description 
+      "Allocate costs to cost centers based on rules.";
+    
+    input {
+      leaf period-start {
+        type yang:date-and-time;
+        mandatory true;
+        description "Allocation period start";
+      }
+      leaf period-end {
+        type yang:date-and-time;
+        mandatory true;
+        description "Allocation period end";
+      }
+      leaf cost-center {
+        type cost-center-id-type;
+        description "Specific cost center (all if not specified)";
+      }
+      leaf preview-only {
+        type boolean;
+        default false;
+        description "Preview without committing allocation";
+      }
+      leaf recalculate {
+        type boolean;
+        default false;
+        description "Recalculate existing allocations";
+      }
+    }
+    
+    output {
+      leaf allocation-id {
+        type accounting-id-type;
+        description "Allocation batch ID";
+      }
+      list allocation-result {
+        description "Allocation results by cost center";
+        
+        leaf cost-center-id {
+          type cost-center-id-type;
+        }
+        leaf cost-center-name {
+          type string;
+        }
+        container allocated-amount {
+          uses financial-amount;
+        }
+        container previous-amount {
+          uses financial-amount;
+        }
+        container difference {
+          uses financial-amount;
+        }
+        list breakdown {
+          key "resource-type";
+          
+          leaf resource-type {
+            type resource-type-accounting;
+          }
+          container amount {
+            uses financial-amount;
+          }
+          leaf allocation-rule {
+            type string;
+          }
+        }
+      }
+      container total-allocated {
+        description "Total amount allocated";
+        uses financial-amount;
+      }
+      leaf records-processed {
+        type uint32;
+        description "Usage records processed";
+      }
+      leaf rules-applied {
+        type uint32;
+        description "Allocation rules applied";
+      }
+      leaf status {
+        type enumeration {
+          enum COMPLETED;
+          enum PARTIAL;
+          enum FAILED;
+        }
+        description "Allocation status";
+      }
+    }
+  }
+  
+  rpc create-budget {
+    if-feature budget-tracking;
+    description 
+      "Create a new budget for tracking.";
+    
+    input {
+      leaf budget-name {
+        type string {
+          length "1..128";
+        }
+        mandatory true;
+        description "Budget display name";
+      }
+      leaf budget-type {
+        type enumeration {
+          enum OPERATIONAL;
+          enum CAPITAL;
+          enum PROJECT;
+          enum DEPARTMENT;
+          enum RESOURCE_TYPE;
+        }
+        description "Type of budget";
+      }
+      leaf cost-center {
+        type cost-center-id-type;
+        description "Associated cost center";
+      }
+      container budget-amount {
+        description "Budget amount";
+        uses financial-amount;
+      }
+      leaf budget-period {
+        type billing-period-type;
+        mandatory true;
+        description "Budget period type";
+      }
+      leaf period-start {
+        type yang:date-and-time;
+        mandatory true;
+        description "Budget period start";
+      }
+      leaf period-end {
+        type yang:date-and-time;
+        mandatory true;
+        description "Budget period end";
+      }
+      leaf warning-threshold {
+        type percentage-value;
+        default 70.00;
+        description "Warning alert threshold";
+      }
+      leaf critical-threshold {
+        type percentage-value;
+        default 90.00;
+        description "Critical alert threshold";
+      }
+      leaf-list alert-recipients {
+        type inet:email-address;
+        description "Alert notification recipients";
+      }
+      leaf auto-renew {
+        type boolean;
+        default false;
+        description "Auto-renew for next period";
+      }
+    }
+    
+    output {
+      leaf budget-id {
+        type string;
+        description "Created budget ID";
+      }
+      leaf status {
+        type budget-status-type;
+        description "Budget status";
+      }
+      leaf created-timestamp {
+        type yang:date-and-time;
+        description "Creation timestamp";
+      }
+    }
+  }
+  
+  rpc update-budget {
+    if-feature budget-tracking;
+    description 
+      "Update an existing budget.";
+    
+    input {
+      leaf budget-id {
+        type string;
+        mandatory true;
+        description "Budget to update";
+      }
+      leaf budget-name {
+        type string {
+          length "1..128";
+        }
+        description "New budget name";
+      }
+      container budget-adjustment {
+        description "Budget adjustment amount";
+        uses financial-amount;
+      }
+      leaf adjustment-type {
+        type enumeration {
+          enum INCREASE;
+          enum DECREASE;
+          enum REALLOCATION;
+        }
+        description "Type of adjustment";
+      }
+      leaf adjustment-reason {
+        type string;
+        description "Reason for adjustment";
+      }
+      leaf warning-threshold {
+        type percentage-value;
+        description "New warning threshold";
+      }
+      leaf critical-threshold {
+        type percentage-value;
+        description "New critical threshold";
+      }
+      leaf status {
+        type enumeration {
+          enum ACTIVE;
+          enum SUSPENDED;
+          enum CLOSED;
+        }
+        description "New budget status";
+      }
+      leaf-list alert-recipients {
+        type inet:email-address;
+        description "New alert recipients";
+      }
+    }
+    
+    output {
+      leaf budget-id {
+        type string;
+        description "Updated budget ID";
+      }
+      container new-budget-amount {
+        description "New total budget amount";
+        uses financial-amount;
+      }
+      leaf modified-timestamp {
+        type yang:date-and-time;
+        description "Modification timestamp";
+      }
+      leaf status {
+        type budget-status-type;
+        description "Current budget status";
+      }
+    }
+  }
+  
+  rpc get-budget-status {
+    if-feature budget-tracking;
+    description 
+      "Retrieve budget status and consumption information.";
+    
+    input {
+      leaf budget-id {
+        type string;
+        description "Specific budget (all if not specified)";
+      }
+      leaf cost-center {
+        type cost-center-id-type;
+        description "Filter by cost center";
+      }
+      leaf include-forecasts {
+        type boolean;
+        default true;
+        description "Include consumption forecasts";
+      }
+      leaf include-variance {
+        type boolean;
+        default true;
+        description "Include variance analysis";
+      }
+    }
+    
+    output {
+      list budget-info {
+        description "Budget status information";
+        
+        leaf budget-id {
+          type string;
+        }
+        leaf budget-name {
+          type string;
+        }
+        leaf cost-center {
+          type cost-center-id-type;
+        }
+        container budget-amount {
+          uses financial-amount;
+        }
+        container consumed-amount {
+          uses financial-amount;
+        }
+        container remaining-amount {
+          uses financial-amount;
+        }
+        leaf consumption-percent {
+          type utilization-percentage;
+        }
+        leaf projected-consumption-percent {
+          type utilization-percentage;
+        }
+        leaf status {
+          type budget-status-type;
+        }
+        container projected-overrun {
+          description "Projected overrun amount if applicable";
+          uses financial-amount;
+        }
+        container variance {
+          description "Budget variance";
+          uses financial-amount;
+        }
+        leaf variance-percent {
+          type decimal64 {
+            fraction-digits 2;
+          }
+        }
+        leaf period-end {
+          type yang:date-and-time;
+        }
+        leaf days-remaining {
+          type uint16;
+        }
+      }
+      container total-budgeted {
+        description "Total budgeted amount";
+        uses financial-amount;
+      }
+      container total-consumed {
+        description "Total consumed amount";
+        uses financial-amount;
+      }
+      leaf budgets-at-warning {
+        type uint32;
+        description "Budgets at warning threshold";
+      }
+      leaf budgets-at-critical {
+        type uint32;
+        description "Budgets at critical threshold";
+      }
+      leaf budgets-exceeded {
+        type uint32;
+        description "Budgets that have been exceeded";
+      }
+    }
+  }
+  
+  rpc export-billing-data {
+    if-feature billing-integration;
+    description 
+      "Export billing data to external format.";
+    
+    input {
+      leaf export-type {
+        type enumeration {
+          enum INVOICES;
+          enum USAGE_RECORDS;
+          enum CHARGEBACK_DATA;
+          enum RATE_CARDS;
+          enum COST_ALLOCATIONS;
+          enum FULL_EXPORT;
+        }
+        mandatory true;
+        description "Type of data to export";
+      }
+      leaf start-date {
+        type yang:date-and-time;
+        description "Export period start";
+      }
+      leaf end-date {
+        type yang:date-and-time;
+        description "Export period end";
+      }
+      leaf output-format {
+        type export-format-type;
+        default CSV;
+        description "Output format";
+      }
+      leaf include-headers {
+        type boolean;
+        default true;
+        description "Include column headers";
+      }
+      leaf compress-output {
+        type boolean;
+        default true;
+        description "Compress output file";
+      }
+      leaf customer-filter {
+        type string;
+        description "Filter by customer";
+      }
+      leaf cost-center-filter {
+        type cost-center-id-type;
+        description "Filter by cost center";
+      }
+    }
+    
+    output {
+      leaf export-id {
+        type accounting-id-type;
+        description "Export job ID";
+      }
+      leaf export-url {
+        type inet:uri;
+        description "URL to download exported data";
+      }
+      leaf file-size-bytes {
+        type uint64;
+        description "Export file size";
+      }
+      leaf records-exported {
+        type uint32;
+        description "Number of records exported";
+      }
+      leaf expiry-timestamp {
+        type yang:date-and-time;
+        description "When export file expires";
+      }
+    }
+  }
+  
+  rpc generate-cost-report {
+    if-feature cost-allocation;
+    description 
+      "Generate cost analysis report.";
+    
+    input {
+      leaf report-type {
+        type enumeration {
+          enum COST_SUMMARY;
+          enum COST_BREAKDOWN;
+          enum TREND_ANALYSIS;
+          enum VARIANCE_REPORT;
+          enum CHARGEBACK_SUMMARY;
+        }
+        mandatory true;
+        description "Type of cost report";
+      }
+      leaf period-start {
+        type yang:date-and-time;
+        mandatory true;
+        description "Report period start";
+      }
+      leaf period-end {
+        type yang:date-and-time;
+        mandatory true;
+        description "Report period end";
+      }
+      leaf cost-center {
+        type cost-center-id-type;
+        description "Filter by cost center";
+      }
+      leaf group-by {
+        type enumeration {
+          enum RESOURCE_TYPE;
+          enum COST_CENTER;
+          enum VENDOR;
+          enum CUSTOMER;
+          enum DEPARTMENT;
+          enum PROJECT;
+        }
+        description "Grouping dimension";
+      }
+      leaf compare-to-previous {
+        type boolean;
+        default true;
+        description "Compare to previous period";
+      }
+      leaf output-format {
+        type export-format-type;
+        default PDF;
+        description "Output format";
+      }
+    }
+    
+    output {
+      leaf report-id {
+        type accounting-id-type;
+        description "Generated report ID";
+      }
+      leaf report-url {
+        type inet:uri;
+        description "URL to download report";
+      }
+      container summary {
+        description "Report summary";
+        
+        container total-cost {
+          uses financial-amount;
+        }
+        container previous-period-cost {
+          uses financial-amount;
+        }
+        leaf change-percent {
+          type decimal64 {
+            fraction-digits 2;
+          }
+        }
+        leaf top-cost-center {
+          type string;
+        }
+        leaf top-resource-type {
+          type resource-type-accounting;
+        }
+      }
+    }
+  }
+  
+  rpc create-quota {
+    if-feature quota-management;
+    description 
+      "Create a new resource quota.";
+    
+    input {
+      leaf quota-name {
+        type string {
+          length "1..128";
+        }
+        mandatory true;
+        description "Quota display name";
+      }
+      leaf quota-type {
+        type quota-type;
+        description "Type of quota";
+      }
+      leaf resource-type {
+        type resource-type-accounting;
+        mandatory true;
+        description "Resource type for quota";
+      }
+      leaf cost-center {
+        type cost-center-id-type;
+        description "Associated cost center";
+      }
+      leaf customer-id {
+        type string;
+        description "Associated customer/tenant";
+      }
+      leaf quota-limit {
+        type decimal64 {
+          fraction-digits 4;
+        }
+        mandatory true;
+        description "Quota limit value";
+      }
+      leaf unit-of-measure {
+        type usage-measurement-unit;
+        description "Unit of measurement";
+      }
+      leaf quota-period {
+        type billing-period-type;
+        default MONTHLY;
+        description "Quota reset period";
+      }
+      leaf on-exceeded-action {
+        type enumeration {
+          enum BLOCK;
+          enum THROTTLE;
+          enum NOTIFY_ONLY;
+          enum WARN_CONTINUE;
+        }
+        default NOTIFY_ONLY;
+        description "Action when quota exceeded";
+      }
+      list threshold {
+        key "threshold-percent";
+        description "Alert thresholds";
+        
+        leaf threshold-percent {
+          type utilization-percentage;
+        }
+        leaf-list recipients {
+          type inet:email-address;
+        }
+      }
+    }
+    
+    output {
+      leaf quota-id {
+        type string;
+        description "Created quota ID";
+      }
+      leaf status {
+        type enumeration {
+          enum ACTIVE;
+          enum PENDING;
+        }
+        description "Quota status";
+      }
+      leaf created-timestamp {
+        type yang:date-and-time;
+        description "Creation timestamp";
+      }
+    }
+  }
+  
+  rpc update-quota {
+    if-feature quota-management;
+    description 
+      "Update an existing quota.";
+    
+    input {
+      leaf quota-id {
+        type string;
+        mandatory true;
+        description "Quota to update";
+      }
+      leaf quota-limit {
+        type decimal64 {
+          fraction-digits 4;
+        }
+        description "New quota limit";
+      }
+      leaf on-exceeded-action {
+        type enumeration {
+          enum BLOCK;
+          enum THROTTLE;
+          enum NOTIFY_ONLY;
+          enum WARN_CONTINUE;
+        }
+        description "New exceeded action";
+      }
+      leaf status {
+        type enumeration {
+          enum ACTIVE;
+          enum SUSPENDED;
+        }
+        description "New quota status";
+      }
+      leaf reset-usage {
+        type boolean;
+        default false;
+        description "Reset current usage to zero";
+      }
+    }
+    
+    output {
+      leaf quota-id {
+        type string;
+        description "Updated quota ID";
+      }
+      leaf new-quota-limit {
+        type decimal64 {
+          fraction-digits 4;
+        }
+        description "New quota limit";
+      }
+      leaf current-usage {
+        type decimal64 {
+          fraction-digits 4;
+        }
+        description "Current usage";
+      }
+      leaf modified-timestamp {
+        type yang:date-and-time;
+        description "Modification timestamp";
+      }
+    }
+  }
+  
+  rpc get-quota-status {
+    if-feature quota-management;
+    description 
+      "Retrieve quota status and usage information.";
+    
+    input {
+      leaf quota-id {
+        type string;
+        description "Specific quota (all if not specified)";
+      }
+      leaf cost-center {
+        type cost-center-id-type;
+        description "Filter by cost center";
+      }
+      leaf customer-id {
+        type string;
+        description "Filter by customer";
+      }
+      leaf resource-type {
+        type resource-type-accounting;
+        description "Filter by resource type";
+      }
+      leaf include-history {
+        type boolean;
+        default false;
+        description "Include usage history";
+      }
+    }
+    
+    output {
+      list quota-info {
+        description "Quota status information";
+        
+        leaf quota-id {
+          type string;
+        }
+        leaf quota-name {
+          type string;
+        }
+        leaf resource-type {
+          type resource-type-accounting;
+        }
+        leaf quota-limit {
+          type decimal64 {
+            fraction-digits 4;
+          }
+        }
+        leaf current-usage {
+          type decimal64 {
+            fraction-digits 4;
+          }
+        }
+        leaf remaining-quota {
+          type decimal64 {
+            fraction-digits 4;
+          }
+        }
+        leaf utilization-percent {
+          type utilization-percentage;
+        }
+        leaf status {
+          type enumeration {
+            enum ACTIVE;
+            enum EXCEEDED;
+            enum EXHAUSTED;
+            enum SUSPENDED;
+          }
+        }
+        leaf period-end {
+          type yang:date-and-time;
+        }
+        list usage-history {
+          key "period-start";
+          
+          leaf period-start {
+            type yang:date-and-time;
+          }
+          leaf usage {
+            type decimal64 {
+              fraction-digits 4;
+            }
+          }
+          leaf exceeded {
+            type boolean;
+          }
+        }
+      }
+      leaf total-quotas {
+        type uint32;
+        description "Total quotas matching query";
+      }
+      leaf exceeded-quotas {
+        type uint32;
+        description "Currently exceeded quotas";
+      }
+      leaf near-limit-quotas {
+        type uint32;
+        description "Quotas above 80% utilization";
+      }
+    }
+  }
+
+  /***************************************************************************
+   * NOTIFICATION DEFINITIONS
+   ***************************************************************************/
+  
+  notification license-threshold-exceeded {
+    if-feature license-management;
+    description 
+      "License utilization has exceeded the configured threshold.
+       Sent when license utilization reaches warning or critical levels.";
+    
+    leaf license-id {
+      type license-id-type;
+      mandatory true;
+      description "License identifier";
+    }
+    leaf license-name {
+      type string;
+      mandatory true;
+      description "License display name";
+    }
+    leaf vendor {
+      type vendor-accounting-type;
+      description "License vendor";
+    }
+    leaf utilization-percent {
+      type utilization-percentage;
+      mandatory true;
+      description "Current utilization percentage";
+    }
+    leaf threshold-percent {
+      type percentage-value;
+      mandatory true;
+      description "Threshold that was exceeded";
+    }
+    leaf available-capacity {
+      type uint32;
+      mandatory true;
+      description "Available license capacity";
+    }
+    leaf used-capacity {
+      type uint32;
+      description "Currently used capacity";
+    }
+    leaf total-capacity {
+      type uint32;
+      description "Total license capacity";
+    }
+    leaf threshold-type {
+      type enumeration {
+        enum WARNING;
+        enum CRITICAL;
+      }
+      description "Type of threshold exceeded";
+    }
+    leaf timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When threshold was exceeded";
+    }
+    container recommended-action {
+      description "Recommended remediation action";
+      
+      leaf action-type {
+        type enumeration {
+          enum PURCHASE_ADDITIONAL;
+          enum OPTIMIZE_USAGE;
+          enum REALLOCATE;
+          enum NO_ACTION;
+        }
+      }
+      leaf description {
+        type string;
+      }
+    }
+  }
+  
+  notification budget-threshold-exceeded {
+    if-feature budget-tracking;
+    description 
+      "Budget consumption has exceeded the configured threshold.
+       Sent when budget utilization reaches warning or critical levels.";
+    
+    leaf budget-id {
+      type string;
+      mandatory true;
+      description "Budget identifier";
+    }
+    leaf budget-name {
+      type string;
+      mandatory true;
+      description "Budget display name";
+    }
+    leaf cost-center {
+      type cost-center-id-type;
+      description "Associated cost center";
+    }
+    leaf cost-center-name {
+      type string;
+      description "Cost center name";
+    }
+    container budget-amount {
+      description "Total budget amount";
+      uses financial-amount;
+    }
+    container consumed-amount {
+      description "Amount consumed";
+      uses financial-amount;
+    }
+    container remaining-amount {
+      description "Remaining budget";
+      uses financial-amount;
+    }
+    leaf utilization-percent {
+      type utilization-percentage;
+      mandatory true;
+      description "Current budget utilization";
+    }
+    leaf threshold-percent {
+      type percentage-value;
+      mandatory true;
+      description "Threshold that was exceeded";
+    }
+    leaf threshold-type {
+      type enumeration {
+        enum WARNING;
+        enum CRITICAL;
+      }
+      description "Type of threshold exceeded";
+    }
+    leaf projected-overrun {
+      type boolean;
+      description "Whether budget overrun is projected";
+    }
+    container projected-overrun-amount {
+      description "Projected overrun amount";
+      uses financial-amount;
+    }
+    leaf timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When threshold was exceeded";
+    }
+    leaf period-end {
+      type yang:date-and-time;
+      description "Budget period end date";
+    }
+    leaf days-remaining {
+      type uint16;
+      description "Days remaining in budget period";
+    }
+  }
+  
+  notification invoice-generated {
+    if-feature billing-integration;
+    description 
+      "A new invoice has been generated and is ready for review.
+       Sent when invoice generation completes successfully.";
+    
+    leaf invoice-id {
+      type accounting-id-type;
+      mandatory true;
+      description "Invoice identifier";
+    }
+    leaf invoice-number {
+      type invoice-number-type;
+      mandatory true;
+      description "Human-readable invoice number";
+    }
+    leaf invoice-type {
+      type enumeration {
+        enum STANDARD;
+        enum CREDIT_NOTE;
+        enum DEBIT_NOTE;
+        enum PRO_FORMA;
+      }
+      description "Type of invoice";
+    }
+    leaf customer-id {
+      type string;
+      mandatory true;
+      description "Customer/tenant identifier";
+    }
+    leaf customer-name {
+      type string;
+      description "Customer display name";
+    }
+    container total-amount {
+      description "Total invoice amount";
+      uses financial-amount;
+    }
+    container subtotal {
+      description "Invoice subtotal";
+      uses financial-amount;
+    }
+    container tax-amount {
+      description "Total tax amount";
+      uses financial-amount;
+    }
+    leaf currency {
+      type currency-type;
+      description "Invoice currency";
+    }
+    leaf billing-period-start {
+      type yang:date-and-time;
+      description "Billing period start";
+    }
+    leaf billing-period-end {
+      type yang:date-and-time;
+      description "Billing period end";
+    }
+    leaf issue-date {
+      type yang:date-and-time;
+      description "Invoice issue date";
+    }
+    leaf due-date {
+      type yang:date-and-time;
+      mandatory true;
+      description "Payment due date";
+    }
+    leaf line-items-count {
+      type uint32;
+      description "Number of line items";
+    }
+    leaf invoice-url {
+      type inet:uri;
+      description "URL to view invoice";
+    }
+    leaf generated-by {
+      type string;
+      description "System or user that generated invoice";
+    }
+    leaf timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "Generation timestamp";
+    }
+  }
+  
+  notification invoice-payment-received {
+    if-feature billing-integration;
+    description 
+      "Payment has been received for an invoice.
+       Sent when payment is processed successfully.";
+    
+    leaf invoice-id {
+      type accounting-id-type;
+      mandatory true;
+      description "Invoice identifier";
+    }
+    leaf invoice-number {
+      type invoice-number-type;
+      mandatory true;
+      description "Invoice number";
+    }
+    leaf customer-id {
+      type string;
+      mandatory true;
+      description "Customer identifier";
+    }
+    leaf customer-name {
+      type string;
+      description "Customer name";
+    }
+    container payment-amount {
+      description "Payment amount received";
+      uses financial-amount;
+    }
+    container total-invoice-amount {
+      description "Total invoice amount";
+      uses financial-amount;
+    }
+    container amount-outstanding {
+      description "Remaining balance";
+      uses financial-amount;
+    }
+    leaf payment-method {
+      type payment-method-type;
+      description "Payment method used";
+    }
+    leaf payment-reference {
+      type string;
+      description "Payment transaction reference";
+    }
+    leaf payment-status {
+      type invoice-status-type;
+      description "Updated invoice payment status";
+    }
+    leaf payment-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When payment was received";
+    }
+    leaf processed-by {
+      type string;
+      description "System that processed payment";
+    }
+  }
+  
+  notification quota-exceeded {
+    if-feature quota-management;
+    description 
+      "A quota has been exceeded and enforcement action taken.
+       Sent when usage surpasses quota limit.";
+    
+    leaf quota-id {
+      type string;
+      mandatory true;
+      description "Quota identifier";
+    }
+    leaf quota-name {
+      type string;
+      mandatory true;
+      description "Quota display name";
+    }
+    leaf resource-type {
+      type resource-type-accounting;
+      description "Resource type for quota";
+    }
+    leaf cost-center {
+      type cost-center-id-type;
+      description "Associated cost center";
+    }
+    leaf customer-id {
+      type string;
+      description "Associated customer";
+    }
+    leaf quota-limit {
+      type decimal64 {
+        fraction-digits 4;
+      }
+      mandatory true;
+      description "Quota limit";
+    }
+    leaf current-usage {
+      type decimal64 {
+        fraction-digits 4;
+      }
+      mandatory true;
+      description "Current usage";
+    }
+    leaf utilization-percent {
+      type utilization-percentage;
+      description "Utilization percentage";
+    }
+    leaf exceeded-by {
+      type decimal64 {
+        fraction-digits 4;
+      }
+      description "Amount exceeded by";
+    }
+    leaf enforcement-action {
+      type enumeration {
+        enum BLOCKED;
+        enum THROTTLED;
+        enum NOTIFIED;
+        enum WARNED;
+      }
+      description "Enforcement action taken";
+    }
+    leaf grace-period-active {
+      type boolean;
+      description "Whether grace period is active";
+    }
+    leaf grace-period-end {
+      type yang:date-and-time;
+      description "When grace period ends";
+    }
+    leaf timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When quota was exceeded";
+    }
+    leaf period-end {
+      type yang:date-and-time;
+      description "When quota resets";
+    }
+  }
+  
+  notification usage-anomaly-detected {
+    if-feature usage-analytics;
+    description 
+      "An anomaly has been detected in usage patterns.
+       Sent when unusual usage behavior is identified.";
+    
+    leaf anomaly-id {
+      type accounting-id-type;
+      mandatory true;
+      description "Anomaly identifier";
+    }
+    leaf resource-type {
+      type resource-type-accounting;
+      description "Resource type with anomaly";
+    }
+    leaf resource-id {
+      type string;
+      description "Specific resource if applicable";
+    }
+    leaf cost-center {
+      type cost-center-id-type;
+      description "Associated cost center";
+    }
+    leaf anomaly-type {
+      type enumeration {
+        enum SPIKE;
+        enum DROP;
+        enum UNUSUAL_PATTERN;
+        enum ABNORMAL_GROWTH;
+        enum ABNORMAL_DECLINE;
+        enum SEASONAL_DEVIATION;
+      }
+      description "Type of anomaly detected";
+    }
+    leaf severity {
+      type alert-severity-type;
+      description "Anomaly severity";
+    }
+    container expected-value {
+      description "Expected usage value";
+      uses financial-amount;
+    }
+    container actual-value {
+      description "Actual usage value";
+      uses financial-amount;
+    }
+    leaf deviation-percent {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      description "Percentage deviation from expected";
+    }
+    leaf detection-method {
+      type enumeration {
+        enum STATISTICAL;
+        enum MACHINE_LEARNING;
+        enum THRESHOLD_BASED;
+        enum TREND_ANALYSIS;
+      }
+      description "How anomaly was detected";
+    }
+    leaf confidence-score {
+      type confidence-score;
+      description "Confidence in anomaly detection";
+    }
+    leaf description {
+      type string;
+      description "Anomaly description";
+    }
+    leaf timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When anomaly was detected";
+    }
+    container impact-assessment {
+      description "Impact assessment";
+      
+      container cost-impact {
+        description "Estimated cost impact";
+        uses financial-amount;
+      }
+      leaf affected-services {
+        type uint32;
+        description "Number of services affected";
+      }
+    }
+    list recommended-actions {
+      key "sequence";
+      
+      leaf sequence {
+        type uint8;
+      }
+      leaf action {
+        type string;
+      }
+    }
+  }
+  
+  notification cost-allocation-completed {
+    if-feature cost-allocation;
+    description 
+      "Cost allocation process has completed.
+       Sent when allocation batch processing finishes.";
+    
+    leaf allocation-id {
+      type accounting-id-type;
+      mandatory true;
+      description "Allocation batch identifier";
+    }
+    leaf period-start {
+      type yang:date-and-time;
+      description "Allocation period start";
+    }
+    leaf period-end {
+      type yang:date-and-time;
+      description "Allocation period end";
+    }
+    container total-allocated {
+      description "Total amount allocated";
+      uses financial-amount;
+    }
+    leaf cost-centers-count {
+      type uint32;
+      description "Number of cost centers processed";
+    }
+    leaf records-processed {
+      type uint32;
+      description "Usage records processed";
+    }
+    leaf rules-applied {
+      type uint32;
+      description "Allocation rules applied";
+    }
+    leaf status {
+      type enumeration {
+        enum COMPLETED;
+        enum COMPLETED_WITH_WARNINGS;
+        enum PARTIAL;
+        enum FAILED;
+      }
+      description "Allocation status";
+    }
+    list failed-allocations {
+      key "cost-center";
+      description "Failed allocations if any";
+      
+      leaf cost-center {
+        type cost-center-id-type;
+      }
+      leaf reason {
+        type string;
+      }
+    }
+    leaf timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When allocation completed";
+    }
+    leaf duration-ms {
+      type uint32;
+      description "Processing duration in milliseconds";
+    }
+  }
+  
+  notification license-expiry-warning {
+    if-feature license-management;
+    description 
+      "License is approaching expiration date.
+       Sent when license is within the warning period before expiry.";
+    
+    leaf license-id {
+      type license-id-type;
+      mandatory true;
+      description "License identifier";
+    }
+    leaf license-name {
+      type string;
+      mandatory true;
+      description "License display name";
+    }
+    leaf vendor {
+      type vendor-accounting-type;
+      description "License vendor";
+    }
+    leaf expiry-date {
+      type yang:date-and-time;
+      mandatory true;
+      description "License expiration date";
+    }
+    leaf days-until-expiry {
+      type int32;
+      mandatory true;
+      description "Days until license expires";
+    }
+    leaf warning-type {
+      type enumeration {
+        enum THIRTY_DAYS;
+        enum SEVEN_DAYS;
+        enum ONE_DAY;
+        enum EXPIRED;
+      }
+      description "Type of expiry warning";
+    }
+    leaf renewal-required {
+      type boolean;
+      description "Whether renewal is required";
+    }
+    leaf auto-renew-enabled {
+      type boolean;
+      description "Whether auto-renewal is enabled";
+    }
+    container annual-cost {
+      description "Annual license cost";
+      uses financial-amount;
+    }
+    leaf contract-number {
+      type string;
+      description "Associated contract number";
+    }
+    leaf contact-email {
+      type inet:email-address;
+      description "Vendor contact email";
+    }
+    leaf timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "Warning timestamp";
+    }
+    list affected-resources {
+      key "resource-id";
+      
+      leaf resource-id {
+        type string;
+      }
+      leaf resource-name {
+        type string;
+      }
+    }
+  }
+  
+  notification report-generation-completed {
+    description 
+      "Report generation has completed successfully.
+       Sent when a requested report is ready for download.";
+    
+    leaf report-id {
+      type accounting-id-type;
+      mandatory true;
+      description "Report identifier";
+    }
+    leaf report-name {
+      type string;
+      mandatory true;
+      description "Report display name";
+    }
+    leaf report-type {
+      type enumeration {
+        enum USAGE_SUMMARY;
+        enum COST_ANALYSIS;
+        enum BILLING_RECONCILIATION;
+        enum LICENSE_UTILIZATION;
+        enum BUDGET_VARIANCE;
+        enum CHARGEBACK_REPORT;
+        enum TREND_ANALYSIS;
+        enum ANOMALY_REPORT;
+      }
+      description "Type of report";
+    }
+    leaf output-format {
+      type export-format-type;
+      description "Output format";
+    }
+    leaf report-url {
+      type inet:uri;
+      description "URL to download report";
+    }
+    leaf file-size-bytes {
+      type uint64;
+      description "Report file size";
+    }
+    leaf report-period-start {
+      type yang:date-and-time;
+      description "Report period start";
+    }
+    leaf report-period-end {
+      type yang:date-and-time;
+      description "Report period end";
+    }
+    leaf records-included {
+      type uint32;
+      description "Number of records in report";
+    }
+    leaf generation-duration-ms {
+      type uint32;
+      description "Time taken to generate";
+    }
+    leaf expiry-timestamp {
+      type yang:date-and-time;
+      description "When report file expires";
+    }
+    leaf generated-by {
+      type string;
+      description "User who requested report";
+    }
+    leaf timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "Generation completion timestamp";
+    }
+    container summary-statistics {
+      description "Report summary statistics";
+      
+      leaf total-records {
+        type uint32;
+      }
+      container total-cost {
+        uses financial-amount;
+      }
+      leaf data-points {
+        type uint32;
+      }
+    }
+  }
+}

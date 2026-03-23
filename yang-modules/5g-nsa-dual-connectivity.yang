@@ -1,0 +1,496 @@
+module 5g-nsa-dual-connectivity {
+  yang-version 1.1;
+  namespace "urn:unified-oss:5g-nsa:dc";
+  prefix nsa-dc;
+
+  import unified-oss-core-nrm { prefix uoss-nrm; }
+  import ietf-inet-types { prefix inet; }
+  import ietf-yang-types { prefix yang; }
+
+  organization "Unified OSS Framework - EN-DC Dual Connectivity";
+  contact "Dr. Houda Chihi - IEEE Member";
+  description 
+    "YANG module for EN-DC (E-UTRA-NR Dual Connectivity) management.
+     
+     EN-DC enables simultaneous connectivity to 4G EPC (via MeNB)
+     and 5G NR (via SgNB) for enhanced throughput and latency.
+     
+     Key concepts:
+     - MCG: Master Cell Group (controlled by MeNB)
+     - SCG: Secondary Cell Group (controlled by SgNB)
+     - Split Bearer: Bearer split between MCG and SCG
+     
+     Reference: 3GPP TS 37.340";
+
+  revision 2026-03-21 {
+    description "Initial version for Unified OSS Framework v1.0.0";
+  }
+
+  typedef en-dc-state {
+    type enumeration {
+      enum inactive;
+      enum configuring;
+      enum active;
+      enum suspended;
+      enum releasing;
+      enum failed;
+    }
+  }
+
+  typedef bearer-type {
+    type enumeration {
+      enum mcg-bearer;
+      enum scg-bearer;
+      enum split-bearer;
+    }
+  }
+
+  container en-dc-management {
+    description "EN-DC dual connectivity management";
+    
+    list en-dc-session {
+      key "session-id";
+      description "EN-DC session configuration and status";
+      
+      leaf session-id {
+        type string;
+        description "Unique EN-DC session identifier";
+      }
+      
+      leaf ue-id {
+        type string;
+        description "User Equipment identifier";
+      }
+      
+      leaf state {
+        type en-dc-state;
+        default inactive;
+      }
+      
+      leaf menb-id {
+        type string;
+        mandatory true;
+        description "Master eNodeB serving this session";
+      }
+      
+      leaf sgnb-id {
+        type string;
+        mandatory true;
+        description "Secondary gNodeB serving this session";
+      }
+      
+      leaf setup-time {
+        type yang:date-and-time;
+        description "Time of EN-DC session setup";
+      }
+      
+      container mcg-config {
+        description "Master Cell Group configuration";
+        
+        leaf mcg-id {
+          type uint32;
+        }
+        
+        leaf primary-cell {
+          type uint32;
+          description "Primary cell in MCG";
+        }
+        
+        leaf-list secondary-cells {
+          type uint32;
+          description "Secondary cells in MCG";
+        }
+        
+        leaf mcg-bearer-count {
+          type uint8;
+        }
+      }
+      
+      container scg-config {
+        description "Secondary Cell Group configuration";
+        
+        leaf scg-id {
+          type uint32;
+        }
+        
+        leaf primary-scg-cell {
+          type uint32;
+          description "Primary SCG cell (PSCell)";
+        }
+        
+        leaf-list secondary-scg-cells {
+          type uint32;
+        }
+        
+        leaf scg-bearer-count {
+          type uint8;
+        }
+        
+        leaf scg-activation-state {
+          type enumeration {
+            enum deactivated;
+            enum activated;
+          }
+        }
+      }
+      
+      container split-bearer {
+        description "Split bearer configuration";
+        
+        leaf enabled {
+          type boolean;
+          default false;
+        }
+        
+        leaf bearer-id {
+          type uint8;
+        }
+        
+        leaf split-ratio {
+          type uint8 {
+            range "0..100";
+          }
+          description "Traffic split ratio MCG:SCG";
+        }
+        
+        leaf mcg-path-throughput {
+          type uint64;
+          units "Mbps";
+        }
+        
+        leaf scg-path-throughput {
+          type uint64;
+          units "Mbps";
+        }
+      }
+      
+      container bearer-management {
+        description "Bearer configuration for EN-DC";
+        
+        list bearer {
+          key "bearer-id";
+          
+          leaf bearer-id {
+            type uint8;
+          }
+          
+          leaf bearer-type {
+            type bearer-type;
+          }
+          
+          leaf qci {
+            type uint8 {
+              range "1..9";
+            }
+            description "QoS Class Identifier";
+          }
+          
+          leaf arp {
+            type uint8 {
+              range "1..15";
+            }
+            description "Allocation and Retention Priority";
+          }
+          
+          leaf throughput {
+            type uint64;
+            units "kbps";
+          }
+        }
+      }
+      
+      container performance-metrics {
+        description "Real-time performance metrics";
+        
+        leaf total-throughput-downlink {
+          type uint64;
+          units "Mbps";
+        }
+        
+        leaf total-throughput-uplink {
+          type uint64;
+          units "Mbps";
+        }
+        
+        leaf mcg-throughput {
+          type uint64;
+          units "Mbps";
+        }
+        
+        leaf scg-throughput {
+          type uint64;
+          units "Mbps";
+        }
+        
+        leaf latency {
+          type uint32;
+          units "ms";
+        }
+        
+        leaf packet-loss-rate {
+          type decimal64 {
+            fraction-digits 4;
+          }
+        }
+      }
+    }
+  }
+  
+  container dc-alarms {
+    description "Dual connectivity alarms";
+    
+    list dc-alarm {
+      key "alarm-id";
+      
+      leaf alarm-id {
+        type string;
+      }
+      
+      leaf session-id {
+        type string;
+        description "Affected EN-DC session";
+      }
+      
+      leaf alarm-type {
+        type enumeration {
+          enum scg-failure;
+          enum mcg-failure;
+          enum split-bearer-failure;
+          enum sgnb-addition-failure;
+          enum scg-deactivation;
+          enum dual-connectivity-loss;
+        }
+      }
+      
+      leaf severity {
+        type uoss-nrm:severity-level;
+      }
+      
+      leaf probable-cause {
+        type string;
+        description "ITU-T X.733 probable cause";
+      }
+      
+      leaf timestamp {
+        type yang:date-and-time;
+      }
+      
+      container affected-resources {
+        leaf menb {
+          type string;
+        }
+        leaf sgnb {
+          type string;
+        }
+        leaf mcg-cells {
+          type string;
+        }
+        leaf scg-cells {
+          type string;
+        }
+      }
+    }
+  }
+  
+  container dc-kpis {
+    description "EN-DC Key Performance Indicators";
+    
+    leaf en-dc-setup-success-rate {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      units "percent";
+      description "EN-DC session setup success rate";
+    }
+    
+    leaf en-dc-setup-latency {
+      type uint32;
+      units "ms";
+      description "Average EN-DC setup latency";
+    }
+    
+    leaf scg-activation-rate {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      units "percent";
+    }
+    
+    leaf split-bearer-efficiency {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      units "percent";
+    }
+    
+    leaf active-en-dc-sessions {
+      type uint32;
+    }
+    
+    leaf total-throughput {
+      type uint64;
+      units "Gbps";
+      description "Total throughput across all EN-DC sessions";
+    }
+    
+    leaf scg-utilization {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      units "percent";
+    }
+  }
+
+  notification en-dc-session-event {
+    description "EN-DC session state change notification";
+    
+    leaf session-id {
+      type string;
+    }
+    
+    leaf event-type {
+      type enumeration {
+        enum session-created;
+        enum session-activated;
+        enum session-suspended;
+        enum session-released;
+        enum session-failed;
+      }
+    }
+    
+    leaf menb-id {
+      type string;
+    }
+    
+    leaf sgnb-id {
+      type string;
+    }
+    
+    leaf timestamp {
+      type yang:date-and-time;
+    }
+    
+    leaf reason {
+      type string;
+      description "Reason for event (if applicable)";
+    }
+  }
+
+  rpc setup-en-dc-session {
+    description "Setup new EN-DC dual connectivity session";
+    
+    input {
+      leaf ue-id {
+        type string;
+        mandatory true;
+      }
+      leaf menb-id {
+        type string;
+        mandatory true;
+      }
+      leaf sgnb-id {
+        type string;
+        mandatory true;
+      }
+      leaf bearer-type {
+        type bearer-type;
+        default split-bearer;
+      }
+    }
+    
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failure;
+          enum partial;
+        }
+      }
+      leaf session-id {
+        type string;
+      }
+      leaf scg-activation-status {
+        type enumeration {
+          enum activated;
+          enum pending;
+          enum failed;
+        }
+      }
+      leaf error-details {
+        type string;
+      }
+    }
+  }
+
+  rpc modify-scg-configuration {
+    description "Modify Secondary Cell Group configuration";
+    
+    input {
+      leaf session-id {
+        type string;
+        mandatory true;
+      }
+      leaf action {
+        type enumeration {
+          enum activate-scg;
+          enum deactivate-scg;
+          enum modify-split-ratio;
+          enum add-scg-cell;
+          enum remove-scg-cell;
+        }
+        mandatory true;
+      }
+      leaf parameter {
+        type string;
+        description "Additional parameter for action";
+      }
+    }
+    
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failure;
+        }
+      }
+      leaf new-state {
+        type en-dc-state;
+      }
+    }
+  }
+
+  rpc release-en-dc-session {
+    description "Release EN-DC dual connectivity session";
+    
+    input {
+      leaf session-id {
+        type string;
+        mandatory true;
+      }
+      leaf release-reason {
+        type enumeration {
+          enum normal;
+          enum handover;
+          enum failure;
+          enum timeout;
+        }
+        default normal;
+      }
+    }
+    
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failure;
+        }
+      }
+      leaf mcg-status {
+        type enumeration {
+          enum retained;
+          enum released;
+        }
+      }
+    }
+  }
+}

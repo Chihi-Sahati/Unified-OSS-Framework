@@ -1,0 +1,3327 @@
+module ericsson-huawei-unified-fault-management {
+  yang-version 1.1;
+  namespace "urn:cim:fcaps:fault:v1";
+  prefix "fcaps-fault";
+  
+  import ietf-yang-types {
+    prefix yang;
+  }
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import ietf-datastores {
+    prefix ds;
+  }
+
+  organization "Unified OSS Framework Consortium";
+  contact "oss-framework@example.com";
+  
+  description
+    "YANG data model for Fault Management within the Unified OSS Framework.
+     This module provides vendor-neutral alarm and fault management capabilities
+     for multi-vendor network environments including Ericsson ENM and Huawei U2000.
+     
+     Copyright (c) 2024 Unified OSS Framework Consortium.
+     All rights reserved.";
+  
+  revision 2024-03-01 {
+    description 
+      "Initial version - Fault Management YANG model for Ericsson/Huawei
+       multi-vendor network element management.
+       
+       Key features:
+       - Normalized alarm severity enumeration
+       - Cross-vendor alarm correlation
+       - Root cause analysis support
+       - Service impact assessment
+       - Automated remedial action tracking
+       - Alarm suppression rules
+       - Notification preferences
+       - Performance metrics";
+    reference 
+      "IEEE Transactions on Network and Service Management;
+       3GPP TS 28.541 - Network Resource Model;
+       ITU-T X.733 - Alarm Reporting Function;
+       TM Forum TMF512 - Alarm Management";
+  }
+
+  /***************************************************************************
+   * FEATURE DEFINITIONS
+   ***************************************************************************/
+  
+  feature alarm-correlation {
+    description "Enable alarm correlation analysis";
+  }
+  
+  feature root-cause-analysis {
+    description "Enable automated root cause analysis";
+  }
+  
+  feature service-impact-assessment {
+    description "Enable service impact assessment";
+  }
+  
+  feature automated-remediation {
+    description "Enable automated remedial actions";
+  }
+  
+  feature alarm-suppression {
+    description "Enable alarm suppression capabilities";
+  }
+  
+  feature alarm-escalation {
+    description "Enable alarm escalation workflows";
+  }
+  
+  feature alarm-forwarding {
+    description "Enable alarm forwarding to external systems";
+  }
+  
+  feature alarm-aging {
+    description "Enable alarm aging and auto-clearance";
+  }
+  
+  feature anomaly-detection {
+    description "Enable anomaly-based alarm detection";
+  }
+
+  /***************************************************************************
+   * IDENTITY DEFINITIONS
+   ***************************************************************************/
+  
+  identity alarm-type-base {
+    description "Base identity for alarm type classification";
+  }
+  
+  identity equipment-alarm {
+    base alarm-type-base;
+    description "Hardware/equipment related alarm";
+  }
+  
+  identity communication-alarm {
+    base alarm-type-base;
+    description "Communication/network related alarm";
+  }
+  
+  identity processing-alarm {
+    base alarm-type-base;
+    description "Processing/software related alarm";
+  }
+  
+  identity environmental-alarm {
+    base alarm-type-base;
+    description "Environmental condition alarm";
+  }
+  
+  identity quality-of-service-alarm {
+    base alarm-type-base;
+    description "QoS degradation alarm";
+  }
+  
+  identity security-alarm {
+    base alarm-type-base;
+    description "Security related alarm";
+  }
+  
+  identity integrity-violation {
+    base security-alarm;
+    description "Data integrity violation detected";
+  }
+  
+  identity operational-violation {
+    base security-alarm;
+    description "Operational security violation";
+  }
+  
+  identity physical-violation {
+    base security-alarm;
+    description "Physical security violation";
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Alarm Identification
+   ***************************************************************************/
+  
+  typedef alarm-id-type {
+    description 
+      "Globally unique alarm identifier.
+       UUID v4 format for unique identification across all systems.";
+    type string {
+      length "36..36";
+      pattern "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}";
+    }
+  }
+  
+  typedef vendor-alarm-code-type {
+    description 
+      "Vendor-specific alarm code identifier.
+       Supports alphanumeric codes from vendor systems.";
+    type string {
+      length "1..64";
+      pattern "[A-Za-z0-9_\\-\\.]+";
+    }
+  }
+  
+  typedef correlation-id-type {
+    description 
+      "Alarm correlation identifier for grouping related alarms.
+       UUID v4 format linking correlated alarms.";
+    type string {
+      length "36..36";
+      pattern "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+    }
+  }
+  
+  typedef ticket-id-type {
+    description 
+      "External ticket system reference identifier.
+       Supports various ticket system formats.";
+    type string {
+      length "1..64";
+      pattern "[A-Za-z0-9_\\-]+";
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Alarm Severity
+   ***************************************************************************/
+  
+  typedef alarm-severity-type {
+    description 
+      "Normalized alarm severity enumeration across vendors.
+       
+       Mapping tables:
+       - Ericsson: perceivedSeverity (CRITICAL, MAJOR, MINOR, WARNING, INDETERMINATE)
+       - Huawei: severityLevel (1=CRITICAL, 2=MAJOR, 3=MINOR, 4=WARNING, 0=INDETERMINATE)
+       - CIM: Standard severity as defined in ITU-T X.733";
+    type enumeration {
+      enum CRITICAL {
+        value 1;
+        description 
+          "System-level failure requiring immediate action.
+           Service is severely impacted or unavailable.
+           Examples: Site down, transmission failure, hardware failure.";
+      }
+      enum MAJOR {
+        value 2;
+        description 
+          "Significant service degradation.
+           Service is available but with degraded performance.
+           Examples: High CPU utilization, memory pressure, partial hardware failure.";
+      }
+      enum MINOR {
+        value 3;
+        description 
+          "Minor operational issue that does not impact service.
+           Should be addressed during maintenance window.
+           Examples: Fan speed degradation, temperature warning.";
+      }
+      enum WARNING {
+        value 4;
+        description 
+          "Non-critical advisory notification.
+           Proactive alert before service impact occurs.
+           Examples: Capacity threshold approaching, certificate expiry warning.";
+      }
+      enum INDETERMINATE {
+        value 0;
+        description 
+          "Severity cannot be determined from available information.
+           May require manual investigation or additional data collection.";
+      }
+      enum CLEARED {
+        value 5;
+        description 
+          "Alarm has been cleared and no longer active.
+           Retained for historical and audit purposes.";
+      }
+    }
+  }
+  
+  typedef severity-level-range {
+    description 
+      "Numeric severity level for filtering and comparison.
+       Lower values indicate higher severity (1=Critical, 5=Warning).";
+    type uint8 {
+      range "0..5";
+    }
+  }
+  
+  typedef severity-threshold-type {
+    description 
+      "Threshold for severity-based filtering and escalation.
+       Alarms at or below threshold trigger action.";
+    type alarm-severity-type;
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Alarm State
+   ***************************************************************************/
+  
+  typedef alarm-state-type {
+    description 
+      "Alarm operational state lifecycle.
+       
+       State transitions:
+       ACTIVE -> ACKNOWLEDGED -> CLEARED
+                    |
+                    v
+               RESOLVING -> CLEARED";
+    type enumeration {
+      enum ACTIVE {
+        value 1;
+        description 
+          "Alarm is currently active and requires attention.
+           No acknowledgment has been recorded.";
+      }
+      enum ACKNOWLEDGED {
+        value 2;
+        description 
+          "Alarm has been acknowledged by operator.
+           Work on resolution may be in progress.";
+      }
+      enum CLEARED {
+        value 3;
+        description 
+          "Alarm condition has been resolved.
+           The underlying fault has been corrected.";
+      }
+      enum RESOLVING {
+        value 4;
+        description 
+          "Automated resolution process is in progress.
+           System is attempting corrective action.";
+      }
+      enum SUPPRESSED {
+        value 5;
+        description 
+          "Alarm is suppressed due to correlation or policy.
+           Not displayed in active alarm views.";
+      }
+      enum DEFERRED {
+        value 6;
+        description 
+          "Alarm handling deferred to maintenance window.
+           Not requiring immediate action.";
+      }
+    }
+  }
+  
+  typedef acknowledgment-status-type {
+    description "Status of alarm acknowledgment process";
+    type enumeration {
+      enum ACKNOWLEDGED;
+      enum UNACKNOWLEDGED;
+      enum ACKNOWLEDGED_AND_CLEARED;
+      enum AUTO_ACKNOWLEDGED;
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Probable Cause
+   ***************************************************************************/
+  
+  typedef alarm-probable-cause-type {
+    description 
+      "Standardized probable cause classification based on ITU-T X.733
+       and 3GPP TS 32.111-2.";
+    type enumeration {
+      enum UNKNOWN {
+        value 0;
+        description "Cause cannot be determined";
+      }
+      enum HARDWARE_FAILURE {
+        value 1;
+        description "Physical hardware component failure";
+      }
+      enum SOFTWARE_ERROR {
+        value 2;
+        description "Software application or process error";
+      }
+      enum NETWORK_FAILURE {
+        value 3;
+        description "Network connectivity or protocol failure";
+      }
+      enum CONFIGURATION_ERROR {
+        value 4;
+        description "Invalid or conflicting configuration";
+      }
+      enum PERFORMANCE_DEGRADATION {
+        value 5;
+        description "System performance below threshold";
+      }
+      enum ENVIRONMENTAL_ISSUE {
+        value 6;
+        description "Environmental condition alert (temperature, power, etc.)";
+      }
+      enum SECURITY_INCIDENT {
+        value 7;
+        description "Security-related event or breach";
+      }
+      enum RESOURCE_EXHAUSTION {
+        value 8;
+        description "System resource limit reached (CPU, memory, storage)";
+      }
+      enum COMMUNICATION_FAILURE {
+        value 9;
+        description "Communication link or interface failure";
+      }
+      enum POWER_FAILURE {
+        value 10;
+        description "Power supply or distribution failure";
+      }
+      enum TIMING_FAILURE {
+        value 11;
+        description "Clock synchronization or timing failure";
+      }
+      enum TRANSPORT_FAILURE {
+        value 12;
+        description "Transport layer or transmission failure";
+      }
+      enum RADIO_FAILURE {
+        value 13;
+        description "Radio equipment or RF failure";
+      }
+      enum ANTENNA_FAILURE {
+        value 14;
+        description "Antenna system failure";
+      }
+      enum FIBER_FAILURE {
+        value 15;
+        description "Optical fiber or connection failure";
+      }
+      enum LICENSE_EXPIRY {
+        value 16;
+        description "Software license expired or invalid";
+      }
+      enum CAPACITY_LIMIT {
+        value 17;
+        description "Capacity limit reached or exceeded";
+      }
+      enum BACKUP_FAILURE {
+        value 18;
+        description "Backup process or storage failure";
+      }
+      enum SYNCHRONIZATION_FAILURE {
+        value 19;
+        description "Data or state synchronization failure";
+      }
+      enum DATABASE_FAILURE {
+        value 20;
+        description "Database system failure";
+      }
+      enum PROTOCOL_ERROR {
+        value 21;
+        description "Protocol implementation error";
+      }
+      enum AUTHENTICATION_FAILURE {
+        value 22;
+        description "Authentication process failure";
+      }
+      enum AUTHORIZATION_FAILURE {
+        value 23;
+        description "Authorization or permission failure";
+      }
+      enum INTEGRITY_VIOLATION {
+        value 24;
+        description "Data integrity violation detected";
+      }
+      enum THRESHOLD_CROSSED {
+        value 25;
+        description "Performance threshold crossed";
+      }
+      enum TRAFFIC_ABNORMALITY {
+        value 26;
+        description "Abnormal traffic pattern detected";
+      }
+      enum SERVICE_DEGRADATION {
+        value 27;
+        description "Service quality degradation";
+      }
+      enum MAINTENANCE_REQUIRED {
+        value 28;
+        description "Preventive maintenance required";
+      }
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Resource References
+   ***************************************************************************/
+  
+  typedef resource-path-type {
+    description 
+      "CIM hierarchical resource path identifier.
+       Standard format: /network/{vendor}/{resource-type}/{resource-id}";
+    type string {
+      length "1..512";
+      pattern "/network/[A-Za-z]+/[A-Za-z]+/[A-Za-z0-9_\\-]+(/[A-Za-z0-9_\\-]+)*";
+    }
+  }
+  
+  typedef resource-id-type {
+    description 
+      "Unique resource identifier within vendor system.";
+    type string {
+      length "1..128";
+      pattern "[A-Za-z0-9_\\-\\.:]+";
+    }
+  }
+  
+  typedef resource-type-enum {
+    description "Network resource type classification";
+    type enumeration {
+      enum NODE;
+      enum SITE;
+      enum CELL;
+      enum RADIO_UNIT;
+      enum ANTENNA;
+      enum TRANSMISSION_LINK;
+      enum PORT;
+      enum CARD;
+      enum SHELF;
+      enum RACK;
+      enum CONTROLLER;
+      enum GATEWAY;
+      enum SWITCH;
+      enum ROUTER;
+      enum SERVER;
+      enum VIRTUAL_MACHINE;
+      enum CONTAINER;
+      enum SERVICE;
+      enum INTERFACE;
+      enum VLAN;
+      enum TUNNEL;
+      enum BEARER;
+      enum SESSION;
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Correlation and Confidence
+   ***************************************************************************/
+  
+  typedef correlation-confidence-range {
+    description 
+      "Correlation confidence score indicating reliability of correlation analysis.
+       0.00 = No correlation, 1.00 = Perfect correlation match.";
+    type decimal64 {
+      fraction-digits 2;
+      range "0.00..1.00";
+    }
+  }
+  
+  typedef probability-percentage {
+    description 
+      "Probability expressed as percentage (0-100%).";
+    type decimal64 {
+      fraction-digits 2;
+      range "0.00..100.00";
+    }
+  }
+  
+  typedef similarity-score {
+    description 
+      "Similarity score for pattern matching and correlation.";
+    type decimal64 {
+      fraction-digits 4;
+      range "0.0000..1.0000";
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Time and Duration
+   ***************************************************************************/
+  
+  typedef duration-seconds {
+    description "Duration in seconds";
+    type uint32 {
+      range "0..4294967295";
+    }
+  }
+  
+  typedef duration-minutes {
+    description "Duration in minutes";
+    type uint32 {
+      range "0..525600";
+    }
+  }
+  
+  typedef duration-hours {
+    description "Duration in hours";
+    type uint16 {
+      range "0..8760";
+    }
+  }
+  
+  typedef time-window-seconds {
+    description "Time window for correlation and analysis (seconds)";
+    type uint32 {
+      range "1..86400";
+    }
+  }
+  
+  typedef alarm-age-hours {
+    description "Age of alarm in hours";
+    type decimal64 {
+      fraction-digits 2;
+      range "0.00..8784.00";
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Vendor Specifics
+   ***************************************************************************/
+  
+  typedef vendor-type {
+    description "Supported vendor system enumeration";
+    type enumeration {
+      enum ERICSSON {
+        value 1;
+        description "Ericsson ENM system";
+      }
+      enum HUAWEI {
+        value 2;
+        description "Huawei U2000/iManager system";
+      }
+      enum NOKIA {
+        value 3;
+        description "Nokia NFM-T/NSP system";
+      }
+      enum ZTE {
+        value 4;
+        description "ZTE NetNumen system";
+      }
+      enum SAMSUNG {
+        value 5;
+        description "Samsung NetManager system";
+      }
+      enum CISCO {
+        value 6;
+        description "Cisco Prime/NSO system";
+      }
+      enum CALCULATED {
+        value 99;
+        description "Calculated or derived data";
+      }
+    }
+  }
+  
+  typedef ericsson-severity-type {
+    description "Ericsson native severity enumeration";
+    type enumeration {
+      enum critical;
+      enum major;
+      enum minor;
+      enum warning;
+      enum indeterminate;
+      enum cleared;
+    }
+  }
+  
+  typedef huawei-severity-level {
+    description "Huawei native severity level (integer)";
+    type uint8 {
+      range "0..4";
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Clearance and Resolution
+   ***************************************************************************/
+  
+  typedef alarm-clearance-reason-type {
+    description 
+      "Classification of alarm clearance reason.";
+    type enumeration {
+      enum RESOLVED {
+        value 1;
+        description "Underlying issue has been corrected";
+      }
+      enum FALSE_POSITIVE {
+        value 2;
+        description "Alarm was determined to be invalid";
+      }
+      enum MAINTENANCE_WINDOW {
+        value 3;
+        description "Cleared as part of planned maintenance";
+      }
+      enum SUPPRESSED {
+        value 4;
+        description "Alarm suppressed by correlation or policy";
+      }
+      enum AUTO_CLEARED {
+        value 5;
+        description "Automatically cleared by system";
+      }
+      enum AGED_OUT {
+        value 6;
+        description "Cleared due to aging policy";
+      }
+      enum USER_CLEARED {
+        value 7;
+        description "Manually cleared by user";
+      }
+      enum SYSTEM_RESTART {
+        value 8;
+        description "Cleared due to system restart";
+      }
+      enum CORRELATION_CLEARED {
+        value 9;
+        description "Cleared as secondary to root cause";
+      }
+    }
+  }
+  
+  typedef resolution-method-type {
+    description "Method used to resolve the alarm";
+    type enumeration {
+      enum MANUAL;
+      enum AUTOMATED;
+      enum SEMI_AUTOMATED;
+      enum SELF_HEALING;
+      enum EXTERNAL_SYSTEM;
+      enum MAINTENANCE_ACTIVITY;
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Escalation
+   ***************************************************************************/
+  
+  typedef escalation-level-type {
+    description "Escalation level within support hierarchy";
+    type uint8 {
+      range "0..10";
+    }
+  }
+  
+  typedef escalation-policy-type {
+    description "Escalation policy classification";
+    type enumeration {
+      enum TIME_BASED;
+      enum SEVERITY_BASED;
+      enum IMPACT_BASED;
+      enum COMBINED;
+      enum CUSTOM;
+    }
+  }
+  
+  typedef escalation-action-type {
+    description "Action taken during escalation";
+    type enumeration {
+      enum NOTIFY;
+      enum ASSIGN;
+      enum TRANSFER;
+      enum CREATE_TICKET;
+      enum PAGE;
+      enum CALL;
+      enum EMAIL;
+      enum SMS;
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Impact Assessment
+   ***************************************************************************/
+  
+  typedef impact-level-type {
+    description "Service impact level classification";
+    type enumeration {
+      enum CRITICAL_IMPACT {
+        value 1;
+        description "Complete service outage";
+      }
+      enum HIGH_IMPACT {
+        value 2;
+        description "Significant service degradation";
+      }
+      enum MEDIUM_IMPACT {
+        value 3;
+        description "Partial service impact";
+      }
+      enum LOW_IMPACT {
+        value 4;
+        description "Minimal service impact";
+      }
+      enum NO_IMPACT {
+        value 5;
+        description "No service impact";
+      }
+    }
+  }
+  
+  typedef affected-service-type {
+    description "Type of affected telecommunication service";
+    type enumeration {
+      enum VOICE;
+      enum DATA;
+      enum SMS;
+      enum MMS;
+      enum VIDEO;
+      enum VOLTE;
+      enum VOWIFI;
+      enum LTE;
+      enum NR_5G;
+      enum UMTS;
+      enum GSM;
+      enum EMERGENCY;
+      enum IMS;
+      enum EPC;
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Notifications
+   ***************************************************************************/
+  
+  typedef notification-channel-type {
+    description "Notification delivery channel";
+    type enumeration {
+      enum EMAIL;
+      enum SMS;
+      enum SNMP_TRAP;
+      enum SYSLOG;
+      enum WEBHOOK;
+      enum WEBSOCKET;
+      enum KAFKA;
+      enum AMQP;
+      enum PAGERDUTY;
+    }
+  }
+  
+  typedef notification-priority {
+    description "Notification delivery priority";
+    type enumeration {
+      enum IMMEDIATE;
+      enum HIGH;
+      enum NORMAL;
+      enum LOW;
+      enum BATCHED;
+    }
+  }
+  
+  typedef notification-status-type {
+    description "Status of notification delivery";
+    type enumeration {
+      enum PENDING;
+      enum SENT;
+      enum DELIVERED;
+      enum FAILED;
+      enum RETRYING;
+      enum SUPPRESSED;
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Statistics and Metrics
+   ***************************************************************************/
+  
+  typedef percentage-value {
+    description "Generic percentage value (0-100)";
+    type decimal64 {
+      fraction-digits 2;
+      range "0.00..100.00";
+    }
+  }
+  
+  typedef count-value {
+    description "Generic count value";
+    type uint64;
+  }
+  
+  typedef rate-value {
+    description "Rate value per time unit";
+    type decimal64 {
+      fraction-digits 4;
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS - Vendor Source Details
+   ***************************************************************************/
+  
+  grouping vendor-source-details {
+    description 
+      "Common grouping for vendor-specific source information.";
+    
+    leaf vendor-alarm-code {
+      type vendor-alarm-code-type;
+      description 
+        "Original vendor-specific alarm code.
+         Ericsson: alarmId (e.g., 'A1001', 'SW-EQUIPMENT-1')
+         Huawei: alarmId (e.g., '0x0411FFFF', 'ALM-001')";
+    }
+    
+    leaf vendor-alarm-name {
+      type string {
+        length "1..256";
+      }
+      description 
+        "Original vendor alarm name in human-readable format.
+         Example: 'Radio Unit Connection Failure', 'CPU Overload'";
+    }
+    
+    leaf source-node-ip {
+      type inet:ip-address;
+      description 
+        "Source network element IP address.
+         Used for network management routing and diagnostics.";
+    }
+    
+    leaf source-node-name {
+      type string {
+        length "1..128";
+      }
+      description 
+        "Source network element name as configured in vendor OSS.
+         Example: 'ENB-HCM-001', 'RNC-BKK-NORTH'";
+    }
+    
+    leaf source-shelf {
+      type string;
+      description "Physical shelf/slot identifier if applicable";
+    }
+    
+    leaf source-slot {
+      type string;
+      description "Physical slot identifier within shelf";
+    }
+    
+    leaf source-port {
+      type string;
+      description "Physical port identifier";
+    }
+    
+    leaf source-subsystem {
+      type string;
+      description "Subsystem or module within the network element";
+    }
+    
+    leaf source-location {
+      type string;
+      description "Physical location (site, building, room)";
+    }
+    
+    leaf source-mcc {
+      type uint16;
+      description "Mobile Country Code";
+    }
+    
+    leaf source-mnc {
+      type uint16;
+      description "Mobile Network Code";
+    }
+    
+    leaf source-cell-id {
+      type uint32;
+      description "Cell Identity (CI)";
+    }
+  }
+  
+  /***************************************************************************
+   * GROUPING DEFINITIONS - Correlation Metadata
+   ***************************************************************************/
+  
+  grouping correlation-metadata {
+    description 
+      "Alarm correlation and causality tracking information.";
+    
+    leaf-list correlated-alarm-ids {
+      type alarm-id-type;
+      ordered-by system;
+      description 
+        "Related alarm IDs that may be causally linked.
+         Used for alarm correlation analysis and root cause determination.";
+    }
+    
+    leaf root-cause-alarm-id {
+      type alarm-id-type;
+      description 
+        "Root cause alarm ID if determined through correlation analysis.
+         NULL if this alarm is the root cause or correlation not performed.";
+    }
+    
+    leaf correlation-confidence {
+      type correlation-confidence-range;
+      description 
+        "Correlation confidence score.
+         0.00 = No correlation established
+         1.00 = Perfect correlation match
+         Values between indicate probability of correct correlation.";
+    }
+    
+    leaf correlation-timestamp {
+      type yang:date-and-time;
+      description "Timestamp when correlation analysis was performed";
+    }
+    
+    leaf correlation-rule-id {
+      type string;
+      description "Identifier of correlation rule that matched";
+    }
+    
+    leaf correlation-method {
+      type enumeration {
+        enum TEMPORAL;
+        enum SPATIAL;
+        enum CAUSAL;
+        enum TOPOLOGICAL;
+        enum PATTERN_BASED;
+        enum ML_BASED;
+      }
+      description "Method used for correlation";
+    }
+    
+    leaf correlation-group-id {
+      type string;
+      description "Group identifier for batch correlation";
+    }
+  }
+  
+  /***************************************************************************
+   * GROUPING DEFINITIONS - Impact Assessment
+   ***************************************************************************/
+  
+  grouping impact-assessment {
+    description 
+      "Service impact analysis and customer affect data.";
+    
+    leaf-list affected-services {
+      type affected-service-type;
+      description 
+        "Services impacted by this alarm.";
+    }
+    
+    leaf customer-count {
+      type uint32;
+      description 
+        "Estimated number of customers affected by this alarm.
+         Calculated based on service topology and capacity data.";
+    }
+    
+    leaf estimated-revenue-impact {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      units "USD";
+      description 
+        "Estimated revenue impact in USD per hour of outage.
+         Used for priority escalation and SLA tracking.";
+    }
+    
+    leaf sla-breach-indicator {
+      type boolean;
+      description 
+        "True if alarm condition may cause SLA breach.
+         Used for automatic escalation trigger.";
+    }
+    
+    leaf impact-level {
+      type impact-level-type;
+      description "Overall impact level assessment";
+    }
+    
+    leaf geographic-impact {
+      type string;
+      description "Geographic area affected (city, region, country)";
+    }
+    
+    leaf affected-cell-count {
+      type uint32;
+      description "Number of cells affected by this alarm";
+    }
+    
+    leaf affected-site-count {
+      type uint32;
+      description "Number of sites affected by this alarm";
+    }
+  }
+  
+  /***************************************************************************
+   * GROUPING DEFINITIONS - Remedial Actions
+   ***************************************************************************/
+  
+  grouping remedial-actions {
+    description 
+      "Recommended or automated remediation.";
+    
+    leaf-list suggested-actions {
+      type string;
+      ordered-by system;
+      description 
+        "Operator-actionable remediation steps.
+         Ordered by recommended execution sequence.";
+    }
+    
+    leaf-list executed-actions {
+      type string;
+      ordered-by system;
+      description 
+        "Automatically executed remediation steps.
+         Logged with timestamp and result.";
+    }
+    
+    leaf action-status {
+      type enumeration {
+        enum PENDING;
+        enum IN_PROGRESS;
+        enum COMPLETED;
+        enum FAILED;
+        enum ROLLED_BACK;
+        enum TIMEOUT;
+      }
+      description "Current status of remediation efforts";
+    }
+    
+    leaf last-action-timestamp {
+      type yang:date-and-time;
+      description "When last action was taken";
+    }
+    
+    leaf action-result {
+      type string;
+      description "Result of last remediation action";
+    }
+    
+    leaf self-healing-attempted {
+      type boolean;
+      description "Whether self-healing was attempted";
+    }
+    
+    leaf self-healing-success {
+      type boolean;
+      description "Whether self-healing succeeded";
+    }
+  }
+  
+  /***************************************************************************
+   * GROUPING DEFINITIONS - Audit Trail
+   ***************************************************************************/
+  
+  grouping audit-trail-entry {
+    description 
+      "Single audit trail entry for state change.";
+    
+    leaf transition-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When the state change occurred";
+    }
+    
+    leaf previous-state {
+      type alarm-state-type;
+      description "State before transition";
+    }
+    
+    leaf new-state {
+      type alarm-state-type;
+      mandatory true;
+      description "State after transition";
+    }
+    
+    leaf previous-severity {
+      type alarm-severity-type;
+      description "Severity before change";
+    }
+    
+    leaf new-severity {
+      type alarm-severity-type;
+      description "Severity after change";
+    }
+    
+    leaf changed-by {
+      type string {
+        length "1..128";
+      }
+      mandatory true;
+      description 
+        "User ID or system component performing change.
+         System users: 'CORRELATION_ENGINE', 'AUTO_CLEAR_SERVICE'
+         Human users: Active Directory user ID";
+    }
+    
+    leaf change-reason {
+      type string;
+      description 
+        "Explanation for state change.
+         Required for manual transitions, optional for automatic.";
+    }
+    
+    leaf source-ip {
+      type inet:ip-address;
+      description "IP address of client initiating change";
+    }
+    
+    leaf session-id {
+      type string;
+      description "Session identifier for audit correlation";
+    }
+  }
+  
+  /***************************************************************************
+   * GROUPING DEFINITIONS - Escalation Info
+   ***************************************************************************/
+  
+  grouping escalation-info {
+    description 
+      "Escalation tracking and policy enforcement.";
+    
+    leaf escalation-level {
+      type escalation-level-type;
+      description 
+        "Current escalation level.
+         0 = Not escalated
+         1-5 = Escalation tiers (higher = more urgent)";
+    }
+    
+    leaf escalation-group {
+      type string {
+        length "1..64";
+      }
+      description 
+        "Assigned escalation group.
+         Examples: 'NOC_TIER1', 'RF_ENGINEERING', 'VENDOR_SUPPORT'";
+    }
+    
+    leaf escalation-timestamp {
+      type yang:date-and-time;
+      description "When escalation was triggered";
+    }
+    
+    leaf escalation-ticket-id {
+      type ticket-id-type;
+      description "External ticket system reference if created";
+    }
+    
+    leaf escalation-policy {
+      type string;
+      description "Name of escalation policy applied";
+    }
+    
+    leaf next-escalation-time {
+      type yang:date-and-time;
+      description "When next escalation will occur if not addressed";
+    }
+    
+    leaf-list notification-recipients {
+      type string;
+      description "Users/groups notified for this escalation";
+    }
+  }
+
+  /***************************************************************************
+   * CONTAINER DEFINITIONS - Fault Management Root
+   ***************************************************************************/
+  
+  container faults {
+    description 
+      "Root container for alarm/fault management.
+       Contains all alarm records and fault statistics.";
+    
+    leaf schema-version {
+      type string {
+        pattern "[0-9]+\\.[0-9]+\\.[0-9]+";
+      }
+      config false;
+      description "Current fault management schema version";
+    }
+    
+    leaf total-active-alarms {
+      type uint32;
+      config false;
+      description 
+        "Count of currently active alarms (state = ACTIVE or ACKNOWLEDGED).
+         Updated in real-time as alarm state changes.";
+    }
+    
+    leaf total-cleared-alarms {
+      type uint64;
+      config false;
+      description 
+        "Cumulative count of cleared alarms since system initialization.
+         Monotonically increasing counter.";
+    }
+    
+    leaf-list alarm-severity-distribution {
+      type alarm-severity-type;
+      config false;
+      ordered-by system;
+      description 
+        "Distribution of active alarm severities.
+         Provides quick overview of system health status.";
+    }
+    
+    leaf last-alarm-timestamp {
+      type yang:date-and-time;
+      config false;
+      description "Timestamp of most recent alarm event";
+    }
+    
+    leaf alarms-last-hour {
+      type uint32;
+      config false;
+      description "Number of alarms in the last hour";
+    }
+    
+    leaf alarms-last-24-hours {
+      type uint32;
+      config false;
+      description "Number of alarms in the last 24 hours";
+    }
+    
+    leaf mean-time-to-repair-hours {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      config false;
+      description "Average time to repair alarms (MTTR) in hours";
+    }
+
+    /*************************************************************************
+     * ALARM RECORD LIST
+     *************************************************************************/
+    
+    list alarm {
+      key "alarm-id";
+      description 
+        "Individual alarm record containing all alarm lifecycle information.
+         Each alarm represents a single fault condition detected by the system.";
+      config false;
+      
+      leaf alarm-id {
+        type alarm-id-type;
+        description 
+          "Globally unique alarm identifier (UUID v4).
+           Generated at alarm creation time.";
+      }
+      
+      leaf source-vendor {
+        type vendor-type;
+        mandatory true;
+        description 
+          "Originating vendor system identification.
+           Used for routing alarm to appropriate vendor-specific handlers.";
+      }
+      
+      leaf timestamp {
+        type yang:date-and-time;
+        mandatory true;
+        description 
+          "Alarm detection timestamp (ISO 8601 UTC format).
+           Time when the fault condition was first detected by the system.";
+      }
+      
+      leaf alarm-type {
+        type string {
+          length "1..128";
+        }
+        mandatory true;
+        description 
+          "Vendor-independent alarm classification.
+           Maps from vendor-specific types through semantic mapping rules.
+           Examples: 'EquipmentFailure', 'ConnectivityLoss', 'ThresholdBreach'";
+      }
+      
+      leaf alarm-type-id {
+        type identityref {
+          base alarm-type-base;
+        }
+        description "Standardized alarm type identity";
+      }
+      
+      leaf severity {
+        type alarm-severity-type;
+        mandatory true;
+        description 
+          "Normalized alarm severity level.
+           Derived from vendor-specific severity through mapping rules.";
+      }
+      
+      leaf state {
+        type alarm-state-type;
+        mandatory true;
+        description 
+          "Current alarm lifecycle state.
+           Transitions through ACTIVE -> ACKNOWLEDGED -> CLEARED.";
+      }
+      
+      leaf probable-cause {
+        type alarm-probable-cause-type;
+        description 
+          "Root cause classification based on ITU-T X.733.
+           May be determined through correlation analysis or direct mapping.";
+      }
+      
+      leaf probable-cause-description {
+        type string;
+        description "Detailed description of probable cause";
+      }
+      
+      leaf affected-resource {
+        type resource-path-type;
+        mandatory true;
+        description 
+          "CIM path of affected network element.
+           Standard path format: /network/{vendor}/{resource-type}/{resource-id}";
+      }
+      
+      leaf affected-resource-id {
+        type resource-id-type;
+        description 
+          "Unique identifier of affected resource within vendor system.";
+      }
+      
+      leaf affected-resource-type {
+        type resource-type-enum;
+        description "Type of affected resource";
+      }
+      
+      leaf alarm-text {
+        type string;
+        description "Full alarm description text";
+      }
+      
+      leaf additional-text {
+        type string;
+        description "Additional information and context";
+      }
+      
+      container source-details {
+        description 
+          "Vendor-specific alarm source information.
+           Contains original vendor data for troubleshooting.";
+        uses vendor-source-details;
+      }
+      
+      container correlation {
+        description 
+          "Alarm correlation and causality tracking.
+           Populated by correlation engine after analysis.";
+        uses correlation-metadata;
+      }
+      
+      container impact {
+        description 
+          "Service impact analysis data.
+           Populated by impact assessment engine.";
+        uses impact-assessment;
+      }
+      
+      container remedial-actions {
+        description 
+          "Recommended or automated remediation actions.";
+        uses remedial-actions;
+      }
+      
+      container escalation {
+        description 
+          "Escalation tracking and policy enforcement.";
+        uses escalation-info;
+      }
+      
+      container audit-trail {
+        description 
+          "Complete history of alarm state changes.";
+        
+        list state-change {
+          description 
+            "Individual state transition record.";
+          uses audit-trail-entry;
+        }
+      }
+      
+      container additional-information {
+        description "Extensible additional alarm data";
+        
+        list parameter {
+          key "name";
+          
+          leaf name {
+            type string;
+          }
+          
+          leaf value {
+            type string;
+          }
+          
+          leaf data-type {
+            type string;
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * ALARM STATISTICS
+     *************************************************************************/
+    
+    container alarm-statistics {
+      config false;
+      description "Real-time alarm statistics and metrics";
+      
+      container by-severity {
+        description "Statistics grouped by severity";
+        
+        list severity-count {
+          key "severity";
+          
+          leaf severity {
+            type alarm-severity-type;
+          }
+          
+          leaf count {
+            type uint32;
+          }
+          
+          leaf percentage {
+            type percentage-value;
+          }
+        }
+      }
+      
+      container by-vendor {
+        description "Statistics grouped by vendor";
+        
+        list vendor-count {
+          key "vendor";
+          
+          leaf vendor {
+            type vendor-type;
+          }
+          
+          leaf count {
+            type uint32;
+          }
+        }
+      }
+      
+      container by-state {
+        description "Statistics grouped by state";
+        
+        list state-count {
+          key "state";
+          
+          leaf state {
+            type alarm-state-type;
+          }
+          
+          leaf count {
+            type uint32;
+          }
+        }
+      }
+      
+      container by-resource-type {
+        description "Statistics grouped by resource type";
+        
+        list resource-type-count {
+          key "resource-type";
+          
+          leaf resource-type {
+            type resource-type-enum;
+          }
+          
+          leaf count {
+            type uint32;
+          }
+        }
+      }
+      
+      container time-based {
+        description "Time-based statistics";
+        
+        leaf count-last-hour {
+          type uint32;
+        }
+        
+        leaf count-last-6-hours {
+          type uint32;
+        }
+        
+        leaf count-last-24-hours {
+          type uint32;
+        }
+        
+        leaf count-last-7-days {
+          type uint32;
+        }
+        
+        leaf count-last-30-days {
+          type uint32;
+        }
+      }
+    }
+  }
+
+  /***************************************************************************
+   * ALARM CORRELATION RULES
+   ***************************************************************************/
+  
+  container alarm-correlation-rules {
+    description 
+      "Configuration of rules for cross-vendor alarm correlation.";
+    config true;
+    
+    leaf correlation-enabled {
+      type boolean;
+      default true;
+      description "Enable alarm correlation processing";
+    }
+    
+    leaf correlation-interval-seconds {
+      type uint32 {
+        range "10..3600";
+      }
+      default 60;
+      description "Interval between correlation analysis runs";
+    }
+    
+    leaf max-correlation-group-size {
+      type uint8 {
+        range "2..50";
+      }
+      default 20;
+      description "Maximum alarms in a correlation group";
+    }
+    
+    list correlation-rule {
+      key "rule-id";
+      description 
+        "Individual correlation rule definition.";
+      
+      leaf rule-id {
+        type string {
+          length "1..64";
+          pattern "[A-Za-z][A-Za-z0-9_-]*";
+        }
+        description "Unique rule identifier";
+      }
+      
+      leaf description {
+        type string {
+          length "1..512";
+        }
+        description "Human-readable description of correlation logic";
+      }
+      
+      leaf enabled {
+        type boolean;
+        default true;
+        description "Enable or disable this correlation rule";
+      }
+      
+      leaf priority {
+        type uint8 {
+          range "1..100";
+        }
+        default 50;
+        description "Rule evaluation priority (higher = first)";
+      }
+      
+      container match-criteria {
+        description 
+          "Alarm filtering conditions for rule matching.";
+        
+        leaf-list severity-list {
+          type alarm-severity-type;
+          min-elements 1;
+          description "Match alarms with these severities";
+        }
+        
+        leaf-list alarm-type-list {
+          type string;
+          description "Match alarms of these types";
+        }
+        
+        leaf resource-pattern {
+          type string;
+          description "XPath pattern for affected resource matching";
+        }
+        
+        leaf time-window-seconds {
+          type time-window-seconds;
+          default 300;
+          description "Time window for correlation";
+        }
+        
+        leaf vendor-filter {
+          type enumeration {
+            enum BOTH;
+            enum ERICSSON_ONLY;
+            enum HUAWEI_ONLY;
+            enum CROSS_VENDOR;
+          }
+          default BOTH;
+          description "Vendor filtering for correlation";
+        }
+        
+        leaf location-pattern {
+          type string;
+          description "Pattern for location-based correlation";
+        }
+        
+        leaf max-distance-km {
+          type uint16;
+          description "Maximum distance for geographic correlation";
+        }
+      }
+      
+      container correlation-action {
+        description "Action to take when correlation rule matches";
+        
+        leaf correlation-type {
+          type enumeration {
+            enum AGGREGATE;
+            enum SUPPRESS_SECONDARY;
+            enum CREATE_COMPOSITE;
+            enum ESCALATE;
+            enum ROOT_CAUSE_IDENTIFY;
+          }
+          mandatory true;
+          description "Type of correlation action";
+        }
+        
+        leaf target-action {
+          type string;
+          description "Additional action specification";
+        }
+        
+        leaf notification-template {
+          type string;
+          description "Template ID for notification generation";
+        }
+        
+        leaf create-ticket {
+          type boolean;
+          default false;
+          description "Create ticket for correlated alarms";
+        }
+      }
+      
+      container statistics {
+        config false;
+        description "Rule execution statistics";
+        
+        leaf times-matched {
+          type uint64;
+        }
+        
+        leaf last-match-timestamp {
+          type yang:date-and-time;
+        }
+        
+        leaf alarms-correlated {
+          type uint64;
+        }
+      }
+    }
+  }
+
+  /***************************************************************************
+   * ALARM SUPPRESSION RULES
+   ***************************************************************************/
+  
+  container alarm-suppression-rules {
+    if-feature alarm-suppression;
+    description 
+      "Configuration of alarm suppression rules for planned maintenance
+       and known issues.";
+    config true;
+    
+    list suppression-rule {
+      key "rule-id";
+      description "Individual suppression rule definition";
+      
+      leaf rule-id {
+        type string {
+          length "1..64";
+        }
+      }
+      
+      leaf name {
+        type string {
+          length "1..128";
+        }
+        mandatory true;
+      }
+      
+      leaf description {
+        type string;
+      }
+      
+      leaf enabled {
+        type boolean;
+        default true;
+      }
+      
+      leaf suppression-type {
+        type enumeration {
+          enum MAINTENANCE;
+          enum KNOWN_ISSUE;
+          enum TESTING;
+          enum PLANNED_OUTAGE;
+          enum VENDOR_ISSUE;
+        }
+        mandatory true;
+      }
+      
+      leaf start-time {
+        type yang:date-and-time;
+        description "When suppression starts";
+      }
+      
+      leaf end-time {
+        type yang:date-and-time;
+        description "When suppression ends";
+      }
+      
+      leaf recurring {
+        type boolean;
+        default false;
+        description "Whether suppression is recurring";
+      }
+      
+      leaf recurrence-pattern {
+        type string;
+        description "Cron-style recurrence pattern";
+      }
+      
+      container match-criteria {
+        description "Criteria for alarm suppression";
+        
+        leaf-list vendor-filter {
+          type vendor-type;
+        }
+        
+        leaf-list severity-filter {
+          type alarm-severity-type;
+        }
+        
+        leaf-list alarm-type-filter {
+          type string;
+        }
+        
+        leaf resource-pattern {
+          type string;
+        }
+        
+        leaf location-pattern {
+          type string;
+        }
+      }
+      
+      leaf ticket-id {
+        type ticket-id-type;
+        description "Associated ticket for this suppression";
+      }
+      
+      leaf approved-by {
+        type string;
+        description "User who approved this suppression";
+      }
+      
+      leaf approval-timestamp {
+        type yang:date-and-time;
+      }
+      
+      container statistics {
+        config false;
+        
+        leaf alarms-suppressed {
+          type uint64;
+        }
+        
+        leaf last-suppression {
+          type yang:date-and-time;
+        }
+      }
+    }
+  }
+
+  /***************************************************************************
+   * ALARM NOTIFICATION PREFERENCES
+   ***************************************************************************/
+  
+  container alarm-notification-preferences {
+    description 
+      "User and system notification preferences for alarms.";
+    config true;
+    
+    list notification-profile {
+      key "profile-name";
+      description "Notification profile definition";
+      
+      leaf profile-name {
+        type string {
+          length "1..64";
+        }
+      }
+      
+      leaf description {
+        type string;
+      }
+      
+      leaf enabled {
+        type boolean;
+        default true;
+      }
+      
+      leaf-list assigned-users {
+        type string;
+        description "Users assigned to this profile";
+      }
+      
+      leaf-list assigned-groups {
+        type string;
+        description "Groups assigned to this profile";
+      }
+      
+      container severity-filters {
+        description "Notification filters by severity";
+        
+        leaf notify-critical {
+          type boolean;
+          default true;
+        }
+        
+        leaf notify-major {
+          type boolean;
+          default true;
+        }
+        
+        leaf notify-minor {
+          type boolean;
+          default true;
+        }
+        
+        leaf notify-warning {
+          type boolean;
+          default false;
+        }
+        
+        leaf notify-indeterminate {
+          type boolean;
+          default false;
+        }
+      }
+      
+      container notification-channels {
+        description "Configured notification channels";
+        
+        leaf email-enabled {
+          type boolean;
+          default true;
+        }
+        
+        leaf email-recipients {
+          type string;
+          description "Comma-separated email addresses";
+        }
+        
+        leaf sms-enabled {
+          type boolean;
+          default false;
+        }
+        
+        leaf sms-recipients {
+          type string;
+          description "Comma-separated phone numbers";
+        }
+        
+        leaf snmp-trap-enabled {
+          type boolean;
+          default false;
+        }
+        
+        leaf snmp-trap-destination {
+          type inet:ip-address;
+        }
+        
+        leaf webhook-enabled {
+          type boolean;
+          default false;
+        }
+        
+        leaf webhook-url {
+          type string;
+        }
+        
+        leaf kafka-enabled {
+          type boolean;
+          default false;
+        }
+        
+        leaf kafka-topic {
+          type string;
+        }
+      }
+      
+      container quiet-hours {
+        description "Quiet hours configuration";
+        
+        leaf enabled {
+          type boolean;
+          default false;
+        }
+        
+        leaf start-time {
+          type string {
+            pattern "[0-9]{2}:[0-9]{2}";
+          }
+          description "Start time (HH:MM)";
+        }
+        
+        leaf end-time {
+          type string {
+            pattern "[0-9]{2}:[0-9]{2}";
+          }
+          description "End time (HH:MM)";
+        }
+        
+        leaf-list exclude-days {
+          type enumeration {
+            enum MONDAY;
+            enum TUESDAY;
+            enum WEDNESDAY;
+            enum THURSDAY;
+            enum FRIDAY;
+            enum SATURDAY;
+            enum SUNDAY;
+          }
+        }
+      }
+    }
+  }
+
+  /***************************************************************************
+   * ALARM PERFORMANCE METRICS
+   ***************************************************************************/
+  
+  container alarm-performance-metrics {
+    config false;
+    description "Performance metrics for alarm management system";
+    
+    container ingestion-metrics {
+      description "Alarm ingestion performance";
+      
+      leaf total-alarms-received {
+        type uint64;
+        description "Total alarms received from all vendors";
+      }
+      
+      leaf alarms-received-ericsson {
+        type uint64;
+      }
+      
+      leaf alarms-received-huawei {
+        type uint64;
+      }
+      
+      leaf ingestion-rate-per-minute {
+        type rate-value;
+        description "Current alarm ingestion rate";
+      }
+      
+      leaf peak-ingestion-rate {
+        type rate-value;
+        description "Peak alarm ingestion rate recorded";
+      }
+      
+      leaf ingestion-errors {
+        type uint64;
+      }
+      
+      leaf average-processing-time-ms {
+        type decimal64 {
+          fraction-digits 2;
+        }
+      }
+    }
+    
+    container correlation-metrics {
+      description "Alarm correlation performance";
+      
+      leaf total-correlations-performed {
+        type uint64;
+      }
+      
+      leaf successful-correlations {
+        type uint64;
+      }
+      
+      leaf average-correlation-time-ms {
+        type decimal64 {
+          fraction-digits 2;
+        }
+      }
+      
+      leaf root-causes-identified {
+        type uint64;
+      }
+      
+      leaf correlation-accuracy {
+        type percentage-value;
+      }
+    }
+    
+    container resolution-metrics {
+      description "Alarm resolution performance";
+      
+      leaf mttr-hours {
+        type decimal64 {
+          fraction-digits 2;
+        }
+        description "Mean Time To Repair in hours";
+      }
+      
+      leaf mtta-hours {
+        type decimal64 {
+          fraction-digits 2;
+        }
+        description "Mean Time To Acknowledge in hours";
+      }
+      
+      leaf auto-clear-rate {
+        type percentage-value;
+      }
+      
+      leaf self-healing-success-rate {
+        type percentage-value;
+      }
+    }
+    
+    container notification-metrics {
+      description "Notification delivery performance";
+      
+      leaf total-notifications-sent {
+        type uint64;
+      }
+      
+      leaf notification-success-rate {
+        type percentage-value;
+      }
+      
+      leaf average-delivery-time-ms {
+        type decimal64 {
+          fraction-digits 2;
+        }
+      }
+      
+      leaf notification-failures {
+        type uint64;
+      }
+    }
+  }
+
+  /***************************************************************************
+   * ALARM AGING POLICIES
+   ***************************************************************************/
+  
+  container alarm-aging-policies {
+    if-feature alarm-aging;
+    description "Automatic alarm aging and clearance policies";
+    config true;
+    
+    list aging-policy {
+      key "policy-name";
+      description "Aging policy definition";
+      
+      leaf policy-name {
+        type string {
+          length "1..64";
+        }
+      }
+      
+      leaf description {
+        type string;
+      }
+      
+      leaf enabled {
+        type boolean;
+        default true;
+      }
+      
+      leaf-list severity-filter {
+        type alarm-severity-type;
+        description "Severities this policy applies to";
+      }
+      
+      leaf aging-time-hours {
+        type duration-hours;
+        mandatory true;
+        description "Time after which alarm is considered aged";
+      }
+      
+      leaf auto-clear {
+        type boolean;
+        default false;
+        description "Automatically clear aged alarms";
+      }
+      
+      leaf notification-before-aging {
+        type boolean;
+        default true;
+        description "Send notification before aging action";
+      }
+      
+      leaf notification-hours-before {
+        type uint8 {
+          range "1..72";
+        }
+        default 24;
+        description "Hours before aging to send notification";
+      }
+    }
+  }
+
+  /***************************************************************************
+   * ALARM FORWARDING CONFIGURATION
+   ***************************************************************************/
+  
+  container alarm-forwarding {
+    if-feature alarm-forwarding;
+    description "Configuration for forwarding alarms to external systems";
+    config true;
+    
+    list forwarding-destination {
+      key "destination-name";
+      description "External system destination for alarm forwarding";
+      
+      leaf destination-name {
+        type string {
+          length "1..64";
+        }
+      }
+      
+      leaf destination-type {
+        type enumeration {
+          enum SNMP_TRAP;
+          enum SYSLOG;
+          enum EMAIL;
+          enum WEBHOOK;
+          enum KAFKA;
+          enum AMQP;
+          enum REST_API;
+          enum FILE;
+        }
+        mandatory true;
+      }
+      
+      leaf enabled {
+        type boolean;
+        default true;
+      }
+      
+      leaf endpoint-url {
+        type string;
+        description "URL for webhook or REST API endpoints";
+      }
+      
+      leaf host {
+        type string;
+        description "Host for syslog or SNMP trap";
+      }
+      
+      leaf port {
+        type uint16;
+        description "Port number";
+      }
+      
+      container filter {
+        description "Forwarding filter criteria";
+        
+        leaf-list severity-filter {
+          type alarm-severity-type;
+        }
+        
+        leaf-list vendor-filter {
+          type vendor-type;
+        }
+        
+        leaf forward-cleared-alarms {
+          type boolean;
+          default true;
+        }
+        
+        leaf forward-suppressed-alarms {
+          type boolean;
+          default false;
+        }
+      }
+      
+      container retry-policy {
+        description "Retry configuration for failed forwarding";
+        
+        leaf max-retries {
+          type uint8 {
+            range "0..10";
+          }
+          default 3;
+        }
+        
+        leaf retry-interval-seconds {
+          type uint16 {
+            range "1..3600";
+          }
+          default 60;
+        }
+        
+        leaf exponential-backoff {
+          type boolean;
+          default true;
+        }
+      }
+      
+      container statistics {
+        config false;
+        
+        leaf alarms-forwarded {
+          type uint64;
+        }
+        
+        leaf forwarding-failures {
+          type uint64;
+        }
+        
+        leaf last-success-timestamp {
+          type yang:date-and-time;
+        }
+        
+        leaf last-failure-timestamp {
+          type yang:date-and-time;
+        }
+      }
+    }
+  }
+
+  /***************************************************************************
+   * RPC DEFINITIONS - Alarm Operations
+   ***************************************************************************/
+  
+  rpc acknowledge-alarm {
+    description 
+      "Acknowledge alarm with optional comment.";
+    
+    input {
+      leaf alarm-id {
+        type alarm-id-type;
+        mandatory true;
+      }
+      leaf acknowledgment-comment {
+        type string {
+          length "1..1024";
+        }
+      }
+      leaf acknowledged-by {
+        type string {
+          length "1..128";
+        }
+        mandatory true;
+      }
+    }
+    
+    output {
+      leaf success {
+        type boolean;
+        mandatory true;
+      }
+      leaf result-message {
+        type string;
+      }
+      leaf previous-state {
+        type alarm-state-type;
+      }
+      leaf acknowledgment-timestamp {
+        type yang:date-and-time;
+      }
+    }
+  }
+  
+  rpc acknowledge-alarms-batch {
+    description 
+      "Acknowledge multiple alarms in a single operation.";
+    
+    input {
+      leaf-list alarm-ids {
+        type alarm-id-type;
+        min-elements 1;
+        max-elements 100;
+      }
+      leaf acknowledgment-comment {
+        type string;
+      }
+      leaf acknowledged-by {
+        type string;
+        mandatory true;
+      }
+    }
+    
+    output {
+      leaf success-count {
+        type uint32;
+      }
+      leaf failure-count {
+        type uint32;
+      }
+      list failed-alarms {
+        key "alarm-id";
+        
+        leaf alarm-id {
+          type alarm-id-type;
+        }
+        leaf failure-reason {
+          type string;
+        }
+      }
+    }
+  }
+  
+  rpc clear-alarm {
+    description 
+      "Clear alarm (manual or automated clearance).";
+    
+    input {
+      leaf alarm-id {
+        type alarm-id-type;
+        mandatory true;
+      }
+      leaf clearance-reason {
+        type alarm-clearance-reason-type;
+        mandatory true;
+      }
+      leaf clearance-comment {
+        type string {
+          length "1..1024";
+        }
+      }
+      leaf cleared-by {
+        type string {
+          length "1..128";
+        }
+        mandatory true;
+      }
+    }
+    
+    output {
+      leaf success {
+        type boolean;
+        mandatory true;
+      }
+      leaf result-message {
+        type string;
+      }
+    }
+  }
+  
+  rpc clear-alarms-batch {
+    description 
+      "Clear multiple alarms in a single operation.";
+    
+    input {
+      leaf-list alarm-ids {
+        type alarm-id-type;
+        min-elements 1;
+        max-elements 100;
+      }
+      leaf clearance-reason {
+        type alarm-clearance-reason-type;
+        mandatory true;
+      }
+      leaf clearance-comment {
+        type string;
+      }
+      leaf cleared-by {
+        type string;
+        mandatory true;
+      }
+    }
+    
+    output {
+      leaf success-count {
+        type uint32;
+      }
+      leaf failure-count {
+        type uint32;
+      }
+    }
+  }
+  
+  rpc unacknowledge-alarm {
+    description 
+      "Remove acknowledgment from an alarm.";
+    
+    input {
+      leaf alarm-id {
+        type alarm-id-type;
+        mandatory true;
+      }
+      leaf reason {
+        type string;
+      }
+      leaf unacknowledged-by {
+        type string;
+        mandatory true;
+      }
+    }
+    
+    output {
+      leaf success {
+        type boolean;
+      }
+      leaf result-message {
+        type string;
+      }
+    }
+  }
+  
+  rpc suppress-alarm {
+    description 
+      "Suppress alarm with time window.";
+    
+    input {
+      leaf alarm-id {
+        type alarm-id-type;
+        mandatory true;
+      }
+      leaf suppression-reason {
+        type string;
+        mandatory true;
+      }
+      leaf suppression-duration-minutes {
+        type uint32 {
+          range "1..10080";
+        }
+        mandatory true;
+        description "Duration in minutes (max 1 week)";
+      }
+      leaf suppressed-by {
+        type string;
+        mandatory true;
+      }
+    }
+    
+    output {
+      leaf success {
+        type boolean;
+      }
+      leaf suppression-end-time {
+        type yang:date-and-time;
+      }
+    }
+  }
+  
+  rpc unsuppress-alarm {
+    description 
+      "Remove suppression from an alarm.";
+    
+    input {
+      leaf alarm-id {
+        type alarm-id-type;
+        mandatory true;
+      }
+      leaf reason {
+        type string;
+      }
+      leaf unsuppressed-by {
+        type string;
+        mandatory true;
+      }
+    }
+    
+    output {
+      leaf success {
+        type boolean;
+      }
+    }
+  }
+  
+  rpc correlate-alarms {
+    description 
+      "Explicitly correlate related alarms.";
+    
+    input {
+      leaf primary-alarm-id {
+        type alarm-id-type;
+        mandatory true;
+      }
+      leaf-list secondary-alarm-ids {
+        type alarm-id-type;
+        min-elements 1;
+      }
+      leaf correlation-reason {
+        type string;
+        mandatory true;
+      }
+      leaf correlation-confidence {
+        type correlation-confidence-range;
+        default 1.00;
+      }
+    }
+    
+    output {
+      leaf correlation-id {
+        type correlation-id-type;
+      }
+      leaf success {
+        type boolean;
+      }
+    }
+  }
+  
+  rpc uncorrelate-alarms {
+    description 
+      "Remove correlation between alarms.";
+    
+    input {
+      leaf correlation-id {
+        type correlation-id-type;
+        mandatory true;
+      }
+      leaf reason {
+        type string;
+      }
+    }
+    
+    output {
+      leaf success {
+        type boolean;
+      }
+      leaf uncorrelated-count {
+        type uint32;
+      }
+    }
+  }
+  
+  rpc escalate-alarm {
+    description 
+      "Escalate alarm to higher support tier.";
+    
+    input {
+      leaf alarm-id {
+        type alarm-id-type;
+        mandatory true;
+      }
+      leaf target-escalation-group {
+        type string;
+        mandatory true;
+      }
+      leaf escalation-reason {
+        type string;
+        mandatory true;
+      }
+      leaf create-ticket {
+        type boolean;
+        default false;
+      }
+      leaf priority {
+        type enumeration {
+          enum LOW;
+          enum MEDIUM;
+          enum HIGH;
+          enum CRITICAL;
+        }
+        default MEDIUM;
+      }
+    }
+    
+    output {
+      leaf escalation-ticket-id {
+        type ticket-id-type;
+      }
+      leaf success {
+        type boolean;
+      }
+      leaf new-escalation-level {
+        type escalation-level-type;
+      }
+    }
+  }
+  
+  rpc de-escalate-alarm {
+    description 
+      "Lower escalation level of an alarm.";
+    
+    input {
+      leaf alarm-id {
+        type alarm-id-type;
+        mandatory true;
+      }
+      leaf reason {
+        type string;
+        mandatory true;
+      }
+      leaf de-escalated-by {
+        type string;
+        mandatory true;
+      }
+    }
+    
+    output {
+      leaf success {
+        type boolean;
+      }
+      leaf new-escalation-level {
+        type escalation-level-type;
+      }
+    }
+  }
+  
+  rpc query-alarms {
+    description 
+      "Query alarms with filtering criteria.";
+    
+    input {
+      leaf severity-filter {
+        type alarm-severity-type;
+      }
+      leaf state-filter {
+        type alarm-state-type;
+      }
+      leaf vendor-filter {
+        type vendor-type;
+      }
+      leaf start-time {
+        type yang:date-and-time;
+      }
+      leaf end-time {
+        type yang:date-and-time;
+      }
+      leaf resource-pattern {
+        type string;
+      }
+      leaf alarm-type-pattern {
+        type string;
+      }
+      leaf limit {
+        type uint32 {
+          range "1..1000";
+        }
+        default 100;
+      }
+      leaf offset {
+        type uint32;
+        default 0;
+      }
+      leaf sort-by {
+        type enumeration {
+          enum TIMESTAMP_ASC;
+          enum TIMESTAMP_DESC;
+          enum SEVERITY_ASC;
+          enum SEVERITY_DESC;
+          enum STATE;
+        }
+        default TIMESTAMP_DESC;
+      }
+    }
+    
+    output {
+      list alarm-summary {
+        key "alarm-id";
+        
+        leaf alarm-id {
+          type alarm-id-type;
+        }
+        leaf severity {
+          type alarm-severity-type;
+        }
+        leaf alarm-type {
+          type string;
+        }
+        leaf timestamp {
+          type yang:date-and-time;
+        }
+        leaf affected-resource {
+          type string;
+        }
+        leaf state {
+          type alarm-state-type;
+        }
+        leaf source-vendor {
+          type vendor-type;
+        }
+      }
+      leaf total-count {
+        type uint32;
+      }
+      leaf query-duration-ms {
+        type uint32;
+      }
+    }
+  }
+  
+  rpc get-alarm {
+    description 
+      "Get detailed information for a single alarm.";
+    
+    input {
+      leaf alarm-id {
+        type alarm-id-type;
+        mandatory true;
+      }
+    }
+    
+    output {
+      container alarm-details {
+        presence "Alarm found";
+        description "Complete alarm information";
+        
+        leaf alarm-id {
+          type alarm-id-type;
+        }
+        leaf source-vendor {
+          type vendor-type;
+        }
+        leaf timestamp {
+          type yang:date-and-time;
+        }
+        leaf alarm-type {
+          type string;
+        }
+        leaf severity {
+          type alarm-severity-type;
+        }
+        leaf state {
+          type alarm-state-type;
+        }
+        leaf affected-resource {
+          type string;
+        }
+        // Include all other alarm fields
+      }
+    }
+  }
+  
+  rpc export-alarms {
+    description 
+      "Export alarms to file in specified format.";
+    
+    input {
+      leaf format {
+        type enumeration {
+          enum CSV;
+          enum JSON;
+          enum XML;
+          enum EXCEL;
+        }
+        mandatory true;
+      }
+      leaf severity-filter {
+        type alarm-severity-type;
+      }
+      leaf state-filter {
+        type alarm-state-type;
+      }
+      leaf start-time {
+        type yang:date-and-time;
+      }
+      leaf end-time {
+        type yang:date-and-time;
+      }
+      leaf vendor-filter {
+        type vendor-type;
+      }
+      leaf include-cleared {
+        type boolean;
+        default false;
+      }
+      leaf include-audit-trail {
+        type boolean;
+        default false;
+      }
+    }
+    
+    output {
+      leaf export-id {
+        type string;
+      }
+      leaf download-url {
+        type string;
+      }
+      leaf record-count {
+        type uint32;
+      }
+      leaf file-size-bytes {
+        type uint64;
+      }
+      leaf estimated-completion-seconds {
+        type uint32;
+      }
+    }
+  }
+  
+  rpc import-alarm-rules {
+    description 
+      "Import correlation or suppression rules from file.";
+    
+    input {
+      leaf file-format {
+        type enumeration {
+          enum JSON;
+          enum YAML;
+          enum CSV;
+        }
+        mandatory true;
+      }
+      leaf file-content {
+        type string;
+        mandatory true;
+        description "Base64 encoded file content";
+      }
+      leaf rule-type {
+        type enumeration {
+          enum CORRELATION;
+          enum SUPPRESSION;
+          enum NOTIFICATION;
+        }
+        mandatory true;
+      }
+      leaf overwrite-existing {
+        type boolean;
+        default false;
+      }
+      leaf dry-run {
+        type boolean;
+        default false;
+        description "Validate without importing";
+      }
+    }
+    
+    output {
+      leaf success {
+        type boolean;
+      }
+      leaf rules-imported {
+        type uint32;
+      }
+      leaf rules-skipped {
+        type uint32;
+      }
+      leaf rules-with-errors {
+        type uint32;
+      }
+      list import-error {
+        key "line-number";
+        
+        leaf line-number {
+          type uint32;
+        }
+        leaf error-message {
+          type string;
+        }
+      }
+    }
+  }
+  
+  rpc get-alarm-statistics {
+    description 
+      "Get alarm statistics for specified time period.";
+    
+    input {
+      leaf start-time {
+        type yang:date-and-time;
+        mandatory true;
+      }
+      leaf end-time {
+        type yang:date-and-time;
+        mandatory true;
+      }
+      leaf group-by {
+        type enumeration {
+          enum SEVERITY;
+          enum VENDOR;
+          enum STATE;
+          enum RESOURCE_TYPE;
+          enum HOUR;
+          enum DAY;
+        }
+        default SEVERITY;
+      }
+    }
+    
+    output {
+      leaf total-alarms {
+        type uint32;
+      }
+      leaf new-alarms {
+        type uint32;
+      }
+      leaf cleared-alarms {
+        type uint32;
+      }
+      leaf acknowledged-alarms {
+        type uint32;
+      }
+      leaf mttr-hours {
+        type decimal64 {
+          fraction-digits 2;
+        }
+      }
+      list statistics-group {
+        key "group-name";
+        
+        leaf group-name {
+          type string;
+        }
+        leaf count {
+          type uint32;
+        }
+        leaf percentage {
+          type percentage-value;
+        }
+      }
+    }
+  }
+  
+  rpc analyze-alarm-trend {
+    description 
+      "Analyze alarm trends over time.";
+    
+    input {
+      leaf time-range {
+        type enumeration {
+          enum LAST_24_HOURS;
+          enum LAST_7_DAYS;
+          enum LAST_30_DAYS;
+          enum LAST_90_DAYS;
+        }
+        mandatory true;
+      }
+      leaf analysis-type {
+        type enumeration {
+          enum VOLUME_TREND;
+          enum SEVERITY_TREND;
+          enum RESOURCE_TREND;
+          enum MTTR_TREND;
+        }
+        default VOLUME_TREND;
+      }
+    }
+    
+    output {
+      leaf trend-direction {
+        type enumeration {
+          enum INCREASING;
+          enum DECREASING;
+          enum STABLE;
+        }
+      }
+      leaf trend-percentage {
+        type percentage-value;
+      }
+      list data-points {
+        key "timestamp";
+        
+        leaf timestamp {
+          type yang:date-and-time;
+        }
+        leaf value {
+          type decimal64 {
+            fraction-digits 2;
+          }
+        }
+      }
+      leaf forecast-next-period {
+        type decimal64 {
+          fraction-digits 2;
+        }
+      }
+    }
+  }
+  
+  rpc run-root-cause-analysis {
+    description 
+      "Perform root cause analysis on specified alarms.";
+    
+    input {
+      leaf-list alarm-ids {
+        type alarm-id-type;
+        min-elements 1;
+        max-elements 50;
+      }
+      leaf analysis-depth {
+        type enumeration {
+          enum SHALLOW;
+          enum STANDARD;
+          enum DEEP;
+        }
+        default STANDARD;
+      }
+    }
+    
+    output {
+      leaf analysis-id {
+        type string;
+      }
+      list analysis-result {
+        key "alarm-id";
+        
+        leaf alarm-id {
+          type alarm-id-type;
+        }
+        leaf is-root-cause {
+          type boolean;
+        }
+        leaf root-cause-confidence {
+          type correlation-confidence-range;
+        }
+        leaf-list contributing-factors {
+          type string;
+        }
+        leaf recommended-action {
+          type string;
+        }
+      }
+    }
+  }
+
+  /***************************************************************************
+   * NOTIFICATION DEFINITIONS
+   ***************************************************************************/
+  
+  notification alarm-created {
+    description 
+      "Notification sent when new alarm is raised.";
+    
+    leaf alarm-id {
+      type alarm-id-type;
+      mandatory true;
+    }
+    leaf severity {
+      type alarm-severity-type;
+      mandatory true;
+    }
+    leaf alarm-type {
+      type string;
+      mandatory true;
+    }
+    leaf affected-resource {
+      type string;
+      mandatory true;
+    }
+    leaf source-vendor {
+      type vendor-type;
+      mandatory true;
+    }
+    leaf timestamp {
+      type yang:date-and-time;
+      mandatory true;
+    }
+    leaf probable-cause {
+      type alarm-probable-cause-type;
+    }
+    leaf impact-level {
+      type impact-level-type;
+    }
+  }
+  
+  notification alarm-cleared {
+    description 
+      "Notification sent when alarm is cleared.";
+    
+    leaf alarm-id {
+      type alarm-id-type;
+      mandatory true;
+    }
+    leaf clearance-reason {
+      type alarm-clearance-reason-type;
+      mandatory true;
+    }
+    leaf clearance-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+    }
+    leaf alarm-duration-seconds {
+      type duration-seconds;
+    }
+    leaf cleared-by {
+      type string;
+    }
+  }
+  
+  notification alarm-acknowledged {
+    description 
+      "Notification sent when alarm is acknowledged.";
+    
+    leaf alarm-id {
+      type alarm-id-type;
+      mandatory true;
+    }
+    leaf acknowledged-by {
+      type string;
+      mandatory true;
+    }
+    leaf acknowledgment-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+    }
+    leaf comment {
+      type string;
+    }
+  }
+  
+  notification alarm-severity-changed {
+    description 
+      "Notification sent when alarm severity changes.";
+    
+    leaf alarm-id {
+      type alarm-id-type;
+      mandatory true;
+    }
+    leaf previous-severity {
+      type alarm-severity-type;
+      mandatory true;
+    }
+    leaf new-severity {
+      type alarm-severity-type;
+      mandatory true;
+    }
+    leaf change-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+    }
+    leaf change-reason {
+      type string;
+    }
+  }
+  
+  notification alarm-escalated {
+    description 
+      "Notification sent when alarm is escalated.";
+    
+    leaf alarm-id {
+      type alarm-id-type;
+      mandatory true;
+    }
+    leaf escalation-level {
+      type escalation-level-type;
+      mandatory true;
+    }
+    leaf escalation-group {
+      type string;
+      mandatory true;
+    }
+    leaf escalation-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+    }
+    leaf escalation-reason {
+      type string;
+    }
+    leaf ticket-id {
+      type ticket-id-type;
+    }
+  }
+  
+  notification alarm-correlated {
+    description 
+      "Notification sent when alarms are correlated.";
+    
+    leaf correlation-id {
+      type correlation-id-type;
+      mandatory true;
+    }
+    leaf primary-alarm-id {
+      type alarm-id-type;
+      mandatory true;
+    }
+    leaf-list secondary-alarm-ids {
+      type alarm-id-type;
+    }
+    leaf correlation-confidence {
+      type correlation-confidence-range;
+    }
+    leaf correlation-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+    }
+    leaf correlation-rule {
+      type string;
+    }
+  }
+  
+  notification alarm-suppressed {
+    description 
+      "Notification sent when alarm is suppressed.";
+    
+    leaf alarm-id {
+      type alarm-id-type;
+      mandatory true;
+    }
+    leaf suppression-reason {
+      type string;
+      mandatory true;
+    }
+    leaf suppressed-by {
+      type string;
+      mandatory true;
+    }
+    leaf suppression-end-time {
+      type yang:date-and-time;
+    }
+  }
+  
+  notification alarm-unsuppressed {
+    description 
+      "Notification sent when alarm suppression is removed.";
+    
+    leaf alarm-id {
+      type alarm-id-type;
+      mandatory true;
+    }
+    leaf reason {
+      type string;
+    }
+    leaf unsuppressed-by {
+      type string;
+    }
+  }
+  
+  notification alarm-aged {
+    description 
+      "Notification sent when alarm triggers aging policy.";
+    
+    leaf alarm-id {
+      type alarm-id-type;
+      mandatory true;
+    }
+    leaf alarm-age-hours {
+      type alarm-age-hours;
+      mandatory true;
+    }
+    leaf policy-name {
+      type string;
+      mandatory true;
+    }
+    leaf action-taken {
+      type enumeration {
+        enum NOTIFICATION_ONLY;
+        enum AUTO_CLEARED;
+        enum DEFERRED;
+      }
+    }
+  }
+  
+  notification correlation-rule-triggered {
+    description 
+      "Notification when correlation rule matches.";
+    
+    leaf rule-id {
+      type string;
+      mandatory true;
+    }
+    leaf correlation-id {
+      type correlation-id-type;
+      mandatory true;
+    }
+    leaf alarms-correlated {
+      type uint32;
+      mandatory true;
+    }
+    leaf timestamp {
+      type yang:date-and-time;
+      mandatory true;
+    }
+  }
+
+}

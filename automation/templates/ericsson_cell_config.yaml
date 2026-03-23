@@ -1,0 +1,105 @@
+# Ericsson Cell Configuration Template
+# For NETCONF Configuration Push Automation Tool
+
+# Network Element Identification
+ne_id: "ERIC-eNB-001"
+ne_type: "enodeb"
+vendor: "ericsson"
+
+# Cell Configuration
+cell_config:
+  # Cell Identity
+  cell_id: 1
+  physical_cell_id: 150
+  
+  # Frequency Configuration
+  frequency_band: 3        # Band 3 (1800 MHz)
+  downlink_frequency: 1840  # MHz
+  uplink_frequency: 1745    # MHz
+  bandwidth: 20             # MHz
+  
+  # Cell Parameters
+  tac: 1001
+  cell_reserved: false
+  
+  # Power Configuration
+  reference_signal_power: 15  # dBm
+  pb: 1                        # PDSCH RE Power Offset
+  pa: -3                       # PDSCH EPRE Ratio
+  
+  # SSB Configuration (5G NSA)
+  ssb_config:
+    ssb_period: 20           # ms
+    ssb_subcarrier_spacing: 30  # kHz
+    ssb_offset: 0
+    ssb_duration: 1
+  
+  # PRACH Configuration
+  prach_config:
+    prach_config_index: 0
+    root_sequence_index: 0
+    zero_correlation_zone_config: 5
+    high_speed_flag: false
+    prach_frequency_offset: 0
+  
+  # PDSCH Configuration
+  pdsch_config:
+    p_b: 1
+    p_a: -3
+    reference_signal_power: 15
+  
+  # PUSCH Configuration
+  pusch_config:
+    ack_nack_repitition: 1
+    msg3_delta_preamble: 0
+
+# NETCONF Configuration Payload (YANG-compliant XML)
+payload: |
+  <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+    <network-elements xmlns="urn:unified-oss:core-nrm">
+      <network-element>
+        <ne-id>ERIC-eNB-001</ne-id>
+        <vendor>ericsson</vendor>
+        <ne-type>enodeb</ne-type>
+        <cells>
+          <cell>
+            <cell-id>1</cell-id>
+            <physical-cell-id>150</physical-cell-id>
+            <frequency-band>3</frequency-band>
+            <bandwidth>20</bandwidth>
+            <tac>1001</tac>
+            <status>active</status>
+            <power-config>
+              <reference-signal-power>15</reference-signal-power>
+            </power-config>
+          </cell>
+        </cells>
+      </network-element>
+    </network-elements>
+  </config>
+
+# Validation Rules
+validation:
+  required_fields:
+    - cell_id
+    - physical_cell_id
+    - frequency_band
+    - bandwidth
+    - tac
+  
+  ranges:
+    physical_cell_id: [0, 503]
+    bandwidth: [5, 10, 15, 20]
+    frequency_band: [1, 3, 7, 8, 20, 28, 38, 41, 77, 78, 79]
+
+# Rollback Configuration
+rollback:
+  enabled: true
+  preserve_running_config: true
+
+# Metadata
+metadata:
+  created_at: "2024-03-20T00:00:00Z"
+  author: "unified-oss-automation"
+  version: "1.0.0"
+  description: "Ericsson LTE Cell Configuration Template"

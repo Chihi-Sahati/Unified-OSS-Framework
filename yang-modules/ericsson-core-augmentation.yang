@@ -1,0 +1,745 @@
+module ericsson-core-augmentation {
+  yang-version 1.1;
+  namespace "urn:unified-oss:vendor:ericsson:core";
+  prefix eric-core;
+  
+  import unified-oss-core-nrm { prefix uoss-nrm; }
+  import ietf-inet-types { prefix inet; }
+  import ietf-yang-types { prefix yang; }
+  
+  organization "Unified OSS Framework - Ericsson Core Network Support";
+  contact "Dr. Houda Chihi - IEEE Member, TechWomen 2019 Fellow";
+  description 
+    "YANG augmentation for Ericsson 4G EPC Core Network Elements.
+     
+     This module provides vendor-specific augmentations for:
+     - MME (Mobility Management Entity)
+     - SGW (Serving Gateway)
+     - PGW (PDN Gateway)
+     - HSS (Home Subscriber Server)
+     - PCRF (Policy and Charging Rules Function)
+     
+     Reference: 3GPP TS 23.401, TS 29.274, TS 29.272";
+
+  revision 2026-03-20 {
+    description "Initial version for Unified OSS Framework v1.0.0";
+    reference "IEEE TNSM Submission - Dr. Houda Chihi Supervision";
+  }
+
+  // =============================================================
+  // MME - Mobility Management Entity (4G EPC)
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'ericsson' and uoss-nrm:ne-type = 'mme'";
+    description "MME-specific augmentations";
+    
+    container mme-config {
+      description "MME Configuration Parameters";
+      
+      leaf mme-code {
+        type uint8 {
+          range "0..255";
+        }
+        description "MME Code (MMEC) - identifies MME within MME Group";
+        reference "3GPP TS 23.003 Section 19.4.2.3";
+      }
+      
+      leaf mme-group-id {
+        type uint16 {
+          range "0..65535";
+        }
+        description "MME Group ID (MMEGI) - identifies MME Group within PLMN";
+        reference "3GPP TS 23.003 Section 19.4.2.2";
+      }
+      
+      leaf mme-capability {
+        type bits {
+          bit s1ap-support;
+          bit s3-support;
+          bit s10-support;
+          bit s11-support;
+          bit s6a-support;
+          bit sbc-support;
+        }
+        description "MME interface capability flags";
+      }
+      
+      container s1ap-config {
+        description "S1-AP Interface Configuration";
+        leaf s1ap-port {
+          type uint16;
+          default 36412;
+          description "SCTP port for S1-AP";
+        }
+        leaf s1ap-heartbeat-interval {
+          type uint16 {
+            range "1..3600";
+          }
+          units seconds;
+          default 30;
+          description "S1-AP heartbeat interval";
+        }
+        leaf max-enodeb-connections {
+          type uint32;
+          default 1000;
+          description "Maximum concurrent eNodeB connections";
+        }
+      }
+      
+      container s11-config {
+        description "S11 Interface (MME-SGW) Configuration";
+        leaf s11-port {
+          type uint16;
+          default 2123;
+          description "UDP port for GTPv2-C S11";
+        }
+        leaf gtpc-timer-t3 {
+          type uint16 {
+            range "1..120";
+          }
+          units seconds;
+          default 5;
+          description "GTP-C T3-RESPONSE timer";
+        }
+        leaf gtpc-n3-requests {
+          type uint8 {
+            range "1..10";
+          }
+          default 3;
+          description "GTP-C N3-REQUESTS counter";
+        }
+      }
+      
+      container s6a-config {
+        description "S6a Interface (MME-HSS) Diameter Configuration";
+        leaf diameter-port {
+          type uint16;
+          default 3868;
+          description "Diameter TCP port";
+        }
+        leaf diameter-realm {
+          type string;
+          description "Diameter realm for S6a";
+        }
+        leaf auth-timeout {
+          type uint16 {
+            range "1..60";
+          }
+          units seconds;
+          default 10;
+          description "Authentication timeout";
+        }
+      }
+      
+      container paging-config {
+        description "Paging Configuration";
+        leaf paging-timer {
+          type uint8 {
+            range "1..15";
+          }
+          units seconds;
+          default 2;
+          description "Paging timer T3413";
+        }
+        leaf paging-retry-count {
+          type uint8 {
+            range "1..5";
+          }
+          default 3;
+          description "Number of paging attempts";
+        }
+      }
+      
+      container tac-list {
+        description "Tracking Area Codes managed by this MME";
+        list tac {
+          key "tac-value";
+          leaf tac-value {
+            type uint16 {
+              range "0..65535";
+            }
+            description "TAC value";
+          }
+          leaf tac-status {
+            type enumeration {
+              enum active;
+              enum maintenance;
+              enum blocked;
+            }
+            default active;
+          }
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // SGW - Serving Gateway (4G EPC)
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'ericsson' and uoss-nrm:ne-type = 'sgw'";
+    description "SGW-specific augmentations";
+    
+    container sgw-config {
+      description "SGW Configuration Parameters";
+      
+      container s1u-config {
+        description "S1-U Interface (eNodeB-SGW) Configuration";
+        leaf s1u-port {
+          type uint16;
+          default 2152;
+          description "UDP port for GTP-U S1-U";
+        }
+        leaf gtpu-version {
+          type enumeration {
+            enum gtpu-v1;
+            enum gtpu-v2;
+          }
+          default gtpu-v1;
+        }
+      }
+      
+      container s5-s8-config {
+        description "S5/S8 Interface (SGW-PGW) Configuration";
+        leaf s5-s8-protocol {
+          type enumeration {
+            enum gtp;
+            enum pmip;
+          }
+          default gtp;
+          description "S5/S8 protocol type";
+        }
+        leaf s5-s8-port {
+          type uint16;
+          default 2152;
+          description "GTP-U port for S5/S8";
+        }
+      }
+      
+      container s11-config {
+        description "S11 Interface (MME-SGW) Configuration";
+        leaf s11-port {
+          type uint16;
+          default 2123;
+          description "GTPv2-C port for S11";
+        }
+      }
+      
+      container bearer-config {
+        description "Bearer Management Configuration";
+        leaf max-default-bearers {
+          type uint32;
+          default 100000;
+          description "Maximum default bearers";
+        }
+        leaf max-dedicated-bearers {
+          type uint32;
+          default 500000;
+          description "Maximum dedicated bearers";
+        }
+        leaf bearer-idle-timeout {
+          type uint32;
+          units seconds;
+          default 3600;
+          description "Idle bearer timeout";
+        }
+      }
+      
+      container buffering-config {
+        description "Downlink Buffering Configuration";
+        leaf buffering-enabled {
+          type boolean;
+          default true;
+        }
+        leaf max-buffer-size {
+          type uint32;
+          units kilobytes;
+          default 1024;
+          description "Maximum buffer size per UE";
+        }
+        leaf buffer-ttl {
+          type uint16;
+          units seconds;
+          default 30;
+          description "Buffer time-to-live";
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // PGW - PDN Gateway (4G EPC)
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'ericsson' and uoss-nrm:ne-type = 'pgw'";
+    description "PGW-specific augmentations";
+    
+    container pgw-config {
+      description "PGW Configuration Parameters";
+      
+      container s5-s8-config {
+        description "S5/S8 Interface Configuration";
+        leaf s5-s8-protocol {
+          type enumeration {
+            enum gtp;
+            enum pmip;
+          }
+          default gtp;
+        }
+        leaf s5-s8-port {
+          type uint16;
+          default 2152;
+        }
+      }
+      
+      container sgi-config {
+        description "SGi Interface Configuration";
+        leaf sgi-vlan-id {
+          type uint16 {
+            range "0..4094";
+          }
+          description "SGi VLAN ID";
+        }
+        leaf sgi-mtu {
+          type uint16 {
+            range "576..9000";
+          }
+          default 1500;
+          description "SGi MTU size";
+        }
+        list sgi-ip-pool {
+          key "pool-name";
+          leaf pool-name {
+            type string;
+          }
+          leaf start-ip {
+            type inet:ipv4-address;
+          }
+          leaf end-ip {
+            type inet:ipv4-address;
+          }
+          leaf netmask {
+            type inet:ipv4-address;
+          }
+        }
+      }
+      
+      container gx-config {
+        description "Gx Interface (PGW-PCRF) Diameter Configuration";
+        leaf diameter-port {
+          type uint16;
+          default 3868;
+        }
+        leaf pcrf-realm {
+          type string;
+        }
+        leaf gy-enabled {
+          type boolean;
+          default true;
+          description "Enable Gy interface for online charging";
+        }
+      }
+      
+      container qos-config {
+        description "QoS Configuration";
+        leaf default-qci {
+          type uint8 {
+            range "1..9";
+          }
+          default 9;
+          description "Default QoS Class Identifier";
+        }
+        leaf default-arp {
+          type uint8 {
+            range "1..15";
+          }
+          default 8;
+          description "Default Allocation and Retention Priority";
+        }
+        leaf max-apn-ambr-downlink {
+          type uint32;
+          units "kbps";
+          default 100000;
+        }
+        leaf max-apn-ambr-uplink {
+          type uint32;
+          units "kbps";
+          default 50000;
+        }
+      }
+      
+      container charging-config {
+        description "Charging Configuration";
+        leaf charging-characteristics {
+          type string;
+          default "default";
+        }
+        leaf offline-charging-enabled {
+          type boolean;
+          default true;
+        }
+        leaf online-charging-enabled {
+          type boolean;
+          default false;
+        }
+        container rf-config {
+          description "Rf Interface (Offline Charging)";
+          leaf rf-enabled {
+            type boolean;
+            default true;
+          }
+          leaf ocs-address {
+            type inet:ip-address;
+          }
+          leaf rf-port {
+            type uint16;
+            default 3868;
+          }
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // HSS - Home Subscriber Server (4G EPC)
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'ericsson' and uoss-nrm:ne-type = 'hss'";
+    description "HSS-specific augmentations";
+    
+    container hss-config {
+      description "HSS Configuration Parameters";
+      
+      container s6a-config {
+        description "S6a Interface (HSS-MME) Configuration";
+        leaf diameter-port {
+          type uint16;
+          default 3868;
+        }
+        leaf diameter-realm {
+          type string;
+        }
+        leaf max-mme-connections {
+          type uint32;
+          default 50;
+        }
+      }
+      
+      container sh-config {
+        description "Sh Interface (HSS-IMS AS) Configuration";
+        leaf sh-enabled {
+          type boolean;
+          default true;
+        }
+        leaf sh-port {
+          type uint16;
+          default 3868;
+        }
+      }
+      
+      container c-config {
+        description "C Interface (HSS-MSC/VLR) Configuration";
+        leaf map-enabled {
+          type boolean;
+          default true;
+        }
+        leaf sccp-local-ssn {
+          type uint8;
+          default 6;
+        }
+      }
+      
+      container subscriber-config {
+        description "Subscriber Management Configuration";
+        leaf max-subscribers {
+          type uint64;
+          default 10000000;
+          description "Maximum subscriber capacity";
+        }
+        leaf authentication-mode {
+          type enumeration {
+            enum eps-aka;
+            enum uma;
+          }
+          default eps-aka;
+        }
+        leaf subscriber-sync-interval {
+          type uint16;
+          units seconds;
+          default 300;
+        }
+      }
+      
+      container database-config {
+        description "Database Configuration";
+        leaf db-type {
+          type enumeration {
+            enum ldap;
+            enum mysql;
+            enum oracle;
+            enum postgresql;
+          }
+          default ldap;
+        }
+        leaf db-host {
+          type inet:ip-address;
+        }
+        leaf db-port {
+          type uint16;
+        }
+        leaf db-replication-enabled {
+          type boolean;
+          default true;
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // PCRF - Policy and Charging Rules Function
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'ericsson' and uoss-nrm:ne-type = 'pcrf'";
+    description "PCRF-specific augmentations";
+    
+    container pcrf-config {
+      description "PCRF Configuration Parameters";
+      
+      container gx-config {
+        description "Gx Interface (PCRF-PGW) Configuration";
+        leaf diameter-port {
+          type uint16;
+          default 3868;
+        }
+        leaf max-pgw-peers {
+          type uint32;
+          default 20;
+        }
+      }
+      
+      container rx-config {
+        description "Rx Interface (PCRF-IMS AS) Configuration";
+        leaf rx-enabled {
+          type boolean;
+          default true;
+        }
+        leaf rx-port {
+          type uint16;
+          default 3868;
+        }
+      }
+      
+      container policy-config {
+        description "Policy Configuration";
+        list policy-rule {
+          key "rule-name";
+          leaf rule-name {
+            type string;
+          }
+          leaf rule-priority {
+            type uint16;
+          }
+          leaf qci {
+            type uint8 {
+              range "1..9";
+            }
+          }
+          leaf arp {
+            type uint8 {
+              range "1..15";
+            }
+          }
+          leaf mbr-downlink {
+            type uint32;
+            units "kbps";
+          }
+          leaf mbr-uplink {
+            type uint32;
+            units "kbps";
+          }
+          leaf gbr-downlink {
+            type uint32;
+            units "kbps";
+          }
+          leaf gbr-uplink {
+            type uint32;
+            units "kbps";
+          }
+        }
+      }
+      
+      container sp-config {
+        description "Subscriber Profile Configuration";
+        leaf profile-sync-enabled {
+          type boolean;
+          default true;
+        }
+        leaf sp-db-host {
+          type inet:ip-address;
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // RPC Definitions for Core Element Operations
+  // =============================================================
+  
+  rpc restart-mme {
+    description "Restart MME gracefully";
+    input {
+      leaf ne-id {
+        type string;
+        mandatory true;
+      }
+      leaf graceful {
+        type boolean;
+        default true;
+      }
+      leaf timeout {
+        type uint16;
+        units seconds;
+        default 60;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+          enum timeout;
+        }
+      }
+      leaf message {
+        type string;
+      }
+    }
+  }
+  
+  rpc clear-mme-sessions {
+    description "Clear all sessions from MME";
+    input {
+      leaf ne-id {
+        type string;
+        mandatory true;
+      }
+      leaf tac-filter {
+        type uint16;
+        description "Clear sessions for specific TAC only";
+      }
+    }
+    output {
+      leaf sessions-cleared {
+        type uint32;
+      }
+      leaf result {
+        type enumeration {
+          enum success;
+          enum partial;
+          enum failed;
+        }
+      }
+    }
+  }
+
+  rpc sync-hss-subscribers {
+    description "Synchronize subscriber data with HSS";
+    input {
+      leaf ne-id {
+        type string;
+        mandatory true;
+      }
+      leaf source {
+        type enumeration {
+          enum all;
+          enum ims-only;
+          enum eps-only;
+        }
+        default all;
+      }
+    }
+    output {
+      leaf subscribers-synced {
+        type uint64;
+      }
+      leaf duration-seconds {
+        type uint32;
+      }
+      leaf result {
+        type enumeration {
+          enum success;
+          enum partial;
+          enum failed;
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // Notifications for Core Element Events
+  // =============================================================
+  
+  notification mme-overload {
+    description "MME overload detected";
+    leaf ne-id {
+      type string;
+    }
+    leaf cpu-utilization {
+      type uint8 {
+        range "0..100";
+      }
+    }
+    leaf session-count {
+      type uint64;
+    }
+    leaf overload-level {
+      type enumeration {
+        enum minor;
+        enum major;
+        enum critical;
+      }
+    }
+  }
+  
+  notification sgw-bearer-threshold {
+    description "SGW bearer threshold reached";
+    leaf ne-id {
+      type string;
+    }
+    leaf current-bearers {
+      type uint64;
+    }
+    leaf max-bearers {
+      type uint64;
+    }
+    leaf threshold-percent {
+      type uint8 {
+        range "0..100";
+      }
+    }
+  }
+  
+  notification pgw-charging-failure {
+    description "PGW charging system failure";
+    leaf ne-id {
+      type string;
+    }
+    leaf charging-type {
+      type enumeration {
+        enum online;
+        enum offline;
+      }
+    }
+    leaf ocs-reachable {
+      type boolean;
+    }
+    leaf ofcs-reachable {
+      type boolean;
+    }
+  }
+}

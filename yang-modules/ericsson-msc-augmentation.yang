@@ -1,0 +1,1237 @@
+module ericsson-msc-augmentation {
+  yang-version 1.1;
+  namespace "urn:unified-oss:vendor:ericsson:msc";
+  prefix eric-msc;
+  
+  import unified-oss-core-nrm { prefix uoss-nrm; }
+  import ietf-inet-types { prefix inet; }
+  import ietf-yang-types { prefix yang; }
+  import ericsson-2g-3g-augmentation { prefix eric-2g3g; }
+  
+  organization "Unified OSS Framework - Ericsson MSC Support";
+  contact "Dr. Houda Chihi - IEEE Member, TechWomen 2019 Fellow";
+  description 
+    "YANG augmentation for Ericsson Mobile Switching Center (MSC).
+     
+     The MSC (Mobile Switching Center) is the core network element for
+     circuit-switched services in both 2G GSM and 3G UMTS networks.
+     
+     Functions:
+     - Call setup and teardown for voice and CS data
+     - Mobility management (location update, authentication)
+     - Handover coordination between BSCs/RNCs
+     - Interworking with PSTN/ISDN
+     - VLR (Visitor Location Register) functionality
+     
+     Key interfaces:
+     - A: MSC-BSC interface (GSM)
+     - Iu-CS: MSC-RNC interface (UMTS)
+     - C: MSC-HLR interface (MAP)
+     - D: MSC-VLR interface (MAP)
+     - E: MSC-MSC interface (MAP)
+     - Gs: MSC-SGSN interface
+     - ISUP: MSC-PSTN interface
+     - MAP: Mobile Application Part interfaces
+     
+     This module supports both 2G and 3G circuit-switched core as
+     requested by Dr. Chihi for multi-generation OSS integration.
+     
+     Reference: 3GPP TS 23.002, TS 29.002, TS 48.002";
+  
+  revision 2026-03-21 {
+    description "Initial version for Unified OSS Framework v1.0.0";
+    reference "IEEE TNSM Submission - Multi-Generation OSS Integration";
+  }
+
+  // =============================================================
+  // MSC State and Status Types
+  // =============================================================
+  
+  typedef msc-operational-state {
+    type enumeration {
+      enum offline { description "MSC is offline"; }
+      enum online { description "MSC is online and operational"; }
+      enum degraded { description "MSC is operational with degraded service"; }
+      enum maintenance { description "MSC is in maintenance mode"; }
+      enum overload { description "MSC is in overload state"; }
+      enum failed { description "MSC has failed"; }
+    }
+    description "MSC operational state";
+  }
+  
+  typedef msc-administrative-state {
+    type enumeration {
+      enum unlocked { description "MSC is unlocked for service"; }
+      enum locked { description "MSC is locked"; }
+      enum graceful-lock { description "MSC is in graceful lock process"; }
+    }
+    description "MSC administrative state";
+  }
+  
+  typedef circuit-state {
+    type enumeration {
+      enum idle { description "Circuit is idle"; }
+      enum busy { description "Circuit is busy"; }
+      enum blocked { description "Circuit is blocked"; }
+      enum failed { description "Circuit has failed"; }
+      enum reserved { description "Circuit is reserved"; }
+    }
+    description "Circuit state";
+  }
+  
+  typedef signaling-link-state {
+    type enumeration {
+      enum available { description "Signaling link is available"; }
+      enum unavailable { description "Signaling link is unavailable"; }
+      enum congested { description "Signaling link is congested"; }
+      enum inhibited { description "Signaling link is inhibited"; }
+    }
+    description "Signaling link state";
+  }
+
+  // =============================================================
+  // MSC Configuration Augmentation
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'ericsson' and uoss-nrm:ne-type = 'msc'";
+    description "MSC-specific configuration augmentations";
+    
+    container msc-configuration {
+      description "MSC Configuration Parameters";
+      
+      leaf msc-id {
+        type uint16 {
+          range "0..4095";
+        }
+        description "MSC identification code";
+      }
+      
+      leaf msc-name {
+        type string {
+          length "1..32";
+        }
+        description "Administrative name of the MSC";
+      }
+      
+      leaf operational-state {
+        type msc-operational-state;
+        config false;
+        description "Current operational state";
+      }
+      
+      leaf administrative-state {
+        type msc-administrative-state;
+        description "Administrative state";
+      }
+      
+      leaf msc-pool-capable {
+        type boolean;
+        default false;
+        description "Whether MSC can participate in MSC pool";
+      }
+      
+      leaf msc-pool-id {
+        type uint16;
+        description "MSC Pool identifier if pool member";
+      }
+      
+      container capacity-config {
+        description "MSC capacity configuration";
+        
+        leaf max-simultaneous-calls {
+          type uint32;
+          default 50000;
+          description "Maximum simultaneous calls";
+        }
+        
+        leaf max-subscribers {
+          type uint32;
+          default 500000;
+          description "Maximum subscribers in VLR";
+        }
+        
+        leaf max-bhca {
+          type uint32;
+          default 200000;
+          description "Maximum Busy Hour Call Attempts";
+        }
+        
+        leaf max-circuit-groups {
+          type uint16;
+          default 256;
+          description "Maximum circuit groups";
+        }
+        
+        leaf max-signaling-links {
+          type uint16;
+          default 128;
+          description "Maximum SS7 signaling links";
+        }
+        
+        leaf max-bsc-connections {
+          type uint16;
+          default 32;
+          description "Maximum BSC connections";
+        }
+        
+        leaf max-rnc-connections {
+          type uint16;
+          default 16;
+          description "Maximum RNC connections";
+        }
+      }
+      
+      // A Interface Configuration (MSC-BSC)
+      container a-interface-config {
+        description "A interface (MSC-BSC) for GSM configuration";
+        
+        list a-link {
+          key "link-id";
+          description "A interface link to BSC";
+          
+          leaf link-id {
+            type string;
+            description "Link identifier";
+          }
+          
+          leaf bsc-id {
+            type string;
+            description "Connected BSC identifier";
+          }
+          
+          leaf circuit-group {
+            type string;
+            description "Circuit group identifier";
+          }
+          
+          leaf number-of-circuits {
+            type uint16;
+            description "Number of circuits";
+          }
+          
+          leaf link-state {
+            type enumeration {
+              enum up;
+              enum down;
+              enum partial;
+            }
+            config false;
+          }
+        }
+      }
+      
+      // Iu-CS Interface Configuration (MSC-RNC)
+      container iucs-interface-config {
+        description "Iu-CS interface (MSC-RNC) for UMTS configuration";
+        
+        leaf iucs-enabled {
+          type boolean;
+          default true;
+          description "Enable Iu-CS interface for 3G";
+        }
+        
+        list iucs-link {
+          key "link-id";
+          description "Iu-CS interface link to RNC";
+          
+          leaf link-id {
+            type string;
+          }
+          
+          leaf rnc-id {
+            type string;
+            description "Connected RNC identifier";
+          }
+          
+          leaf sctp-port {
+            type uint16;
+            default 2905;
+            description "SCTP port for Iu-CS";
+          }
+          
+          leaf signaling-ip {
+            type inet:ip-address;
+            description "Signaling IP address";
+          }
+          
+          leaf link-state {
+            type enumeration {
+              enum up;
+              enum down;
+              enum partial;
+            }
+            config false;
+          }
+        }
+      }
+      
+      // Circuit Configuration
+      container circuit-config {
+        description "Circuit group configuration";
+        
+        list circuit-group {
+          key "group-name";
+          description "Circuit group definition";
+          
+          leaf group-name {
+            type string;
+            description "Circuit group name";
+          }
+          
+          leaf group-type {
+            type enumeration {
+              enum incoming { description "Incoming circuit group"; }
+              enum outgoing { description "Outgoing circuit group"; }
+              enum bidirectional { description "Bidirectional circuit group"; }
+            }
+          }
+          
+          leaf circuit-type {
+            type eric-2g3g:circuit-type;
+            description "Type of circuits in this group";
+          }
+          
+          leaf total-circuits {
+            type uint16;
+            description "Total number of circuits";
+          }
+          
+          leaf destination-point-code {
+            type string;
+            description "SS7 destination point code";
+          }
+          
+          leaf destination-name {
+            type string;
+            description "Destination exchange name";
+          }
+          
+          list circuit {
+            key "cic";
+            description "Individual circuit in the group";
+            
+            leaf cic {
+              type uint16 {
+                range "0..4095";
+              }
+              description "Circuit Identification Code";
+            }
+            
+            leaf timeslot {
+              type uint8 {
+                range "0..31";
+              }
+              description "Timeslot number";
+            }
+            
+            leaf circuit-state {
+              type circuit-state;
+              config false;
+              description "Current circuit state";
+            }
+            
+            leaf blocking-reason {
+              type string;
+              description "Reason if circuit is blocked";
+            }
+          }
+        }
+      }
+      
+      // Signaling Configuration
+      container signaling-config {
+        description "SS7 signaling configuration";
+        
+        container ss7-config {
+          description "SS7/SS7 over IP configuration";
+          
+          leaf point-code {
+            type string;
+            description "MSC point code";
+          }
+          
+          leaf network-indicator {
+            type enumeration {
+              enum international;
+              enum national-spare;
+              enum national-reserved;
+              enum national;
+            }
+            default international;
+          }
+          
+          leaf ssn {
+            type uint8 {
+              range "0..255";
+            }
+            default 8;
+            description "Subsystem Number for MSC";
+          }
+          
+          list signaling-linkset {
+            key "linkset-name";
+            description "SS7 signaling linkset";
+            
+            leaf linkset-name {
+              type string;
+            }
+            
+            leaf adjacent-point-code {
+              type string;
+              description "Adjacent node point code";
+            }
+            
+            list signaling-link {
+              key "link-code";
+              description "Signaling link in linkset";
+              
+              leaf link-code {
+                type uint8 {
+                  range "0..15";
+                }
+                description "Signaling link code (SLC)";
+              }
+              
+              leaf link-state {
+                type signaling-link-state;
+                config false;
+              }
+              
+              leaf link-priority {
+                type uint8 {
+                  range "0..3";
+                }
+                description "Link priority for load sharing";
+              }
+            }
+          }
+        }
+        
+        container diameter-config {
+          description "Diameter configuration (if applicable)";
+          
+          leaf diameter-enabled {
+            type boolean;
+            default false;
+          }
+          
+          leaf diameter-realm {
+            type string;
+          }
+          
+          leaf diameter-host {
+            type string;
+          }
+        }
+      }
+      
+      // HLR Interface Configuration
+      container hlr-interface-config {
+        description "C interface (MSC-HLR) configuration";
+        
+        list hlr-connection {
+          key "hlr-id";
+          description "HLR connection configuration";
+          
+          leaf hlr-id {
+            type string;
+          }
+          
+          leaf hlr-point-code {
+            type string;
+            description "HLR SS7 point code";
+          }
+          
+          leaf hlr-gt {
+            type string;
+            description "HLR Global Title";
+          }
+          
+          leaf connection-state {
+            type enumeration {
+              enum available;
+              enum unavailable;
+            }
+            config false;
+          }
+        }
+      }
+      
+      // VLR Configuration (Integrated)
+      container vlr-config {
+        description "VLR configuration (integrated with MSC)";
+        
+        leaf vlr-enabled {
+          type boolean;
+          default true;
+          description "VLR is integrated with MSC";
+        }
+        
+        leaf vlr-number {
+          type string;
+          description "VLR number (E.164)";
+        }
+        
+        leaf subscriber-capacity {
+          type uint32;
+          default 500000;
+          description "Maximum subscribers in VLR";
+        }
+        
+        leaf current-subscribers {
+          type uint32;
+          config false;
+          description "Current subscribers registered";
+        }
+        
+        leaf purge-interval {
+          type uint16;
+          units hours;
+          default 24;
+          description "Purge interval for inactive subscribers";
+        }
+      }
+      
+      // Routing Configuration
+      container routing-config {
+        description "Routing table configuration";
+        
+        list route {
+          key "route-name";
+          description "Routing entry";
+          
+          leaf route-name {
+            type string;
+          }
+          
+          leaf destination-pattern {
+            type string;
+            description "Called party number pattern";
+          }
+          
+          leaf route-type {
+            type enumeration {
+              enum incoming { description "Incoming route"; }
+              enum outgoing { description "Outgoing route"; }
+              enum transit { description "Transit route"; }
+            }
+          }
+          
+          leaf circuit-group {
+            type string;
+            description "Circuit group for this route";
+          }
+          
+          leaf precedence {
+            type uint8 {
+              range "1..10";
+            }
+            description "Route precedence";
+          }
+        }
+      }
+      
+      // PSTN Gateway Configuration
+      container pstn-config {
+        description "PSTN gateway configuration";
+        
+        leaf isup-enabled {
+          type boolean;
+          default true;
+          description "ISUP protocol enabled for PSTN";
+        }
+        
+        list gateway {
+          key "gateway-id";
+          description "PSTN gateway configuration";
+          
+          leaf gateway-id {
+            type string;
+          }
+          
+          leaf gateway-type {
+            type enumeration {
+              enum stp { description "Signal Transfer Point"; }
+              enum exchange { description "PSTN Exchange"; }
+              enum gateway { description "Media Gateway"; }
+            }
+          }
+          
+          leaf point-code {
+            type string;
+          }
+          
+          leaf circuit-groups {
+            type string;
+            description "Comma-separated circuit groups to this gateway";
+          }
+        }
+      }
+      
+      // Overload Control Configuration
+      container overload-config {
+        description "Overload control configuration";
+        
+        leaf overload-detection-enabled {
+          type boolean;
+          default true;
+        }
+        
+        leaf cpu-threshold {
+          type uint8 {
+            range "0..100";
+          }
+          default 85;
+          units "percent";
+          description "CPU threshold for overload detection";
+        }
+        
+        leaf call-gating-threshold {
+          type uint8 {
+            range "0..100";
+          }
+          default 95;
+          units "percent";
+          description "Threshold for call gating activation";
+        }
+        
+        leaf throttling-percentage {
+          type uint8 {
+            range "0..100";
+          }
+          default 20;
+          units "percent";
+          description "Percentage of calls to reject during overload";
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // MSC Alarms
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'ericsson' and uoss-nrm:ne-type = 'msc'";
+    description "MSC-specific alarm augmentations";
+    
+    container msc-alarms {
+      description "MSC specific alarms";
+      
+      list active-alarm {
+        key "alarm-id";
+        config false;
+        description "Currently active MSC alarms";
+        
+        leaf alarm-id {
+          type string;
+        }
+        
+        leaf alarm-type {
+          type enumeration {
+            enum msc-overload { description "MSC processor overload detected"; }
+            enum signaling-link-failure { description "SS7 signaling link failure"; }
+            enum circuit-group-blocked { description "Circuit group blocked"; }
+            enum hlr-unreachable { description "HLR unreachable"; }
+            enum vlr-database-error { description "VLR database error"; }
+            enum a-interface-failure { description "A interface failure"; }
+            enum iucs-interface-failure { description "Iu-CS interface failure"; }
+            enum bsc-connection-lost { description "BSC connection lost"; }
+            enum rnc-connection-lost { description "RNC connection lost"; }
+            enum pstn-gateway-failure { description "PSTN gateway failure"; }
+            enum clock-synchronization-loss { description "Clock synchronization lost"; }
+            enum memory-exhaustion { description "Memory exhaustion"; }
+            enum call-processing-degradation { description "Call processing degradation"; }
+            enum routing-failure { description "Routing failure"; }
+          }
+        }
+        
+        leaf severity {
+          type uoss-nrm:severity-level;
+        }
+        
+        leaf affected-entity {
+          type string;
+          description "Affected MSC entity";
+        }
+        
+        leaf probable-cause {
+          type string;
+          description "ITU-T X.733 probable cause";
+        }
+        
+        leaf alarm-time {
+          type yang:date-and-time;
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // MSC KPIs
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'ericsson' and uoss-nrm:ne-type = 'msc'";
+    description "MSC KPI augmentations";
+    
+    container msc-kpis {
+      config false;
+      description "MSC Key Performance Indicators";
+      
+      container call-statistics {
+        description "Call statistics";
+        
+        leaf call-attempts {
+          type uint32;
+          description "Total call attempts";
+        }
+        
+        leaf call-successes {
+          type uint32;
+          description "Successful call completions";
+        }
+        
+        leaf call-setup-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "Call setup success rate";
+        }
+        
+        leaf call-drop-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "Call drop rate";
+        }
+        
+        leaf average-call-duration {
+          type uint16;
+          units seconds;
+          description "Average call holding time";
+        }
+        
+        leaf peak-concurrent-calls {
+          type uint32;
+          description "Peak concurrent calls";
+        }
+        
+        leaf current-concurrent-calls {
+          type uint32;
+          description "Current concurrent calls";
+        }
+      }
+      
+      container circuit-utilization {
+        description "Circuit utilization KPIs";
+        
+        leaf total-circuits {
+          type uint32;
+          description "Total circuits configured";
+        }
+        
+        leaf available-circuits {
+          type uint32;
+          description "Available circuits";
+        }
+        
+        leaf busy-circuits {
+          type uint32;
+          description "Currently busy circuits";
+        }
+        
+        leaf blocked-circuits {
+          type uint32;
+          description "Blocked circuits";
+        }
+        
+        leaf circuit-utilization-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "Overall circuit utilization";
+        }
+        
+        list circuit-group-utilization {
+          key "group-name";
+          description "Per circuit group utilization";
+          
+          leaf group-name {
+            type string;
+          }
+          
+          leaf utilization-percent {
+            type uint8 {
+              range "0..100";
+            }
+          }
+          
+          leaf congestion-level {
+            type enumeration {
+              enum none;
+              enum minor;
+              enum major;
+              enum critical;
+            }
+          }
+        }
+      }
+      
+      container signaling-statistics {
+        description "Signaling statistics";
+        
+        leaf msu-sent {
+          type uint64;
+          description "MSU (Message Signal Unit) sent";
+        }
+        
+        leaf msu-received {
+          type uint64;
+          description "MSU received";
+        }
+        
+        leaf signaling-link-congestion {
+          type boolean;
+          description "Signaling link congestion detected";
+        }
+        
+        leaf map-dialog-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "MAP dialog success rate";
+        }
+        
+        leaf isup-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "ISUP call success rate";
+        }
+      }
+      
+      container mobility-statistics {
+        description "Mobility management statistics";
+        
+        leaf location-updates {
+          type uint32;
+          description "Location update attempts";
+        }
+        
+        leaf location-update-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+        }
+        
+        leaf authentication-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+        }
+        
+        leaf imsi-attach-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+        }
+        
+        leaf vlr-subscribers {
+          type uint32;
+          description "Current VLR subscriber count";
+        }
+      }
+      
+      container handover-statistics {
+        description "Handover statistics";
+        
+        leaf intra-msc-ho-attempts {
+          type uint32;
+        }
+        
+        leaf intra-msc-ho-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+        }
+        
+        leaf inter-msc-ho-attempts {
+          type uint32;
+        }
+        
+        leaf inter-msc-ho-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+        }
+      }
+      
+      container performance {
+        description "MSC performance metrics";
+        
+        leaf cpu-utilization {
+          type uint8 {
+            range "0..100";
+          }
+          units "percent";
+        }
+        
+        leaf memory-utilization {
+          type uint8 {
+            range "0..100";
+          }
+          units "percent";
+        }
+        
+        leaf call-processing-delay {
+          type uint16;
+          units ms;
+          description "Average call processing delay";
+        }
+        
+        leaf paging-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // MSC Notifications
+  // =============================================================
+  
+  notification msc-alarm-notification {
+    description "MSC alarm notification";
+    
+    leaf msc-id {
+      type string;
+      mandatory true;
+    }
+    
+    leaf alarm-id {
+      type string;
+    }
+    
+    leaf alarm-type {
+      type enumeration {
+        enum msc-overload;
+        enum signaling-link-failure;
+        enum hlr-unreachable;
+        enum circuit-congestion;
+        enum vlr-error;
+      }
+    }
+    
+    leaf severity {
+      type uoss-nrm:severity-level;
+    }
+    
+    leaf affected-interface {
+      type string;
+    }
+    
+    leaf timestamp {
+      type yang:date-and-time;
+    }
+  }
+  
+  notification circuit-group-status-change {
+    description "Circuit group status change notification";
+    
+    leaf msc-id {
+      type string;
+    }
+    
+    leaf group-name {
+      type string;
+    }
+    
+    leaf old-status {
+      type enumeration {
+        enum available;
+        enum congested;
+        enum blocked;
+      }
+    }
+    
+    leaf new-status {
+      type enumeration {
+        enum available;
+        enum congested;
+        enum blocked;
+      }
+    }
+    
+    leaf affected-circuits {
+      type uint16;
+    }
+    
+    leaf reason {
+      type string;
+    }
+    
+    leaf timestamp {
+      type yang:date-and-time;
+    }
+  }
+  
+  notification overload-notification {
+    description "MSC overload notification";
+    
+    leaf msc-id {
+      type string;
+    }
+    
+    leaf overload-level {
+      type enumeration {
+        enum minor;
+        enum major;
+        enum critical;
+      }
+    }
+    
+    leaf cpu-utilization {
+      type uint8 {
+        range "0..100";
+      }
+    }
+    
+    leaf call-rejection-rate {
+      type uint8 {
+        range "0..100";
+      }
+    }
+    
+    leaf timestamp {
+      type yang:date-and-time;
+    }
+  }
+
+  // =============================================================
+  // MSC RPC Operations
+  // =============================================================
+  
+  rpc block-circuit {
+    description "Block a specific circuit";
+    input {
+      leaf msc-id {
+        type string;
+        mandatory true;
+      }
+      leaf circuit-group {
+        type string;
+        mandatory true;
+      }
+      leaf cic {
+        type uint16 {
+          range "0..4095";
+        }
+        mandatory true;
+      }
+      leaf reason {
+        type string;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+          enum already-blocked;
+          enum circuit-not-found;
+        }
+      }
+      leaf message {
+        type string;
+      }
+    }
+  }
+  
+  rpc unblock-circuit {
+    description "Unblock a specific circuit";
+    input {
+      leaf msc-id {
+        type string;
+        mandatory true;
+      }
+      leaf circuit-group {
+        type string;
+        mandatory true;
+      }
+      leaf cic {
+        type uint16 {
+          range "0..4095";
+        }
+        mandatory true;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+          enum not-blocked;
+          enum circuit-not-found;
+        }
+      }
+    }
+  }
+  
+  rpc reset-circuit-group {
+    description "Reset all circuits in a circuit group";
+    input {
+      leaf msc-id {
+        type string;
+        mandatory true;
+      }
+      leaf circuit-group {
+        type string;
+        mandatory true;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum partial;
+          enum failed;
+        }
+      }
+      leaf circuits-reset {
+        type uint16;
+      }
+      leaf message {
+        type string;
+      }
+    }
+  }
+  
+  rpc query-subscriber {
+    description "Query subscriber information from VLR";
+    input {
+      leaf msc-id {
+        type string;
+        mandatory true;
+      }
+      leaf query-type {
+        type enumeration {
+          enum imsi;
+          enum msisdn;
+          enum tmsi;
+        }
+        mandatory true;
+      }
+      leaf query-value {
+        type string;
+        mandatory true;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum found;
+          enum not-found;
+          enum error;
+        }
+      }
+      leaf imsi {
+        type string;
+      }
+      leaf msisdn {
+        type string;
+      }
+      leaf lac {
+        type uint16;
+      }
+      leaf registration-time {
+        type yang:date-and-time;
+      }
+    }
+  }
+  
+  rpc purge-subscriber {
+    description "Purge subscriber from VLR";
+    input {
+      leaf msc-id {
+        type string;
+        mandatory true;
+      }
+      leaf imsi {
+        type string;
+        mandatory true;
+      }
+      leaf reason {
+        type string;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum not-found;
+          enum failed;
+        }
+      }
+    }
+  }
+  
+  rpc query-msc-status {
+    description "Query comprehensive MSC status";
+    input {
+      leaf msc-id {
+        type string;
+        mandatory true;
+      }
+    }
+    output {
+      leaf operational-state {
+        type msc-operational-state;
+      }
+      leaf administrative-state {
+        type msc-administrative-state;
+      }
+      leaf vlr-subscribers {
+        type uint32;
+      }
+      leaf active-calls {
+        type uint32;
+      }
+      leaf cpu-utilization {
+        type uint8 {
+          range "0..100";
+        }
+        units "percent";
+      }
+      leaf memory-utilization {
+        type uint8 {
+          range "0..100";
+        }
+        units "percent";
+      }
+      leaf connected-bscs {
+        type uint8;
+      }
+      leaf connected-rncs {
+        type uint8;
+      }
+      leaf available-signaling-links {
+        type uint8;
+      }
+    }
+  }
+}

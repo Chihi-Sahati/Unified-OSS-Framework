@@ -1,0 +1,820 @@
+module huawei-sps-augmentation {
+  yang-version 1.1;
+  namespace "urn:unified-oss:vendor:huawei:sps";
+  prefix hsps;
+  
+  import unified-oss-core-nrm { prefix uoss-nrm; }
+  import ietf-inet-types { prefix inet; }
+  import ietf-yang-types { prefix yang; }
+  
+  organization "Unified OSS Framework - Huawei SPS Support";
+  contact "Dr. Houda Chihi - IEEE Member, TechWomen 2019 Fellow";
+  description 
+    "YANG augmentation for Huawei Signaling Processing System (SPS).
+     
+     Huawei SPS integrates three key signaling components:
+     - DRA (Diameter Routing Agent)
+     - DEA (Diameter Edge Agent)  
+     - STP (Signal Transfer Point)
+     
+     This module is based on the Huawei SPS Orientation diagram
+     provided by Dr. Houda Chihi.
+
+     Key Interfaces:
+     - S6a: MME ↔ HSS (subscriber data)
+     - S9: PCRF roaming interfaces
+     - Gx: PCEF ↔ PCRF (policy control)
+     - Gy: PCEF ↔ OCS (online charging)
+     - Cx/Dx: IMS ↔ HSS
+     - Rx: AF ↔ PCRF
+     - Ro: OCS charging
+     - Rf: CTF ↔ CDF
+     - Sy: PCRF ↔ OCS
+
+     Reference: 3GPP TS 29.213, TS 29.214, TS 29.215, TS 29.272";
+
+  revision 2026-03-20 {
+    description "Initial version for Unified OSS Framework v1.0.0";
+    reference "IEEE TNSM Submission - Dr. Houda Chihi Supervision";
+  }
+
+  // =============================================================
+  // DRA - Diameter Routing Agent
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'huawei' and uoss-nrm:ne-type = 'dra'";
+    description "DRA-specific augmentations";
+    
+    container dra-config {
+      description "Diameter Routing Agent Configuration";
+      
+      leaf dra-id {
+        type string;
+        description "DRA Instance Identifier";
+      }
+      
+      leaf routing-realm {
+        type string;
+        description "Diameter routing realm";
+        reference "RFC 6733 Section 4.3";
+      }
+      
+      leaf diameter-port {
+        type uint16;
+        default 3868;
+        description "Diameter TCP/SCTP port";
+      }
+      
+      container transport-config {
+        description "Transport Protocol Configuration";
+        leaf transport-protocol {
+          type enumeration {
+            enum tcp;
+            enum sctp;
+          }
+          default sctp;
+          description "Diameter transport protocol";
+        }
+        leaf max-connections {
+          type uint32;
+          default 1000;
+          description "Maximum concurrent Diameter connections";
+        }
+        leaf connection-timeout {
+          type uint16;
+          units seconds;
+          default 30;
+        }
+        leaf watchdog-interval {
+          type uint16;
+          units seconds;
+          default 30;
+        }
+      }
+      
+      container diameter-interfaces {
+        description "Diameter Interface Configuration";
+        
+        list interface {
+          key "interface-name";
+          leaf interface-name {
+            type enumeration {
+              enum S6a;   // MME-HSS
+              enum S9;    // V-PCRF - H-PCRF
+              enum Gx;    // PCEF-PCRF
+              enum Gy;    // PCEF-OCS
+              enum Cx;    // IMS-HSS
+              enum Dx;    // IMS-HSS via DRA
+              enum Rx;    // AF-PCRF
+              enum Ro;    // OCS charging
+              enum Rf;    // CTF-CDF offline charging
+              enum Sy;    // PCRF-OCS
+            }
+            description "Diameter interface type per 3GPP";
+          }
+          leaf enabled {
+            type boolean;
+            default true;
+          }
+          leaf application-id {
+            type uint32;
+            description "Diameter Application ID";
+            reference "IANA Diameter Application IDs";
+          }
+          leaf vendor-id {
+            type uint32;
+            default 10415;
+            description "3GPP Vendor ID";
+          }
+          leaf auth-app-id {
+            type uint32;
+          }
+        }
+      }
+      
+      container routing-config {
+        description "Diameter Routing Configuration";
+        
+        list route {
+          key "route-name";
+          leaf route-name {
+            type string;
+          }
+          leaf destination-realm {
+            type string;
+            mandatory true;
+          }
+          leaf destination-host {
+            type string;
+          }
+          leaf peer-address {
+            type inet:ip-address;
+          }
+          leaf peer-port {
+            type uint16;
+            default 3868;
+          }
+          leaf priority {
+            type uint8 {
+              range "1..100";
+            }
+            default 50;
+          }
+          leaf weight {
+            type uint8 {
+              range "1..100";
+            }
+            default 50;
+          }
+        }
+        
+        container load-balancing {
+          description "Load Balancing Configuration";
+          leaf enabled {
+            type boolean;
+            default true;
+          }
+          leaf algorithm {
+            type enumeration {
+              enum round-robin;
+              enum weighted;
+              enum least-connections;
+            }
+            default weighted;
+          }
+        }
+      }
+      
+      container hss-integration {
+        description "HSS Integration Configuration";
+        list hss-peer {
+          key "hss-id";
+          leaf hss-id {
+            type string;
+          }
+          leaf hss-address {
+            type inet:ip-address;
+          }
+          leaf hss-port {
+            type uint16;
+            default 3868;
+          }
+          leaf hss-realm {
+            type string;
+          }
+          leaf connection-status {
+            type enumeration {
+              enum connected;
+              enum disconnected;
+              enum pending;
+            }
+            config false;
+          }
+        }
+      }
+      
+      container pcrf-integration {
+        description "PCRF Integration Configuration";
+        list pcrf-peer {
+          key "pcrf-id";
+          leaf pcrf-id {
+            type string;
+          }
+          leaf pcrf-address {
+            type inet:ip-address;
+          }
+          leaf pcrf-port {
+            type uint16;
+            default 3868;
+          }
+        }
+      }
+      
+      container ocs-integration {
+        description "OCS (Online Charging System) Integration";
+        list ocs-peer {
+          key "ocs-id";
+          leaf ocs-id {
+            type string;
+          }
+          leaf ocs-address {
+            type inet:ip-address;
+          }
+          leaf ocs-port {
+            type uint16;
+            default 3868;
+          }
+        }
+      }
+      
+      container ems-integration {
+        description "EMS U2000/U2020 Integration";
+        leaf ems-address {
+          type inet:ip-address;
+          description "EMS management address";
+        }
+        leaf ems-port {
+          type uint16;
+          default 3868;
+        }
+        leaf snmp-enabled {
+          type boolean;
+          default true;
+        }
+        leaf snmp-trap-port {
+          type uint16;
+          default 162;
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // DEA - Diameter Edge Agent
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'huawei' and uoss-nrm:ne-type = 'dea'";
+    description "DEA-specific augmentations";
+    
+    container dea-config {
+      description "Diameter Edge Agent Configuration";
+      
+      leaf dea-id {
+        type string;
+      }
+      
+      container vplmn-config {
+        description "Visited PLMN Configuration";
+        leaf vplmn-realm {
+          type string;
+          description "VPLMN Diameter realm";
+        }
+        leaf vplmn-mcc {
+          type string {
+            length "3";
+            pattern '[0-9]{3}';
+          }
+          description "Mobile Country Code for VPLMN";
+        }
+        leaf vplmn-mnc {
+          type string {
+            length "2..3";
+            pattern '[0-9]{2,3}';
+          }
+          description "Mobile Network Code for VPLMN";
+        }
+      }
+      
+      container hplmn-config {
+        description "Home PLMN Configuration";
+        leaf hplmn-realm {
+          type string;
+          description "HPLMN Diameter realm";
+        }
+        leaf hplmn-mcc {
+          type string {
+            length "3";
+            pattern '[0-9]{3}';
+          }
+        }
+        leaf hplmn-mnc {
+          type string {
+            length "2..3";
+            pattern '[0-9]{2,3}';
+          }
+        }
+      }
+      
+      container ipx-config {
+        description "IPX (IP Exchange) Configuration";
+        leaf ipx-enabled {
+          type boolean;
+          default true;
+          description "Enable IPX interconnect";
+        }
+        list ipx-peer {
+          key "ipx-id";
+          leaf ipx-id {
+            type string;
+          }
+          leaf ipx-address {
+            type inet:ip-address;
+          }
+          leaf ipx-port {
+            type uint16;
+            default 3868;
+          }
+        }
+      }
+      
+      container s6a-config {
+        description "S6a Interface (MME-HSS) Configuration";
+        leaf s6a-enabled {
+          type boolean;
+          default true;
+        }
+        leaf s6a-routing-mode {
+          type enumeration {
+            enum proxy;
+            enum relay;
+            enum redirect;
+          }
+          default relay;
+        }
+      }
+      
+      container s9-config {
+        description "S9 Interface (V-PCRF ↔ H-PCRF) Configuration";
+        leaf s9-enabled {
+          type boolean;
+          default true;
+        }
+        leaf roaming-scenario {
+          type enumeration {
+            enum local-breakout;
+            enum home-routed;
+          }
+          default local-breakout;
+        }
+      }
+      
+      container security-config {
+        description "Security Configuration";
+        leaf tls-enabled {
+          type boolean;
+          default true;
+        }
+        leaf ipsec-enabled {
+          type boolean;
+          default false;
+        }
+        leaf certificate-profile {
+          type string;
+        }
+      }
+      
+      container message-filtering {
+        description "Diameter Message Filtering";
+        leaf filter-enabled {
+          type boolean;
+          default true;
+        }
+        list avp-filter {
+          key "avp-code";
+          leaf avp-code {
+            type uint32;
+            description "AVP code to filter";
+          }
+          leaf filter-action {
+            type enumeration {
+              enum allow;
+              enum block;
+              enum modify;
+              enum log-only;
+            }
+            default allow;
+          }
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // STP - Signal Transfer Point
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'huawei' and uoss-nrm:ne-type = 'stp'";
+    description "STP-specific augmentations for 2G/3G Core signaling";
+    
+    container stp-config {
+      description "Signal Transfer Point Configuration";
+      
+      leaf stp-id {
+        type string;
+      }
+      
+      leaf point-code {
+        type string;
+        description "SS7 Point Code (ITU-T E.164 format)";
+        reference "ITU-T Q.704";
+      }
+      
+      leaf ssn {
+        type uint8 {
+          range "1..255";
+        }
+        description "SS7 Subsystem Number";
+        reference "ITU-T Q.713";
+      }
+      
+      container ss7-config {
+        description "SS7 Protocol Configuration";
+        
+        leaf mtp3-level {
+          type enumeration {
+            enum itu-t;
+            enum ansi;
+            enum etsi;
+          }
+          default itu-t;
+        }
+        
+        container mtp2-config {
+          description "MTP Level 2 Configuration";
+          leaf t7-timer {
+            type uint16;
+            units milliseconds;
+            default 1000;
+          }
+          leaf t12-timer {
+            type uint16;
+            units milliseconds;
+            default 1150;
+          }
+          leaf t13-timer {
+            type uint16;
+            units milliseconds;
+            default 1150;
+          }
+        }
+        
+        container mtp3-config {
+          description "MTP Level 3 Configuration";
+          leaf tfr-timer {
+            type uint16;
+            units milliseconds;
+            default 800;
+          }
+          leaf tfrt-timer {
+            type uint16;
+            units milliseconds;
+            default 1200;
+          }
+        }
+        
+        container sccp-config {
+          description "SCCP Configuration";
+          leaf sccp-routing-mode {
+            type enumeration {
+              enum connectionless;
+              enum connection-oriented;
+              enum both;
+            }
+            default both;
+          }
+          leaf gt-translation-enabled {
+            type boolean;
+            default true;
+          }
+        }
+      }
+      
+      container epc-integration {
+        description "EPC (4G) Integration Configuration";
+        leaf diameter-sigtran-gateway {
+          type boolean;
+          default true;
+          description "Enable Diameter-to-Sigtran translation";
+        }
+        leaf mme-sgs-connection {
+          type boolean;
+          default true;
+          description "Enable MME-SGS interface for SMS";
+        }
+      }
+      
+      container ims-integration {
+        description "IMS Integration Configuration";
+        leaf ims-connection-enabled {
+          type boolean;
+          default true;
+        }
+        leaf sip-sigtran-gateway {
+          type boolean;
+          default true;
+          description "Enable SIP-to-Sigtran translation";
+        }
+      }
+      
+      container legacy-support {
+        description "Legacy 2G/3G Network Support";
+        
+        container gsm-support {
+          description "GSM Network Support";
+          leaf enabled {
+            type boolean;
+            default true;
+          }
+          list msc-peer {
+            key "msc-id";
+            leaf msc-id {
+              type string;
+            }
+            leaf msc-point-code {
+              type string;
+            }
+            leaf msc-ssn {
+              type uint8;
+              default 8;
+              description "MSC SSN (typically 8)";
+            }
+          }
+        }
+        
+        container umts-support {
+          description "UMTS Network Support";
+          leaf enabled {
+            type boolean;
+            default true;
+          }
+          list sgsn-peer {
+            key "sgsn-id";
+            leaf sgsn-id {
+              type string;
+            }
+            leaf sgsn-point-code {
+              type string;
+            }
+          }
+        }
+      }
+      
+      container link-sets {
+        description "SS7 Link Set Configuration";
+        list link-set {
+          key "link-set-name";
+          leaf link-set-name {
+            type string;
+          }
+          leaf adjacent-point-code {
+            type string;
+            mandatory true;
+          }
+          leaf load-sharing {
+            type enumeration {
+              enum sls-based;
+              enum sls-and-link-code;
+            }
+            default sls-based;
+          }
+          list link {
+            key "link-id";
+            leaf link-id {
+              type uint8;
+            }
+            leaf link-type {
+              type enumeration {
+                enum a-link;
+                enum b-link;
+                enum c-link;
+                enum d-link;
+                enum e-link;
+                enum f-link;
+              }
+              default a-link;
+            }
+            leaf timeslot {
+              type uint8 {
+                range "1..31";
+              }
+            }
+            leaf link-status {
+              type enumeration {
+                enum active;
+                enum inactive;
+                enum blocked;
+                enum failed;
+              }
+              config false;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // SPS Notifications
+  // =============================================================
+  
+  notification dra-peer-down {
+    description "DRA peer connection down";
+    leaf ne-id {
+      type string;
+    }
+    leaf peer-host {
+      type string;
+    }
+    leaf peer-realm {
+      type string;
+    }
+    leaf interface-type {
+      type enumeration {
+        enum S6a;
+        enum S9;
+        enum Gx;
+        enum Gy;
+        enum Cx;
+        enum Rx;
+        enum Ro;
+        enum Rf;
+        enum Sy;
+      }
+    }
+    leaf downtime {
+      type yang:date-and-time;
+    }
+  }
+  
+  notification dea-roaming-alert {
+    description "DEA roaming connectivity alert";
+    leaf ne-id {
+      type string;
+    }
+    leaf alert-type {
+      type enumeration {
+        enum hplmn-unreachable;
+        enum ipx-congestion;
+        enum security-violation;
+        enum message-filter-hit;
+      }
+    }
+    leaf affected-realm {
+      type string;
+    }
+  }
+  
+  notification stp-link-failure {
+    description "STP SS7 link failure";
+    leaf ne-id {
+      type string;
+    }
+    leaf link-set-name {
+      type string;
+    }
+    leaf link-id {
+      type uint8;
+    }
+    leaf point-code {
+      type string;
+    }
+    leaf failure-reason {
+      type enumeration {
+        enum alignment-error;
+        enum errored-seconds;
+        enum severely-errored-seconds;
+        enum remote-congestion;
+        enum local-congestion;
+      }
+    }
+  }
+
+  // =============================================================
+  // SPS RPCs
+  // =============================================================
+  
+  rpc dra-flush-route-cache {
+    description "Flush DRA routing cache";
+    input {
+      leaf dra-id {
+        type string;
+        mandatory true;
+      }
+      leaf interface-type {
+        type enumeration {
+          enum all;
+          enum S6a;
+          enum S9;
+          enum Gx;
+          enum Gy;
+          enum Cx;
+          enum Rx;
+        }
+        default all;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+        }
+      }
+      leaf entries-flushed {
+        type uint32;
+      }
+    }
+  }
+  
+  rpc stp-block-link {
+    description "Block SS7 link for maintenance";
+    input {
+      leaf stp-id {
+        type string;
+        mandatory true;
+      }
+      leaf link-set-name {
+        type string;
+        mandatory true;
+      }
+      leaf link-id {
+        type uint8;
+        mandatory true;
+      }
+      leaf reason {
+        type string;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum link-not-found;
+          enum already-blocked;
+          enum failed;
+        }
+      }
+    }
+  }
+  
+  rpc dea-test-roaming {
+    description "Test DEA roaming connectivity";
+    input {
+      leaf dea-id {
+        type string;
+        mandatory true;
+      }
+      leaf target-realm {
+        type string;
+        mandatory true;
+      }
+      leaf test-type {
+        type enumeration {
+          enum connectivity;
+          enum diameter-capabilities;
+          enum full-transaction;
+        }
+        default connectivity;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum timeout;
+          enum failed;
+          enum rejected;
+        }
+      }
+      leaf latency-ms {
+        type uint32;
+      }
+      leaf test-details {
+        type string;
+      }
+    }
+  }
+}

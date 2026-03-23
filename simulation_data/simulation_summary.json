@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-03-19T00:33:35.959199+00:00",
+  "simulation_period": {
+    "start": "2026-03-12T00:33:26.628999+00:00",
+    "end": "2026-03-19T00:33:35.959214+00:00",
+    "days": 7
+  },
+  "statistics": {
+    "total_network_elements": 300,
+    "ericsson_elements": 150,
+    "huawei_elements": 150,
+    "total_alarms": 1200,
+    "alarms_by_severity": {
+      "CRITICAL": 61,
+      "MAJOR": 184,
+      "MINOR": 485,
+      "WARNING": 470
+    },
+    "total_pm_records": 672000
+  }
+}

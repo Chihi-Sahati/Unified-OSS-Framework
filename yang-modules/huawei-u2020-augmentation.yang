@@ -1,0 +1,463 @@
+module huawei-u2020-augmentation {
+  yang-version 1.1;
+  namespace "urn:unified-oss:vendor:huawei:u2020";
+  prefix hu2020;
+  
+  import unified-oss-core-nrm { prefix uoss-nrm; }
+  import ietf-inet-types { prefix inet; }
+  
+  organization "Unified OSS Framework - Huawei U2020 Support";
+  contact "Dr. Houda Chihi - IEEE Member, TechWomen 2019 Fellow";
+  description 
+    "YANG augmentation for Huawei U2020 OSS features.
+     
+     Huawei U2020 is the successor to U2000, providing enhanced
+     network management capabilities for:
+     - 5G NR (New Radio)
+     - CloudCore (5G Core)
+     - Advanced automation and AI features
+     
+     This module addresses Dr. Chihi's requirement to update
+     all references from U2000 to U2000/U2020.
+
+     Reference: Huawei U2020 Product Documentation";
+
+  revision 2026-03-20 {
+    description "Initial version for Unified OSS Framework v1.0.0";
+    reference "IEEE TNSM Submission - Dr. Houda Chihi Supervision";
+  }
+
+  // =============================================================
+  // U2020 Specific Features
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'huawei' and uoss-nrm:management-system = 'u2020'";
+    description "U2020-specific augmentations";
+    
+    container u2020-features {
+      description "Huawei U2020 Enhanced Features";
+      
+      container 5g-management {
+        description "5G Network Management Features";
+        
+        leaf nr-management-enabled {
+          type boolean;
+          default true;
+          description "Enable 5G NR management";
+        }
+        
+        leaf cloud-core-enabled {
+          type boolean;
+          default true;
+          description "Enable CloudCore management";
+        }
+        
+        container nr-config {
+          description "5G NR Configuration";
+          leaf sa-mode-support {
+            type boolean;
+            default true;
+            description "Standalone 5G mode support";
+          }
+          leaf nsa-mode-support {
+            type boolean;
+            default true;
+            description "Non-standalone 5G mode support";
+          }
+          leaf mmwave-support {
+            type boolean;
+            default false;
+            description "mmWave frequency support";
+          }
+          list supported-bands {
+            key "band-id";
+            leaf band-id {
+              type string;
+              description "NR band identifier (e.g., n78, n41, n1)";
+            }
+            leaf band-type {
+              type enumeration {
+                enum fdd;
+                enum tdd;
+                enum supplemental-uplink;
+              }
+            }
+            leaf max-bandwidth-mhz {
+              type uint16;
+            }
+          }
+        }
+        
+        container cloud-core-config {
+          description "CloudCore Configuration";
+          leaf containerized-deployment {
+            type boolean;
+            default true;
+          }
+          leaf microservices-enabled {
+            type boolean;
+            default true;
+          }
+          leaf autoscaling-enabled {
+            type boolean;
+            default true;
+          }
+        }
+      }
+      
+      container ai-features {
+        description "AI-powered Management Features";
+        
+        leaf ai-enabled {
+          type boolean;
+          default true;
+          description "Enable AI/ML features";
+        }
+        
+        container intelligent-alarm {
+          description "Intelligent Alarm Analysis";
+          leaf root-cause-analysis {
+            type boolean;
+            default true;
+          }
+          leaf alarm-correlation-ml {
+            type boolean;
+            default true;
+          }
+          leaf predictive-fault-detection {
+            type boolean;
+            default false;
+          }
+        }
+        
+        container intelligent-optimization {
+          description "Network Optimization AI";
+          leaf parameter-optimization {
+            type boolean;
+            default true;
+          }
+          leaf capacity-forecasting {
+            type boolean;
+            default true;
+          }
+          leaf coverage-optimization {
+            type boolean;
+            default false;
+          }
+        }
+      }
+      
+      container automation-features {
+        description "Advanced Automation Features";
+        
+        container zero-touch-provisioning {
+          description "Zero-Touch Provisioning";
+          leaf ztp-enabled {
+            type boolean;
+            default true;
+          }
+          leaf auto-discovery {
+            type boolean;
+            default true;
+          }
+          leaf auto-configuration {
+            type boolean;
+            default true;
+          }
+          leaf plug-and-play {
+            type boolean;
+            default true;
+          }
+        }
+        
+        container intent-based-management {
+          description "Intent-Based Network Management";
+          leaf ibnm-enabled {
+            type boolean;
+            default true;
+          }
+          leaf policy-driven-config {
+            type boolean;
+            default true;
+          }
+          leaf automated-compliance {
+            type boolean;
+            default true;
+          }
+        }
+        
+        container closed-loop-automation {
+          description "Closed-Loop Automation";
+          leaf cla-enabled {
+            type boolean;
+            default false;
+          }
+          list automation-loop {
+            key "loop-name";
+            leaf loop-name {
+              type string;
+            }
+            leaf trigger-condition {
+              type string;
+            }
+            leaf action-type {
+              type enumeration {
+                enum parameter-adjustment;
+                enum capacity-scaling;
+                enum fault-remediation;
+                enum optimization;
+              }
+            }
+            leaf approval-required {
+              type boolean;
+              default true;
+            }
+          }
+        }
+      }
+      
+      container enhanced-monitoring {
+        description "Enhanced Monitoring Capabilities";
+        
+        leaf real-time-kpi {
+          type boolean;
+          default true;
+        }
+        
+        leaf streaming-telemetry {
+          type boolean;
+          default true;
+          description "gRPC streaming telemetry support";
+        }
+        
+        container telemetry-config {
+          description "Telemetry Configuration";
+          leaf grpc-port {
+            type uint16;
+            default 57400;
+          }
+          leaf sample-interval-ms {
+            type uint32;
+            default 10000;
+          }
+          list subscribed-paths {
+            key "xpath";
+            leaf xpath {
+              type string;
+            }
+            leaf sample-frequency-ms {
+              type uint32;
+            }
+          }
+        }
+      }
+      
+      container security-enhancements {
+        description "U2020 Security Enhancements";
+        
+        leaf zero-trust-enabled {
+          type boolean;
+          default true;
+        }
+        
+        leaf pki-integration {
+          type boolean;
+          default true;
+        }
+        
+        leaf audit-trail-enhanced {
+          type boolean;
+          default true;
+        }
+        
+        container certificate-management {
+          description "Certificate Lifecycle Management";
+          leaf auto-renewal {
+            type boolean;
+            default true;
+          }
+          leaf renewal-days-before-expiry {
+            type uint8;
+            default 30;
+          }
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // U2020 Specific Notifications
+  // =============================================================
+  
+  notification u2020-ai-alert {
+    description "AI-detected anomaly or prediction";
+    leaf ne-id {
+      type string;
+    }
+    leaf alert-type {
+      type enumeration {
+        enum predicted-fault;
+        enum performance-degradation;
+        enum capacity-warning;
+        enum configuration-drift;
+        enum security-anomaly;
+      }
+    }
+    leaf confidence-score {
+      type uint8 {
+        range "0..100";
+      }
+    }
+    leaf predicted-time {
+      type yang:date-and-time;
+      description "Predicted time of event";
+    }
+    leaf recommended-action {
+      type string;
+    }
+  }
+  
+  notification u2020-automation-event {
+    description "Closed-loop automation event notification";
+    leaf automation-loop-name {
+      type string;
+    }
+    leaf trigger {
+      type string;
+    }
+    leaf action-taken {
+      type string;
+    }
+    leaf result {
+      type enumeration {
+        enum success;
+        enum partial;
+        enum failed;
+        enum rolled-back;
+      }
+    }
+    leaf approval-info {
+      type string;
+    }
+  }
+
+  // =============================================================
+  // U2020 Specific RPCs
+  // =============================================================
+  
+  rpc u2020-ai-analyze {
+    description "Request AI analysis for specific NE";
+    input {
+      leaf ne-id {
+        type string;
+        mandatory true;
+      }
+      leaf analysis-type {
+        type enumeration {
+          enum root-cause;
+          enum performance-prediction;
+          enum capacity-forecast;
+          enum optimization;
+        }
+        mandatory true;
+      }
+      leaf time-range-hours {
+        type uint8;
+        default 24;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum insufficient-data;
+          enum model-not-ready;
+          enum failed;
+        }
+      }
+      leaf analysis-report {
+        type string;
+      }
+      leaf recommendations {
+        type string;
+      }
+    }
+  }
+  
+  rpc u2020-deploy-intent {
+    description "Deploy intent-based configuration";
+    input {
+      leaf intent-name {
+        type string;
+        mandatory true;
+      }
+      leaf intent-description {
+        type string;
+      }
+      list target-ne {
+        key "ne-id";
+        leaf ne-id {
+          type string;
+        }
+      }
+      leaf compliance-check {
+        type boolean;
+        default true;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum deployed;
+          enum partial;
+          enum validation-failed;
+          enum failed;
+        }
+      }
+      leaf deployment-id {
+        type string;
+      }
+      leaf validation-report {
+        type string;
+      }
+    }
+  }
+  
+  rpc u2020-telemetry-subscribe {
+    description "Configure streaming telemetry subscription";
+    input {
+      leaf ne-id {
+        type string;
+        mandatory true;
+      }
+      leaf receiver-address {
+        type inet:ip-address;
+        mandatory true;
+      }
+      leaf receiver-port {
+        type uint16;
+        mandatory true;
+      }
+      leaf encoding {
+        type enumeration {
+          enum json;
+          enum protobuf;
+          enum gpb;
+        }
+        default json;
+      }
+    }
+    output {
+      leaf subscription-id {
+        type string;
+      }
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+        }
+      }
+    }
+  }
+}

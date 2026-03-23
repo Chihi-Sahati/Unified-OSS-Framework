@@ -1,0 +1,5395 @@
+module ericsson-huawei-unified-configuration-management {
+  yang-version 1.1;
+  namespace "urn:cim:fcaps:configuration:v1";
+  prefix "fcaps-config";
+  
+  import ietf-yang-types {
+    prefix yang;
+  }
+  import ietf-inet-types {
+    prefix inet;
+  }
+
+  organization "Unified OSS Framework Consortium";
+  contact "oss-framework@example.com";
+  
+  description
+    "YANG 1.1 data model for Configuration Management within the Unified OSS Framework.
+     This module provides comprehensive vendor-neutral configuration provisioning,
+     change management, and policy enforcement for multi-vendor network environments.
+     
+     Key capabilities:
+     - Configuration profile and template management
+     - Change request workflow with approval processes
+     - Cross-vendor policy enforcement
+     - Validation and rollback support
+     - Configuration scheduling and preview
+     - Audit trail and compliance tracking
+     - Backup and restore operations
+     
+     FCAPS-C (Configuration Management) Implementation:
+     This module implements the Configuration Management aspect of the FCAPS framework,
+     providing comprehensive configuration lifecycle management for Ericsson and Huawei
+     network elements.
+     
+     Copyright (c) 2024 Unified OSS Framework Consortium.
+     All rights reserved.";
+  
+  revision 2024-03-01 {
+    description 
+      "Comprehensive Configuration Management YANG model for Ericsson/Huawei
+       multi-vendor network element management.
+       
+       Key features:
+       - Vendor-neutral configuration profiles and templates
+       - Multi-stage approval workflow management
+       - Policy-based configuration enforcement
+       - Audit trail and rollback capabilities
+       - Configuration scheduling and preview
+       - Validation rules engine
+       - Diff engine for configuration comparison
+       - Statistics and metrics tracking";
+    reference 
+      "IEEE Transactions on Network and Service Management;
+       3GPP TS 28.541 - Network Resource Model;
+       NETCONF RFC 6241;
+       YANG 1.1 RFC 7950;
+       TM Forum MTOSI Framework";
+  }
+
+  /***************************************************************************
+   * FEATURE DEFINITIONS
+   ***************************************************************************/
+  
+  feature config-validation {
+    description
+      "Enables comprehensive configuration validation capabilities including
+       syntax checking, semantic validation, and cross-reference validation.
+       When enabled, all configuration changes must pass validation before
+       deployment can proceed.";
+  }
+  
+  feature config-rollback {
+    description
+      "Enables automatic and manual configuration rollback capabilities.
+       Supports point-in-time rollback, version-based rollback, and
+       automatic rollback on deployment failure.";
+  }
+  
+  feature config-preview {
+    description
+      "Enables configuration preview functionality allowing operators to
+       see the impact of proposed changes before actual deployment.
+       Includes what-if analysis and impact assessment.";
+  }
+  
+  feature config-scheduling {
+    description
+      "Enables scheduled configuration deployment allowing changes to be
+       scheduled for specific maintenance windows. Supports recurring
+       schedules and blackout periods.";
+  }
+  
+  feature config-templates {
+    description
+      "Enables configuration template management allowing reusable
+       configuration patterns to be defined and applied across multiple
+       resources. Supports parameter substitution and inheritance.";
+  }
+  
+  feature change-approval-workflow {
+    description
+      "Enables multi-stage approval workflow for configuration changes.
+       Supports configurable approval chains, delegation, escalation,
+       and emergency bypass procedures.";
+  }
+
+  /***************************************************************************
+   * IDENTITY DEFINITIONS
+   ***************************************************************************/
+  
+  identity config-type-base {
+    description
+      "Base identity for configuration types. All configuration type
+       identities should derive from this base identity.";
+  }
+  
+  identity system-config {
+    base config-type-base;
+    description
+      "System-level configuration affecting overall device behavior.
+       Changes typically require device restart.";
+  }
+  
+  identity network-config {
+    base config-type-base;
+    description
+      "Network-level configuration for connectivity and routing.
+       Includes IP addresses, VLANs, routing protocols.";
+  }
+  
+  identity service-config {
+    base config-type-base;
+    description
+      "Service-level configuration for specific services.
+       Includes QoS policies, ACLs, service parameters.";
+  }
+  
+  identity security-config {
+    base config-type-base;
+    description
+      "Security-related configuration including authentication,
+       authorization, encryption, and firewall rules.";
+  }
+  
+  identity radio-config {
+    base config-type-base;
+    description
+      "Radio access network configuration for wireless networks.
+       Includes frequency, power, and cell parameters.";
+  }
+  
+  identity transport-config {
+    base config-type-base;
+    description
+      "Transport layer configuration for data plane.
+       Includes MPLS, SDH, OTN configurations.";
+  }
+  
+  identity operation-base {
+    description
+      "Base identity for configuration operations.";
+  }
+  
+  identity create-operation {
+    base operation-base;
+    description
+      "Create new configuration instance.";
+  }
+  
+  identity modify-operation {
+    base operation-base;
+    description
+      "Modify existing configuration.";
+  }
+  
+  identity delete-operation {
+    base operation-base;
+    description
+      "Delete configuration instance.";
+  }
+  
+  identity activate-operation {
+    base operation-base;
+    description
+      "Activate staged configuration.";
+  }
+  
+  identity deactivate-operation {
+    base operation-base;
+    description
+      "Deactivate active configuration.";
+  }
+  
+  identity rollback-operation {
+    base operation-base;
+    description
+      "Rollback to previous configuration version.";
+  }
+  
+  identity vendor-base {
+    description
+      "Base identity for vendor identification.";
+  }
+  
+  identity ericsson {
+    base vendor-base;
+    description
+      "Ericsson network equipment vendor.";
+  }
+  
+  identity huawei {
+    base vendor-base;
+    description
+      "Huawei network equipment vendor.";
+  }
+  
+  identity deployment-mode-base {
+    description
+      "Base identity for deployment modes.";
+  }
+  
+  identity immediate-deployment {
+    base deployment-mode-base;
+    description
+      "Deploy configuration immediately without scheduling.";
+  }
+  
+  identity scheduled-deployment {
+    base deployment-mode-base;
+    description
+      "Deploy configuration at scheduled time.";
+  }
+  
+  identity staged-deployment {
+    base deployment-mode-base;
+    description
+      "Stage configuration for later activation.";
+  }
+  
+  identity validation-rule-base {
+    description
+      "Base identity for validation rule types.";
+  }
+  
+  identity syntax-validation {
+    base validation-rule-base;
+    description
+      "Syntax validation against YANG schema.";
+  }
+  
+  identity semantic-validation {
+    base validation-rule-base;
+    description
+      "Semantic validation for logical consistency.";
+  }
+  
+  identity cross-reference-validation {
+    base validation-rule-base;
+    description
+      "Validation of cross-references between configurations.";
+  }
+  
+  identity policy-validation {
+    base validation-rule-base;
+    description
+      "Validation against organizational policies.";
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS (30+)
+   ***************************************************************************/
+  
+  typedef config-id-type {
+    description
+      "Unique identifier for configuration instances.
+       Uses UUID format for global uniqueness.";
+    type string {
+      length "36";
+      pattern "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+    }
+  }
+  
+  typedef config-version-type {
+    description
+      "Configuration version number for tracking changes.
+       Monotonically increasing integer starting from 1.";
+    type uint32 {
+      range "1..max";
+    }
+  }
+  
+  typedef config-path-type {
+    description
+      "XPath expression for configuration location.
+       Used for targeting specific configuration elements.";
+    type string {
+      length "1..1024";
+    }
+  }
+  
+  typedef change-request-id-type {
+    description
+      "Unique identifier for change requests.
+       Uses UUID format for global uniqueness.";
+    type string {
+      length "36";
+      pattern "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+    }
+  }
+  
+  typedef approval-status-type {
+    description
+      "Status of approval in workflow.";
+    type enumeration {
+      enum PENDING {
+        value 1;
+        description "Awaiting approval action.";
+      }
+      enum APPROVED {
+        value 2;
+        description "Approved, ready for next stage.";
+      }
+      enum REJECTED {
+        value 3;
+        description "Rejected, changes required.";
+      }
+      enum ESCALATED {
+        value 4;
+        description "Escalated to higher authority.";
+      }
+      enum BYPASSED {
+        value 5;
+        description "Bypassed due to emergency.";
+      }
+      enum EXPIRED {
+        value 6;
+        description "Approval window expired.";
+      }
+      enum WITHDRAWN {
+        value 7;
+        description "Request withdrawn by requester.";
+      }
+    }
+  }
+  
+  typedef deployment-status-type {
+    description
+      "Status of configuration deployment.";
+    type enumeration {
+      enum PENDING {
+        value 1;
+        description "Deployment pending.";
+      }
+      enum IN_PROGRESS {
+        value 2;
+        description "Deployment in progress.";
+      }
+      enum COMPLETED {
+        value 3;
+        description "Deployment completed successfully.";
+      }
+      enum FAILED {
+        value 4;
+        description "Deployment failed.";
+      }
+      enum ROLLED_BACK {
+        value 5;
+        description "Deployment rolled back.";
+      }
+      enum CANCELLED {
+        value 6;
+        description "Deployment cancelled.";
+      }
+      enum SCHEDULED {
+        value 7;
+        description "Deployment scheduled for future.";
+      }
+    }
+  }
+  
+  typedef rollback-reason-type {
+    description
+      "Reason for configuration rollback.";
+    type enumeration {
+      enum MANUAL_REQUEST {
+        value 1;
+        description "Manual rollback requested by operator.";
+      }
+      enum AUTOMATIC_FAILURE {
+        value 2;
+        description "Automatic rollback due to deployment failure.";
+      }
+      enum VALIDATION_FAILURE {
+        value 3;
+        description "Rollback due to post-deployment validation failure.";
+      }
+      enum SERVICE_IMPACT {
+        value 4;
+        description "Rollback due to detected service impact.";
+      }
+      enum PERFORMANCE_DEGRADATION {
+        value 5;
+        description "Rollback due to performance degradation.";
+      }
+      enum COMPLIANCE_VIOLATION {
+        value 6;
+        description "Rollback due to compliance violation detected.";
+      }
+      enum SCHEDULED_ROLLBACK {
+        value 7;
+        description "Pre-scheduled rollback execution.";
+      }
+    }
+  }
+  
+  typedef schedule-window-type {
+    description
+      "Type of maintenance window for scheduling.";
+    type enumeration {
+      enum IMMEDIATE {
+        value 1;
+        description "Execute immediately.";
+      }
+      enum MAINTENANCE_WINDOW {
+        value 2;
+        description "Execute during maintenance window.";
+      }
+      enum OFF_PEAK {
+        value 3;
+        description "Execute during off-peak hours.";
+      }
+      enum SPECIFIC_TIME {
+        value 4;
+        description "Execute at specific scheduled time.";
+      }
+      enum CUSTOM {
+        value 5;
+        description "Custom scheduling window.";
+      }
+    }
+  }
+  
+  typedef config-priority-type {
+    description
+      "Priority level for configuration operations.";
+    type enumeration {
+      enum CRITICAL {
+        value 1;
+        description "Critical priority, immediate processing.";
+      }
+      enum HIGH {
+        value 2;
+        description "High priority, expedited processing.";
+      }
+      enum MEDIUM {
+        value 3;
+        description "Medium priority, standard processing.";
+      }
+      enum LOW {
+        value 4;
+        description "Low priority, deferred processing.";
+      }
+      enum ROUTINE {
+        value 5;
+        description "Routine priority, batch processing.";
+      }
+    }
+  }
+  
+  typedef config-operation-type {
+    description 
+      "Types of configuration operations supported.
+       
+       Lifecycle:
+       CREATE -> MODIFY -> DELETE
+              |
+              v
+       APPLY -> COMMIT (or ROLLBACK)";
+    type enumeration {
+      enum CREATE {
+        value 1;
+        description "Create new configuration instance";
+      }
+      enum MODIFY {
+        value 2;
+        description "Modify existing configuration";
+      }
+      enum DELETE {
+        value 3;
+        description "Delete configuration instance";
+      }
+      enum APPLY {
+        value 4;
+        description "Apply staged configuration to device";
+      }
+      enum ROLLBACK {
+        value 5;
+        description "Rollback to previous configuration";
+      }
+      enum COMMIT {
+        value 6;
+        description "Commit candidate configuration";
+      }
+      enum ACTIVATE {
+        value 7;
+        description "Activate inactive configuration";
+      }
+      enum DEACTIVATE {
+        value 8;
+        description "Deactivate active configuration";
+      }
+      enum CLONE {
+        value 9;
+        description "Clone existing configuration";
+      }
+      enum MERGE {
+        value 10;
+        description "Merge configuration changes";
+      }
+    }
+  }
+  
+  typedef config-status-type {
+    description 
+      "Configuration lifecycle status.
+       
+       State transitions:
+       DRAFT -> PENDING_APPROVAL -> APPROVED -> STAGED -> DEPLOYED
+                    |                  |
+                    v                  v
+                 FAILED             FAILED";
+    type enumeration {
+      enum DRAFT {
+        value 1;
+        description "Configuration in draft state, not submitted";
+      }
+      enum PENDING_APPROVAL {
+        value 2;
+        description "Awaiting approval from authorized user";
+      }
+      enum APPROVED {
+        value 3;
+        description "Approved, ready for deployment";
+      }
+      enum STAGED {
+        value 4;
+        description "Staged on device, not yet activated";
+      }
+      enum DEPLOYED {
+        value 5;
+        description "Successfully deployed and active";
+      }
+      enum FAILED {
+        value 6;
+        description "Deployment failed";
+      }
+      enum ROLLED_BACK {
+        value 7;
+        description "Rolled back to previous version";
+      }
+      enum DEPRECATED {
+        value 8;
+        description "Configuration deprecated, pending removal";
+      }
+      enum ARCHIVED {
+        value 9;
+        description "Configuration archived for historical reference";
+      }
+    }
+  }
+  
+  typedef policy-type {
+    description 
+      "Classification of network policies.";
+    type enumeration {
+      enum QOS_POLICY {
+        value 1;
+        description "Quality of Service policy";
+      }
+      enum SECURITY_POLICY {
+        value 2;
+        description "Security and access control policy";
+      }
+      enum ROUTING_POLICY {
+        value 3;
+        description "Routing and forwarding policy";
+      }
+      enum TRAFFIC_ENGINEERING {
+        value 4;
+        description "Traffic engineering and optimization";
+      }
+      enum RATE_LIMITING {
+        value 5;
+        description "Rate limiting and throttling";
+      }
+      enum CONGESTION_MANAGEMENT {
+        value 6;
+        description "Congestion control and management";
+      }
+      enum ACCESS_CONTROL {
+        value 7;
+        description "Access control and authorization policy";
+      }
+      enum COMPLIANCE {
+        value 8;
+        description "Regulatory compliance policy";
+      }
+    }
+  }
+  
+  typedef validation-severity {
+    description 
+      "Severity level of validation findings.";
+    type enumeration {
+      enum CRITICAL {
+        value 1;
+        description "Critical error, blocks all operations";
+      }
+      enum ERROR {
+        value 2;
+        description "Error, blocks deployment";
+      }
+      enum WARNING {
+        value 3;
+        description "Warning, may proceed with caution";
+      }
+      enum INFO {
+        value 4;
+        description "Informational, no action required";
+      }
+      enum DEBUG {
+        value 5;
+        description "Debug level information";
+      }
+    }
+  }
+  
+  typedef backup-status-type {
+    description
+      "Status of configuration backup operation.";
+    type enumeration {
+      enum INITIATED {
+        value 1;
+        description "Backup operation initiated";
+      }
+      enum IN_PROGRESS {
+        value 2;
+        description "Backup in progress";
+      }
+      enum COMPLETED {
+        value 3;
+        description "Backup completed successfully";
+      }
+      enum FAILED {
+        value 4;
+        description "Backup failed";
+      }
+      enum PARTIAL {
+        value 5;
+        description "Partial backup completed";
+      }
+    }
+  }
+  
+  typedef restore-status-type {
+    description
+      "Status of configuration restore operation.";
+    type enumeration {
+      enum INITIATED {
+        value 1;
+        description "Restore operation initiated";
+      }
+      enum VALIDATING {
+        value 2;
+        description "Validating backup before restore";
+      }
+      enum IN_PROGRESS {
+        value 3;
+        description "Restore in progress";
+      }
+      enum COMPLETED {
+        value 4;
+        description "Restore completed successfully";
+      }
+      enum FAILED {
+        value 5;
+        description "Restore failed";
+      }
+      enum ROLLED_BACK {
+        value 6;
+        description "Restore rolled back due to failure";
+      }
+    }
+  }
+  
+  typedef diff-result-type {
+    description
+      "Result type of configuration comparison.";
+    type enumeration {
+      enum IDENTICAL {
+        value 1;
+        description "Configurations are identical";
+      }
+      enum DIFFERENT {
+        value 2;
+        description "Configurations have differences";
+      }
+      enum EQUIVALENT {
+        value 3;
+        description "Configurations are semantically equivalent";
+      }
+      enum INCOMPARABLE {
+        value 4;
+        description "Configurations cannot be compared";
+      }
+    }
+  }
+  
+  typedef audit-action-type {
+    description
+      "Type of action recorded in audit log.";
+    type enumeration {
+      enum CREATE {
+        value 1;
+        description "Configuration created";
+      }
+      enum READ {
+        value 2;
+        description "Configuration read";
+      }
+      enum UPDATE {
+        value 3;
+        description "Configuration updated";
+      }
+      enum DELETE {
+        value 4;
+        description "Configuration deleted";
+      }
+      enum DEPLOY {
+        value 5;
+        description "Configuration deployed";
+      }
+      enum ROLLBACK {
+        value 6;
+        description "Configuration rolled back";
+      }
+      enum EXPORT {
+        value 7;
+        description "Configuration exported";
+      }
+      enum IMPORT {
+        value 8;
+        description "Configuration imported";
+      }
+      enum APPROVE {
+        value 9;
+        description "Change request approved";
+      }
+      enum REJECT {
+        value 10;
+        description "Change request rejected";
+      }
+    }
+  }
+  
+  typedef template-status-type {
+    description
+      "Status of configuration template.";
+    type enumeration {
+      enum ACTIVE {
+        value 1;
+        description "Template is active and usable";
+      }
+      enum DEPRECATED {
+        value 2;
+        description "Template is deprecated";
+      }
+      enum DISABLED {
+        value 3;
+        description "Template is disabled";
+      }
+      enum DRAFT {
+        value 4;
+        description "Template is in draft state";
+      }
+    }
+  }
+  
+  typedef vendor-type {
+    description
+      "Supported vendor types.";
+    type enumeration {
+      enum ERICSSON {
+        value 1;
+        description "Ericsson equipment";
+      }
+      enum HUAWEI {
+        value 2;
+        description "Huawei equipment";
+      }
+      enum BOTH {
+        value 3;
+        description "Applicable to both vendors";
+      }
+    }
+  }
+  
+  typedef resource-type {
+    description
+      "Types of network resources.";
+    type enumeration {
+      enum NODE {
+        value 1;
+        description "Network node";
+      }
+      enum CARD {
+        value 2;
+        description "Line card or module";
+      }
+      enum PORT {
+        value 3;
+        description "Network port";
+      }
+      enum INTERFACE {
+        value 4;
+        description "Logical interface";
+      }
+      enum CELL {
+        value 5;
+        description "Wireless cell";
+      }
+      enum RADIO {
+        value 6;
+        description "Radio unit";
+      }
+      enum LINK {
+        value 7;
+        description "Network link";
+      }
+      enum SERVICE {
+        value 8;
+        description "Service instance";
+      }
+    }
+  }
+  
+  typedef severity-level-type {
+    description
+      "Generic severity level for various purposes.";
+    type enumeration {
+      enum CRITICAL {
+        value 1;
+        description "Critical severity";
+      }
+      enum MAJOR {
+        value 2;
+        description "Major severity";
+      }
+      enum MINOR {
+        value 3;
+        description "Minor severity";
+      }
+      enum WARNING {
+        value 4;
+        description "Warning severity";
+      }
+      enum INFO {
+        value 5;
+        description "Informational";
+      }
+    }
+  }
+  
+  typedef schedule-frequency-type {
+    description
+      "Frequency of scheduled operations.";
+    type enumeration {
+      enum ONCE {
+        value 1;
+        description "One-time execution";
+      }
+      enum DAILY {
+        value 2;
+        description "Daily execution";
+      }
+      enum WEEKLY {
+        value 3;
+        description "Weekly execution";
+      }
+      enum MONTHLY {
+        value 4;
+        description "Monthly execution";
+      }
+      enum YEARLY {
+        value 5;
+        description "Yearly execution";
+      }
+      enum CUSTOM {
+        value 6;
+        description "Custom schedule (cron expression)";
+      }
+    }
+  }
+  
+  typedef config-format-type {
+    description
+      "Format of configuration data.";
+    type enumeration {
+      enum XML {
+        value 1;
+        description "XML format";
+      }
+      enum JSON {
+        value 2;
+        description "JSON format";
+      }
+      enum CLI {
+        value 3;
+        description "CLI command format";
+      }
+      enum YANG {
+        value 4;
+        description "YANG format";
+      }
+      enum PROPRIETARY {
+        value 5;
+        description "Vendor proprietary format";
+      }
+    }
+  }
+  
+  typedef impact-level-type {
+    description
+      "Level of impact from configuration change.";
+    type enumeration {
+      enum NONE {
+        value 1;
+        description "No impact expected";
+      }
+      enum LOW {
+        value 2;
+        description "Low impact, minimal disruption";
+      }
+      enum MEDIUM {
+        value 3;
+        description "Medium impact, brief disruption";
+      }
+      enum HIGH {
+        value 4;
+        description "High impact, significant disruption";
+      }
+      enum CRITICAL {
+        value 5;
+        description "Critical impact, service affecting";
+      }
+    }
+  }
+  
+  typedef user-role-type {
+    description
+      "User roles for access control.";
+    type enumeration {
+      enum ADMIN {
+        value 1;
+        description "Administrator with full access";
+      }
+      enum OPERATOR {
+        value 2;
+        description "Operator with operational access";
+      }
+      enum ENGINEER {
+        value 3;
+        description "Engineer with configuration access";
+      }
+      enum VIEWER {
+        value 4;
+        description "Read-only access";
+      }
+      enum APPROVER {
+        value 5;
+        description "Approval authority";
+      }
+      enum AUDITOR {
+        value 6;
+        description "Audit access";
+      }
+    }
+  }
+  
+  typedef notification-severity-type {
+    description
+      "Severity for notifications.";
+    type enumeration {
+      enum CRITICAL {
+        value 1;
+        description "Critical notification";
+      }
+      enum MAJOR {
+        value 2;
+        description "Major notification";
+      }
+      enum MINOR {
+        value 3;
+        description "Minor notification";
+      }
+      enum INFO {
+        value 4;
+        description "Informational notification";
+      }
+    }
+  }
+  
+  typedef validation-status-type {
+    description
+      "Result of validation operation.";
+    type enumeration {
+      enum PASS {
+        value 1;
+        description "Validation passed";
+      }
+      enum PASS_WITH_WARNINGS {
+        value 2;
+        description "Validation passed with warnings";
+      }
+      enum FAIL {
+        value 3;
+        description "Validation failed";
+      }
+      enum NOT_PERFORMED {
+        value 4;
+        description "Validation not performed";
+      }
+      enum IN_PROGRESS {
+        value 5;
+        description "Validation in progress";
+      }
+    }
+  }
+  
+  typedef change-type {
+    description
+      "Type of configuration change.";
+    type enumeration {
+      enum ADDITION {
+        value 1;
+        description "New configuration added";
+      }
+      enum MODIFICATION {
+        value 2;
+        description "Existing configuration modified";
+      }
+      enum DELETION {
+        value 3;
+        description "Configuration deleted";
+      }
+      enum REPLACEMENT {
+        value 4;
+        description "Configuration replaced";
+      }
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS
+   ***************************************************************************/
+  
+  grouping config-metadata {
+    description 
+      "Metadata associated with configuration objects.
+       Provides tracking and audit information.";
+    
+    leaf created-by {
+      type string {
+        length "1..128";
+      }
+      description "User ID who created this object";
+    }
+    
+    leaf created-timestamp {
+      type yang:date-and-time;
+      description "When the object was created";
+    }
+    
+    leaf last-modified-by {
+      type string {
+        length "1..128";
+      }
+      description "User ID who last modified this object";
+    }
+    
+    leaf last-modified-timestamp {
+      type yang:date-and-time;
+      description "When the object was last modified";
+    }
+    
+    leaf version {
+      type config-version-type;
+      description "Version number of this object";
+    }
+    
+    leaf description {
+      type string {
+        length "1..2048";
+      }
+      description "Human-readable description";
+    }
+    
+    leaf tags {
+      type string {
+        length "1..512";
+      }
+      description "Comma-separated tags for categorization";
+    }
+    
+    leaf owner {
+      type string {
+        length "1..128";
+      }
+      description "Owner of this configuration object";
+    }
+    
+    leaf organization {
+      type string {
+        length "1..256";
+      }
+      description "Organization responsible for this configuration";
+    }
+  }
+  
+  grouping approval-workflow {
+    description 
+      "Multi-stage approval workflow definition.
+       Supports configurable approval chains with escalation.";
+    
+    leaf approval-required {
+      type boolean;
+      default true;
+      description "Whether approval workflow is required";
+    }
+    
+    leaf current-stage {
+      type uint8 {
+        range "1..10";
+      }
+      description "Current stage in approval workflow";
+    }
+    
+    leaf total-stages {
+      type uint8 {
+        range "1..10";
+      }
+      description "Total number of approval stages";
+    }
+    
+    leaf approval-deadline {
+      type yang:date-and-time;
+      description "Deadline for approval completion";
+    }
+    
+    leaf auto-approve-after {
+      type uint32;
+      units "hours";
+      description "Hours after which auto-approval occurs (0 = disabled)";
+    }
+    
+    leaf escalate-after {
+      type uint32;
+      units "hours";
+      description "Hours after which escalation occurs (0 = disabled)";
+    }
+    
+    list approval-stage {
+      key "stage-number";
+      description "Individual approval stages";
+      
+      leaf stage-number {
+        type uint8 {
+          range "1..10";
+        }
+        description "Stage sequence number";
+      }
+      
+      leaf stage-name {
+        type string {
+          length "1..64";
+        }
+        description "Name of this approval stage";
+      }
+      
+      leaf approver-role {
+        type user-role-type;
+        description "Role required for approval at this stage";
+      }
+      
+      leaf approver {
+        type string {
+          length "1..128";
+        }
+        description "Specific user or group for approval";
+      }
+      
+      leaf approval-status {
+        type approval-status-type;
+        mandatory true;
+        description "Current status of this stage";
+      }
+      
+      leaf approval-timestamp {
+        type yang:date-and-time;
+        description "When approval action was taken";
+      }
+      
+      leaf approver-comments {
+        type string {
+          length "1..2048";
+        }
+        description "Comments from approver";
+      }
+      
+      leaf delegated-from {
+        type string {
+          length "1..128";
+        }
+        description "Original approver if delegated";
+      }
+      
+      leaf escalation-target {
+        type string {
+          length "1..128";
+        }
+        description "Target for escalation if approval delayed";
+      }
+    }
+  }
+  
+  grouping deployment-info {
+    description 
+      "Deployment tracking information.
+       Records deployment execution details and status.";
+    
+    leaf deployment-status {
+      type deployment-status-type;
+      mandatory true;
+      description "Current deployment status";
+    }
+    
+    leaf deployment-job-id {
+      type string {
+        length "36";
+      }
+      description "UUID of deployment job";
+    }
+    
+    leaf deployment-start-time {
+      type yang:date-and-time;
+      description "When deployment started";
+    }
+    
+    leaf deployment-end-time {
+      type yang:date-and-time;
+      description "When deployment completed";
+    }
+    
+    leaf deployed-by {
+      type string {
+        length "1..128";
+      }
+      description "User who initiated deployment";
+    }
+    
+    leaf deployment-mode {
+      type identityref {
+        base deployment-mode-base;
+      }
+      description "Mode of deployment execution";
+    }
+    
+    leaf scheduled-time {
+      type yang:date-and-time;
+      description "Scheduled deployment time if applicable";
+    }
+    
+    leaf estimated-duration {
+      type uint32;
+      units "seconds";
+      description "Estimated deployment duration";
+    }
+    
+    leaf actual-duration {
+      type uint32;
+      units "seconds";
+      description "Actual deployment duration";
+    }
+    
+    list affected-resource {
+      key "resource-id";
+      description "Resources affected by this deployment";
+      
+      leaf resource-id {
+        type string;
+        description "Resource identifier";
+      }
+      
+      leaf resource-type {
+        type resource-type;
+        description "Type of resource";
+      }
+      
+      leaf deployment-result {
+        type enumeration {
+          enum SUCCESS;
+          enum FAILURE;
+          enum PARTIAL;
+          enum SKIPPED;
+        }
+        description "Result for this resource";
+      }
+    }
+    
+    leaf deployment-log {
+      type string;
+      description "Reference to deployment log";
+    }
+    
+    leaf error-message {
+      type string;
+      description "Error message if deployment failed";
+    }
+  }
+  
+  grouping rollback-info {
+    description 
+      "Rollback capability and tracking information.
+       Supports version and point-in-time rollback.";
+    
+    leaf rollback-available {
+      type boolean;
+      mandatory true;
+      description "Whether rollback is possible";
+    }
+    
+    leaf rollback-enabled {
+      type boolean;
+      default true;
+      description "Whether rollback capability is enabled";
+    }
+    
+    leaf rollback-target-version {
+      type config-version-type;
+      description "Version to rollback to";
+    }
+    
+    leaf rollback-window-minutes {
+      type uint32 {
+        range "0..1440";
+      }
+      default 30;
+      description "Automatic rollback window in minutes";
+    }
+    
+    leaf automatic-rollback-enabled {
+      type boolean;
+      default true;
+      description "Enable automatic rollback on failure";
+    }
+    
+    leaf rollback-triggers {
+      type string;
+      description "Conditions that trigger automatic rollback";
+    }
+    
+    leaf rollback-executed {
+      type boolean;
+      default false;
+      description "Whether rollback was executed";
+    }
+    
+    leaf rollback-reason {
+      type rollback-reason-type;
+      description "Reason for rollback if executed";
+    }
+    
+    leaf rollback-timestamp {
+      type yang:date-and-time;
+      description "When rollback was executed";
+    }
+    
+    leaf rolled-back-by {
+      type string {
+        length "1..128";
+      }
+      description "User who executed rollback";
+    }
+    
+    leaf rollback-status {
+      type deployment-status-type;
+      description "Status of rollback operation";
+    }
+    
+    container backup-snapshot {
+      description "Backup snapshot for rollback";
+      
+      leaf snapshot-id {
+        type string;
+        description "Backup snapshot identifier";
+      }
+      
+      leaf snapshot-timestamp {
+        type yang:date-and-time;
+        description "When snapshot was created";
+      }
+      
+      leaf snapshot-location {
+        type string;
+        description "Location of backup snapshot";
+      }
+    }
+  }
+  
+  grouping validation-result {
+    description 
+      "Result of configuration validation operation.
+       Includes errors, warnings, and recommendations.";
+    
+    leaf validation-status {
+      type validation-status-type;
+      mandatory true;
+      description "Overall validation status";
+    }
+    
+    leaf validation-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When validation was performed";
+    }
+    
+    leaf validation-level {
+      type identityref {
+        base validation-rule-base;
+      }
+      description "Level of validation performed";
+    }
+    
+    leaf error-count {
+      type uint32;
+      default 0;
+      description "Number of validation errors";
+    }
+    
+    leaf warning-count {
+      type uint32;
+      default 0;
+      description "Number of validation warnings";
+    }
+    
+    leaf info-count {
+      type uint32;
+      default 0;
+      description "Number of informational messages";
+    }
+    
+    list validation-error {
+      key "error-id";
+      description "Validation errors found";
+      
+      leaf error-id {
+        type string;
+        description "Error identifier";
+      }
+      
+      leaf severity {
+        type validation-severity;
+        mandatory true;
+        description "Error severity";
+      }
+      
+      leaf error-code {
+        type string;
+        description "Error code for reference";
+      }
+      
+      leaf message {
+        type string {
+          length "1..2048";
+        }
+        mandatory true;
+        description "Error message";
+      }
+      
+      leaf xpath {
+        type config-path-type;
+        description "XPath to problematic element";
+      }
+      
+      leaf schema-node {
+        type string;
+        description "Schema node related to error";
+      }
+      
+      leaf suggestion {
+        type string;
+        description "Suggested fix";
+      }
+    }
+    
+    list validation-warning {
+      key "warning-id";
+      description "Validation warnings found";
+      
+      leaf warning-id {
+        type string;
+        description "Warning identifier";
+      }
+      
+      leaf message {
+        type string {
+          length "1..2048";
+        }
+        mandatory true;
+        description "Warning message";
+      }
+      
+      leaf xpath {
+        type config-path-type;
+        description "XPath to related element";
+      }
+      
+      leaf recommendation {
+        type string;
+        description "Recommended action";
+      }
+    }
+    
+    leaf validation-duration-ms {
+      type uint32;
+      description "Time taken for validation in milliseconds";
+    }
+  }
+  
+  grouping change-impact {
+    description 
+      "Impact assessment for configuration changes.
+       Provides risk analysis and affected resources.";
+    
+    leaf impact-level {
+      type impact-level-type;
+      mandatory true;
+      description "Overall impact level";
+    }
+    
+    leaf risk-level {
+      type severity-level-type;
+      description "Calculated risk level";
+    }
+    
+    leaf affected-resources-count {
+      type uint32;
+      description "Number of resources affected";
+    }
+    
+    leaf affected-services-count {
+      type uint32;
+      description "Number of services affected";
+    }
+    
+    leaf affected-customers-count {
+      type uint32;
+      description "Estimated number of affected customers";
+    }
+    
+    leaf expected-downtime-seconds {
+      type uint32;
+      description "Expected downtime duration";
+    }
+    
+    leaf maintenance-window-required {
+      type boolean;
+      description "Whether maintenance window is required";
+    }
+    
+    leaf recommended-window {
+      type string;
+      description "Recommended maintenance window";
+    }
+    
+    list affected-resource {
+      key "resource-id";
+      description "List of affected resources";
+      
+      leaf resource-id {
+        type string;
+        description "Resource identifier";
+      }
+      
+      leaf resource-name {
+        type string;
+        description "Resource name";
+      }
+      
+      leaf resource-type {
+        type resource-type;
+        description "Type of resource";
+      }
+      
+      leaf impact-type {
+        type enumeration {
+          enum DIRECT;
+          enum INDIRECT;
+          enum POTENTIAL;
+        }
+        description "Type of impact";
+      }
+      
+      leaf impact-description {
+        type string;
+        description "Description of impact";
+      }
+    }
+    
+    list affected-service {
+      key "service-id";
+      description "List of affected services";
+      
+      leaf service-id {
+        type string;
+        description "Service identifier";
+      }
+      
+      leaf service-name {
+        type string;
+        description "Service name";
+      }
+      
+      leaf impact-severity {
+        type severity-level-type;
+        description "Severity of service impact";
+      }
+      
+      leaf customer-visible {
+        type boolean;
+        description "Whether impact is customer-visible";
+      }
+    }
+    
+    container dependency-analysis {
+      description "Dependency analysis results";
+      
+      leaf upstream-dependencies {
+        type uint32;
+        description "Number of upstream dependencies";
+      }
+      
+      leaf downstream-dependencies {
+        type uint32;
+        description "Number of downstream dependencies";
+      }
+      
+      leaf circular-dependencies {
+        type boolean;
+        description "Whether circular dependencies exist";
+      }
+    }
+    
+    list prerequisite {
+      key "prereq-id";
+      description "Prerequisites for change";
+      
+      leaf prereq-id {
+        type string;
+        description "Prerequisite identifier";
+      }
+      
+      leaf description {
+        type string;
+        description "Prerequisite description";
+      }
+      
+      leaf mandatory {
+        type boolean;
+        description "Whether prerequisite is mandatory";
+      }
+      
+      leaf status {
+        type enumeration {
+          enum PENDING;
+          enum SATISFIED;
+          enum FAILED;
+        }
+        description "Prerequisite status";
+      }
+    }
+    
+    container risk-mitigation {
+      description "Risk mitigation strategies";
+      
+      leaf mitigation-plan {
+        type string;
+        description "Overall mitigation plan";
+      }
+      
+      list mitigation-step {
+        key "step-id";
+        description "Individual mitigation steps";
+        
+        leaf step-id {
+          type string;
+          description "Step identifier";
+        }
+        
+        leaf description {
+          type string;
+          description "Step description";
+        }
+        
+        leaf responsible {
+          type string;
+          description "Responsible party";
+        }
+      }
+    }
+  }
+
+  /***************************************************************************
+   * CONTAINER DEFINITIONS - Configuration Management
+   ***************************************************************************/
+  
+  container configuration-management {
+    description 
+      "Root container for vendor-neutral configuration provisioning.
+       Contains all configuration profiles, instances, and change management data.
+       
+       This container serves as the primary entry point for all configuration
+       management operations within the FCAPS framework.";
+    
+    leaf config-schema-version {
+      type string {
+        pattern "[0-9]+\.[0-9]+\.[0-9]+";
+      }
+      config false;
+      description 
+        "Current CIM configuration schema version.
+         Format: MAJOR.MINOR.PATCH (Semantic Versioning)";
+    }
+    
+    leaf last-config-change {
+      type yang:date-and-time;
+      config false;
+      description "Timestamp of most recent configuration change";
+    }
+    
+    leaf total-active-profiles {
+      type uint32;
+      config false;
+      description "Count of active configuration profiles";
+    }
+    
+    leaf total-active-configurations {
+      type uint32;
+      config false;
+      description "Count of active configuration instances";
+    }
+    
+    leaf total-pending-changes {
+      type uint32;
+      config false;
+      description "Count of pending change requests";
+    }
+
+    /*************************************************************************
+     * CONFIGURATION PROFILES
+     *************************************************************************/
+    
+    container configuration-profiles {
+      description 
+        "Reusable configuration templates.
+         Profiles define parameter sets that can be applied to multiple resources.
+         
+         Profiles are vendor-neutral definitions that can be mapped to
+         vendor-specific configurations through the vendor-mappings container.";
+      config true;
+      
+      list profile {
+        key "profile-name";
+        description 
+          "Individual configuration profile definition.
+           Profiles are vendor-neutral templates that map to vendor-specific configs.";
+        
+        leaf profile-name {
+          type string {
+            length "1..128";
+            pattern "[A-Za-z][A-Za-z0-9_-]*";
+          }
+          description 
+            "Unique profile identifier.
+             Format: {CATEGORY}_{FUNCTION}_{VERSION}
+             Example: QOS_PREMIUM_V1";
+        }
+        
+        uses config-metadata;
+        
+        leaf profile-version {
+          type string {
+            pattern "[0-9]+\.[0-9]+";
+          }
+          default "1.0";
+          description "Profile version for change tracking";
+        }
+        
+        leaf target-vendors {
+          type string {
+            pattern "(ERICSSON|HUAWEI|BOTH)(,(ERICSSON|HUAWEI|BOTH))*";
+          }
+          description 
+            "Comma-separated list of applicable vendors.
+             Example: 'ERICSSON,HUAWEI'";
+        }
+        
+        leaf applicable-resource-types {
+          type string;
+          description 
+            "Resource types this profile applies to.
+             Comma-separated list. Example: 'eNodeB,Cell,RadioUnit'";
+        }
+        
+        leaf enabled {
+          type boolean;
+          default true;
+          description "Enable or disable profile";
+        }
+        
+        leaf config-type {
+          type identityref {
+            base config-type-base;
+          }
+          description "Type of configuration this profile represents";
+        }
+        
+        must "enabled = 'true' or count(../profile) > 0" {
+          error-message "At least one profile must be enabled";
+          description "Ensure at least one profile remains enabled";
+        }
+        
+        container profile-data {
+          description 
+            "Configuration parameters for this profile.
+             Structure varies based on profile type.";
+          
+          leaf profile-type {
+            type enumeration {
+              enum QOS;
+              enum SECURITY;
+              enum RADIO;
+              enum TRANSPORT;
+              enum NETWORK;
+              enum SERVICE;
+              enum CUSTOM;
+            }
+            mandatory true;
+            description "Classification of profile type";
+          }
+          
+          list parameter {
+            key "name";
+            description "Configuration parameter definition";
+            
+            leaf name {
+              type string {
+                length "1..256";
+              }
+              description "Parameter name";
+            }
+            
+            leaf value {
+              type string;
+              description "Parameter value";
+            }
+            
+            leaf data-type {
+              type string;
+              description "Parameter data type (string, int, bool, etc.)";
+            }
+            
+            leaf mandatory {
+              type boolean;
+              default false;
+              description "Whether parameter is mandatory";
+            }
+            
+            leaf validation-rule {
+              type string;
+              description "Validation rule (regex or expression)";
+            }
+            
+            leaf default-value {
+              type string;
+              description "Default value if not specified";
+            }
+            
+            leaf min-value {
+              type string;
+              description "Minimum value for numeric types";
+            }
+            
+            leaf max-value {
+              type string;
+              description "Maximum value for numeric types";
+            }
+            
+            leaf allowed-values {
+              type string;
+              description "Comma-separated list of allowed values";
+            }
+            
+            leaf description {
+              type string {
+                length "1..1024";
+              }
+              description "Parameter description";
+            }
+          }
+        }
+        
+        container vendor-mappings {
+          description 
+            "Vendor-specific mapping configuration.
+             Maps profile parameters to vendor-specific configurations.";
+          
+          list vendor-mapping {
+            key "vendor";
+            
+            leaf vendor {
+              type vendor-type;
+              description "Target vendor";
+            }
+            
+            leaf yang-module {
+              type string;
+              description "Vendor YANG module name";
+            }
+            
+            leaf xpath-prefix {
+              type string;
+              description "XPath prefix for configuration path";
+            }
+            
+            leaf cli-command-template {
+              type string;
+              description "CLI command template for this vendor";
+            }
+            
+            list parameter-mapping {
+              key "profile-parameter";
+              
+              leaf profile-parameter {
+                type string;
+                description "Profile parameter name";
+              }
+              
+              leaf vendor-parameter {
+                type string;
+                description "Vendor-specific parameter name";
+              }
+              
+              leaf transformation {
+                type string;
+                description "Transformation expression if needed";
+              }
+              
+              leaf vendor-xpath {
+                type string;
+                description "Vendor-specific XPath";
+              }
+            }
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * ACTIVE CONFIGURATIONS
+     *************************************************************************/
+    
+    container active-configurations {
+      description 
+        "Currently deployed configurations.
+         Read-only view of active configuration instances.
+         
+         This container provides visibility into the current state of
+         configurations deployed across the network.";
+      config false;
+      
+      list configuration-instance {
+        key "config-id";
+        description 
+          "Individual deployed configuration instance.
+           Linked to specific resource and source profile.";
+        
+        leaf config-id {
+          type config-id-type;
+          description "Configuration instance UUID";
+        }
+        
+        leaf source-vendor {
+          type vendor-type;
+          mandatory true;
+          description "Vendor system where config is deployed";
+        }
+        
+        leaf target-resource {
+          type string {
+            length "1..512";
+          }
+          mandatory true;
+          description "CIM path of target resource";
+        }
+        
+        leaf source-profile {
+          type string;
+          description "Profile this config was derived from";
+        }
+        
+        leaf config-status {
+          type config-status-type;
+          mandatory true;
+          description "Current configuration status";
+        }
+        
+        leaf deployment-timestamp {
+          type yang:date-and-time;
+          description "When configuration was deployed";
+        }
+        
+        leaf deployed-by-user {
+          type string {
+            length "1..128";
+          }
+          description "User ID who deployed this config";
+        }
+        
+        leaf config-version {
+          type config-version-type;
+          description "Version number of this configuration";
+        }
+        
+        leaf config-type {
+          type identityref {
+            base config-type-base;
+          }
+          description "Type of configuration";
+        }
+        
+        container configuration-data {
+          description 
+            "Active configuration parameters.
+             JSON/YANG data structure.";
+          
+          leaf data-format {
+            type config-format-type;
+            mandatory true;
+            description "Format of configuration data";
+          }
+          
+          leaf raw-data {
+            type string;
+            description "Configuration data in specified format";
+          }
+          
+          leaf checksum {
+            type string;
+            description "Checksum for data integrity verification";
+          }
+        }
+        
+        uses validation-result;
+        
+        uses rollback-info;
+        
+        container deployment-history {
+          description "History of deployments for this resource";
+          
+          list deployment-record {
+            key "version";
+            
+            leaf version {
+              type config-version-type;
+              description "Configuration version number";
+            }
+            
+            leaf deployed-timestamp {
+              type yang:date-and-time;
+              description "When this version was deployed";
+            }
+            
+            leaf deployed-by {
+              type string;
+              description "User who deployed this version";
+            }
+            
+            leaf change-summary {
+              type string;
+              description "Summary of changes in this version";
+            }
+            
+            leaf rollback-available {
+              type boolean;
+              description "Whether this version can be rolled back to";
+            }
+            
+            leaf change-request-id {
+              type change-request-id-type;
+              description "Associated change request";
+            }
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * CHANGE MANAGEMENT
+     *************************************************************************/
+    
+    container configuration-change-management {
+      description 
+        "Change request workflow tracking.
+         Manages the lifecycle of configuration change requests.
+         
+         Implements ITIL-aligned change management processes with
+         multi-stage approval workflows.";
+      
+      list change-request {
+        key "change-id";
+        description 
+          "Individual change request for configuration modification.
+           Follows approval workflow before deployment.";
+        
+        leaf change-id {
+          type change-request-id-type;
+          description "Change request UUID";
+        }
+        
+        leaf change-title {
+          type string {
+            length "1..256";
+          }
+          mandatory true;
+          description "Brief title describing the change";
+        }
+        
+        leaf requester {
+          type string {
+            length "1..128";
+          }
+          mandatory true;
+          description "User ID of change requester";
+        }
+        
+        leaf request-timestamp {
+          type yang:date-and-time;
+          mandatory true;
+          description "When change was requested";
+        }
+        
+        leaf status {
+          type config-status-type;
+          mandatory true;
+          description "Current status of change request";
+        }
+        
+        leaf priority {
+          type config-priority-type;
+          default MEDIUM;
+          description "Priority level affecting approval timeline";
+        }
+        
+        leaf reason {
+          type string {
+            length "1..2048";
+          }
+          mandatory true;
+          description "Business justification for change";
+        }
+        
+        leaf change-type {
+          type change-type;
+          description "Type of change";
+        }
+        
+        leaf emergency-change {
+          type boolean;
+          default false;
+          description "Whether this is an emergency change";
+        }
+        
+        leaf change-ticket {
+          type string;
+          description "External ticket reference";
+        }
+        
+        leaf project-reference {
+          type string;
+          description "Associated project reference";
+        }
+        
+        leaf scheduled-start-time {
+          type yang:date-and-time;
+          description "Scheduled implementation start time";
+        }
+        
+        leaf scheduled-end-time {
+          type yang:date-and-time;
+          description "Scheduled implementation end time";
+        }
+        
+        leaf actual-start-time {
+          type yang:date-and-time;
+          description "Actual implementation start time";
+        }
+        
+        leaf actual-end-time {
+          type yang:date-and-time;
+          description "Actual implementation end time";
+        }
+        
+        container proposed-changes {
+          description "List of proposed configuration changes";
+          
+          list config-change {
+            key "change-sequence";
+            
+            leaf change-sequence {
+              type uint32;
+              description "Sequence order for this change";
+            }
+            
+            leaf operation {
+              type config-operation-type;
+              mandatory true;
+              description "Type of operation";
+            }
+            
+            leaf target-resource {
+              type string {
+                length "1..512";
+              }
+              mandatory true;
+              description "Target resource path";
+            }
+            
+            leaf parameter-name {
+              type string {
+                length "1..128";
+              }
+              mandatory true;
+              description "Parameter to modify";
+            }
+            
+            leaf current-value {
+              type string;
+              description "Current value before change";
+            }
+            
+            leaf proposed-value {
+              type string;
+              mandatory true;
+              description "New value to apply";
+            }
+            
+            leaf data-type {
+              type string;
+              description "Data type of parameter";
+            }
+            
+            leaf validation-status {
+              type validation-status-type;
+              description "Validation result for this change";
+            }
+          }
+        }
+        
+        uses change-impact;
+        
+        uses approval-workflow;
+        
+        uses deployment-info;
+        
+        uses rollback-info;
+        
+        must "(scheduled-end-time and scheduled-start-time) or 
+             (not(scheduled-end-time) and not(scheduled-start-time))" {
+          error-message "Both scheduled start and end times must be specified together";
+          description "Ensure scheduling consistency";
+        }
+        
+        must "scheduled-end-time >= scheduled-start-time" {
+          error-message "Scheduled end time must be after start time";
+          description "Validate scheduling times";
+        }
+      }
+    }
+
+    /*************************************************************************
+     * NETWORK POLICY MANAGEMENT
+     *************************************************************************/
+    
+    container network-policy-management {
+      description 
+        "Cross-vendor policy enforcement framework.
+         Manages network-wide policies applicable across vendors.
+         
+         Policies define rules that govern configuration behavior
+         and can be applied automatically or through validation.";
+      
+      list policy {
+        key "policy-id";
+        description 
+          "Individual policy definition.
+           Policies define rules for network behavior and configuration.";
+        
+        leaf policy-id {
+          type string {
+            length "1..64";
+            pattern "[A-Za-z][A-Za-z0-9_-]*";
+          }
+          description "Unique policy identifier";
+        }
+        
+        leaf policy-name {
+          type string {
+            length "1..256";
+          }
+          mandatory true;
+          description "Human-readable policy name";
+        }
+        
+        leaf policy-type {
+          type policy-type;
+          mandatory true;
+          description "Classification of policy type";
+        }
+        
+        uses config-metadata;
+        
+        leaf enabled {
+          type boolean;
+          default true;
+          description "Enable or disable policy enforcement";
+        }
+        
+        leaf applicable-vendors {
+          type string;
+          description 
+            "Vendors where policy applies.
+             Comma-separated list.";
+        }
+        
+        leaf applicable-resource-scope {
+          type string;
+          description 
+            "XPath scope for policy application.
+             Defines resource selection criteria.";
+        }
+        
+        leaf policy-priority {
+          type uint16 {
+            range "0..65535";
+          }
+          default 1000;
+          description 
+            "Policy precedence priority.
+             Higher values take precedence.
+             Range: 0 (lowest) to 65535 (highest)";
+        }
+        
+        leaf effective-start-time {
+          type yang:date-and-time;
+          description "When policy becomes effective";
+        }
+        
+        leaf effective-end-time {
+          type yang:date-and-time;
+          description "When policy expires";
+        }
+        
+        container policy-rules {
+          description "Individual policy rules within this policy";
+          
+          list rule {
+            key "rule-id";
+            
+            leaf rule-id {
+              type string {
+                length "1..64";
+              }
+              description "Unique rule identifier within policy";
+            }
+            
+            leaf rule-name {
+              type string {
+                length "1..256";
+              }
+              description "Human-readable rule name";
+            }
+            
+            leaf description {
+              type string {
+                length "1..1024";
+              }
+              description "Rule description";
+            }
+            
+            leaf condition {
+              type string;
+              description 
+                "Boolean expression for rule matching.
+                 Supports XPath expressions and comparison operators.
+                 Example: '@throughput > 100000000'";
+            }
+            
+            leaf action {
+              type string;
+              description 
+                "Action to execute when condition matches.
+                 Examples: 'SET qos-profile=premium', 'ALERT', 'BLOCK'";
+            }
+            
+            leaf enforcement-mode {
+              type enumeration {
+                enum MONITOR {
+                  value 1;
+                  description "Monitor and log, no enforcement";
+                }
+                enum ENFORCE {
+                  value 2;
+                  description "Actively enforce the rule";
+                }
+                enum REPORT_ONLY {
+                  value 3;
+                  description "Generate report, no action";
+                }
+              }
+              default ENFORCE;
+              description "How strictly to enforce the rule";
+            }
+            
+            leaf enabled {
+              type boolean;
+              default true;
+              description "Enable or disable this rule";
+            }
+            
+            leaf severity-on-violation {
+              type severity-level-type;
+              description "Severity when rule is violated";
+            }
+          }
+        }
+        
+        container policy-metrics {
+          config false;
+          description "Runtime metrics for this policy";
+          
+          leaf times-applied {
+            type uint64;
+            description "Number of times policy was applied";
+          }
+          
+          leaf times-violated {
+            type uint64;
+            description "Number of policy violations";
+          }
+          
+          leaf times-triggered-exception {
+            type uint64;
+            description "Number of exception cases triggered";
+          }
+          
+          leaf last-applied-timestamp {
+            type yang:date-and-time;
+            description "When policy was last applied";
+          }
+          
+          leaf compliance-rate {
+            type decimal64 {
+              fraction-digits 2;
+            }
+            description 
+              "Compliance rate percentage.
+               100.00 = Full compliance";
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * CONFIGURATION VALIDATION RULES
+     *************************************************************************/
+    
+    container configuration-validation-rules {
+      description
+        "Configuration validation rules engine.
+         Defines rules for validating configurations before deployment.
+         
+         Rules are executed during validation operations and can
+         block deployment or generate warnings.";
+      
+      list validation-rule {
+        key "rule-id";
+        description
+          "Individual validation rule definition.";
+        
+        leaf rule-id {
+          type string {
+            length "1..64";
+            pattern "[A-Za-z][A-Za-z0-9_-]*";
+          }
+          description "Unique rule identifier";
+        }
+        
+        leaf rule-name {
+          type string {
+            length "1..256";
+          }
+          mandatory true;
+          description "Human-readable rule name";
+        }
+        
+        leaf description {
+          type string {
+            length "1..2048";
+          }
+          description "Detailed rule description";
+        }
+        
+        leaf rule-type {
+          type identityref {
+            base validation-rule-base;
+          }
+          mandatory true;
+          description "Type of validation";
+        }
+        
+        leaf enabled {
+          type boolean;
+          default true;
+          description "Enable or disable this rule";
+        }
+        
+        leaf severity {
+          type validation-severity;
+          default ERROR;
+          description "Severity when rule fails";
+        }
+        
+        leaf applicable-vendors {
+          type string;
+          description "Vendors this rule applies to";
+        }
+        
+        leaf applicable-config-types {
+          type string;
+          description "Configuration types this rule applies to";
+        }
+        
+        leaf rule-priority {
+          type uint16 {
+            range "1..10000";
+          }
+          default 100;
+          description "Rule execution priority (lower = higher priority)";
+        }
+        
+        container rule-definition {
+          description "Rule definition and conditions";
+          
+          leaf xpath-condition {
+            type string;
+            description "XPath expression for condition check";
+          }
+          
+          leaf xpath-target {
+            type string;
+            description "XPath to target element being validated";
+          }
+          
+          leaf allowed-values {
+            type string;
+            description "Comma-separated list of allowed values";
+          }
+          
+          leaf pattern {
+            type string;
+            description "Regex pattern for value validation";
+          }
+          
+          leaf min-value {
+            type string;
+            description "Minimum value for numeric validation";
+          }
+          
+          leaf max-value {
+            type string;
+            description "Maximum value for numeric validation";
+          }
+          
+          leaf custom-script {
+            type string;
+            description "Custom validation script (Python/JavaScript)";
+          }
+          
+          leaf cross-reference-check {
+            type string;
+            description "Cross-reference validation target";
+          }
+        }
+        
+        container rule-execution {
+          config false;
+          description "Rule execution statistics";
+          
+          leaf times-executed {
+            type uint64;
+            description "Number of times rule was executed";
+          }
+          
+          leaf times-failed {
+            type uint64;
+            description "Number of times rule failed";
+          }
+          
+          leaf last-execution-time {
+            type yang:date-and-time;
+            description "When rule was last executed";
+          }
+          
+          leaf average-execution-time-ms {
+            type uint32;
+            description "Average execution time in milliseconds";
+          }
+        }
+        
+        leaf error-message-template {
+          type string;
+          description "Template for error message when rule fails";
+        }
+        
+        leaf fix-suggestion {
+          type string;
+          description "Suggested fix for rule violation";
+        }
+      }
+    }
+
+    /*************************************************************************
+     * CONFIGURATION AUDIT HISTORY
+     *************************************************************************/
+    
+    container configuration-audit-history {
+      description
+        "Audit trail for all configuration operations.
+         Provides complete history for compliance and troubleshooting.
+         
+         Audit records are immutable and retained according to
+         organizational retention policies.";
+      config false;
+      
+      leaf total-records {
+        type uint64;
+        description "Total number of audit records";
+      }
+      
+      leaf earliest-record {
+        type yang:date-and-time;
+        description "Timestamp of earliest audit record";
+      }
+      
+      leaf latest-record {
+        type yang:date-and-time;
+        description "Timestamp of latest audit record";
+      }
+      
+      list audit-record {
+        key "audit-id";
+        description
+          "Individual audit record for a configuration operation.";
+        
+        leaf audit-id {
+          type string {
+            length "36";
+          }
+          description "Audit record UUID";
+        }
+        
+        leaf timestamp {
+          type yang:date-and-time;
+          mandatory true;
+          description "When the action occurred";
+        }
+        
+        leaf action {
+          type audit-action-type;
+          mandatory true;
+          description "Type of action performed";
+        }
+        
+        leaf user {
+          type string {
+            length "1..128";
+          }
+          mandatory true;
+          description "User who performed the action";
+        }
+        
+        leaf user-role {
+          type user-role-type;
+          description "Role of user at time of action";
+        }
+        
+        leaf source-ip {
+          type inet:ip-address;
+          description "IP address of client";
+        }
+        
+        leaf target-resource {
+          type string;
+          description "Resource affected by action";
+        }
+        
+        leaf config-id {
+          type config-id-type;
+          description "Configuration instance affected";
+        }
+        
+        leaf change-request-id {
+          type change-request-id-type;
+          description "Associated change request";
+        }
+        
+        leaf action-status {
+          type enumeration {
+            enum SUCCESS;
+            enum FAILURE;
+            enum PARTIAL;
+          }
+          description "Result of the action";
+        }
+        
+        leaf old-value {
+          type string;
+          description "Value before the action";
+        }
+        
+        leaf new-value {
+          type string;
+          description "Value after the action";
+        }
+        
+        leaf details {
+          type string;
+          description "Additional details about the action";
+        }
+        
+        leaf error-message {
+          type string;
+          description "Error message if action failed";
+        }
+        
+        leaf session-id {
+          type string;
+          description "Session identifier";
+        }
+        
+        leaf correlation-id {
+          type string;
+          description "Correlation identifier for tracking";
+        }
+      }
+    }
+
+    /*************************************************************************
+     * CONFIGURATION BACKUPS
+     *************************************************************************/
+    
+    container configuration-backups {
+      description
+        "Configuration backup management.
+         Supports scheduled and on-demand backups with retention policies.";
+      
+      list backup {
+        key "backup-id";
+        description
+          "Individual backup record.";
+        
+        leaf backup-id {
+          type string {
+            length "36";
+          }
+          description "Backup UUID";
+        }
+        
+        leaf backup-name {
+          type string {
+            length "1..256";
+          }
+          description "Human-readable backup name";
+        }
+        
+        leaf backup-type {
+          type enumeration {
+            enum FULL {
+              value 1;
+              description "Full configuration backup";
+            }
+            enum INCREMENTAL {
+              value 2;
+              description "Incremental backup";
+            }
+            enum DIFFERENTIAL {
+              value 3;
+              description "Differential backup";
+            }
+            enum SNAPSHOT {
+              value 4;
+              description "Point-in-time snapshot";
+            }
+          }
+          mandatory true;
+          description "Type of backup";
+        }
+        
+        leaf status {
+          type backup-status-type;
+          mandatory true;
+          description "Current backup status";
+        }
+        
+        leaf created-timestamp {
+          type yang:date-and-time;
+          description "When backup was created";
+        }
+        
+        leaf completed-timestamp {
+          type yang:date-and-time;
+          description "When backup completed";
+        }
+        
+        leaf created-by {
+          type string {
+            length "1..128";
+          }
+          description "User who initiated backup";
+        }
+        
+        leaf scheduled {
+          type boolean;
+          default false;
+          description "Whether this was a scheduled backup";
+        }
+        
+        leaf target-resources {
+          type string;
+          description "Resources included in backup";
+        }
+        
+        leaf target-vendors {
+          type string;
+          description "Vendors included in backup";
+        }
+        
+        leaf backup-size-bytes {
+          type uint64;
+          description "Size of backup in bytes";
+        }
+        
+        leaf backup-location {
+          type string;
+          description "Storage location of backup";
+        }
+        
+        leaf backup-format {
+          type config-format-type;
+          description "Format of backup data";
+        }
+        
+        leaf checksum {
+          type string;
+          description "Checksum for integrity verification";
+        }
+        
+        leaf encryption-enabled {
+          type boolean;
+          description "Whether backup is encrypted";
+        }
+        
+        leaf compressed {
+          type boolean;
+          description "Whether backup is compressed";
+        }
+        
+        leaf retention-days {
+          type uint32;
+          description "Retention period in days";
+        }
+        
+        leaf expires-timestamp {
+          type yang:date-and-time;
+          description "When backup will be expired";
+        }
+        
+        list included-config {
+          key "config-id";
+          description "Configurations included in this backup";
+          
+          leaf config-id {
+            type config-id-type;
+            description "Configuration UUID";
+          }
+          
+          leaf version {
+            type config-version-type;
+            description "Version backed up";
+          }
+        }
+        
+        container restore-info {
+          description "Information about restore operations using this backup";
+          
+          leaf times-restored {
+            type uint32;
+            description "Number of times this backup has been restored";
+          }
+          
+          leaf last-restore-timestamp {
+            type yang:date-and-time;
+            description "When backup was last restored";
+          }
+          
+          leaf last-restore-by {
+            type string;
+            description "Who last restored this backup";
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * CONFIGURATION DIFF ENGINE
+     *************************************************************************/
+    
+    container configuration-diff-engine {
+      description
+        "Configuration comparison and diff engine.
+         Provides detailed comparison between configurations.
+         
+         Supports multiple comparison modes and semantic equivalence
+         analysis across vendors.";
+      config false;
+      
+      leaf total-comparisons {
+        type uint64;
+        description "Total number of comparisons performed";
+      }
+      
+      leaf last-comparison-timestamp {
+        type yang:date-and-time;
+        description "When last comparison was performed";
+      }
+    }
+
+    /*************************************************************************
+     * CONFIGURATION TEMPLATES
+     *************************************************************************/
+    
+    container configuration-templates {
+      if-feature config-templates;
+      description
+        "Configuration template management.
+         Templates provide reusable configuration patterns with
+         parameter substitution support.";
+      
+      list template {
+        key "template-id";
+        description
+          "Individual configuration template.";
+        
+        leaf template-id {
+          type string {
+            length "1..64";
+            pattern "[A-Za-z][A-Za-z0-9_-]*";
+          }
+          description "Unique template identifier";
+        }
+        
+        leaf template-name {
+          type string {
+            length "1..256";
+          }
+          mandatory true;
+          description "Human-readable template name";
+        }
+        
+        leaf description {
+          type string {
+            length "1..2048";
+          }
+          description "Template description";
+        }
+        
+        leaf template-status {
+          type template-status-type;
+          default ACTIVE;
+          description "Current template status";
+        }
+        
+        leaf template-version {
+          type string {
+            pattern "[0-9]+\.[0-9]+";
+          }
+          default "1.0";
+          description "Template version";
+        }
+        
+        leaf parent-template {
+          type string;
+          description "Parent template for inheritance";
+        }
+        
+        leaf applicable-vendors {
+          type string;
+          description "Vendors this template applies to";
+        }
+        
+        leaf applicable-resource-types {
+          type string;
+          description "Resource types this template applies to";
+        }
+        
+        uses config-metadata;
+        
+        container template-parameters {
+          description "Template parameters for substitution";
+          
+          list parameter {
+            key "name";
+            description "Template parameter definition";
+            
+            leaf name {
+              type string {
+                length "1..128";
+              }
+              description "Parameter name";
+            }
+            
+            leaf description {
+              type string {
+                length "1..512";
+              }
+              description "Parameter description";
+            }
+            
+            leaf data-type {
+              type string;
+              mandatory true;
+              description "Parameter data type";
+            }
+            
+            leaf mandatory {
+              type boolean;
+              default false;
+              description "Whether parameter is mandatory";
+            }
+            
+            leaf default-value {
+              type string;
+              description "Default value";
+            }
+            
+            leaf validation-pattern {
+              type string;
+              description "Validation regex pattern";
+            }
+            
+            leaf allowed-values {
+              type string;
+              description "Comma-separated allowed values";
+            }
+          }
+        }
+        
+        container template-content {
+          description "Template content definition";
+          
+          leaf content-format {
+            type config-format-type;
+            mandatory true;
+            description "Format of template content";
+          }
+          
+          leaf content {
+            type string;
+            description "Template content with parameter placeholders";
+          }
+          
+          leaf vendor-specific-content {
+            type string;
+            description "Vendor-specific template variations (JSON)";
+          }
+        }
+        
+        container template-metrics {
+          config false;
+          description "Template usage metrics";
+          
+          leaf times-applied {
+            type uint64;
+            description "Number of times template was applied";
+          }
+          
+          leaf last-applied-timestamp {
+            type yang:date-and-time;
+            description "When template was last applied";
+          }
+          
+          leaf instances-created {
+            type uint32;
+            description "Number of configuration instances created";
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * CONFIGURATION STATISTICS
+     *************************************************************************/
+    
+    container configuration-statistics {
+      description
+        "Configuration management statistics and metrics.
+         Provides operational metrics for monitoring and analysis.";
+      config false;
+      
+      container summary-statistics {
+        description "Summary statistics for configuration management";
+        
+        leaf total-profiles {
+          type uint32;
+          description "Total number of configuration profiles";
+        }
+        
+        leaf active-profiles {
+          type uint32;
+          description "Number of active profiles";
+        }
+        
+        leaf total-configurations {
+          type uint32;
+          description "Total number of configuration instances";
+        }
+        
+        leaf active-configurations {
+          type uint32;
+          description "Number of active configurations";
+        }
+        
+        leaf total-change-requests {
+          type uint32;
+          description "Total number of change requests";
+        }
+        
+        leaf pending-change-requests {
+          type uint32;
+          description "Number of pending change requests";
+        }
+        
+        leaf total-policies {
+          type uint32;
+          description "Total number of policies";
+        }
+        
+        leaf active-policies {
+          type uint32;
+          description "Number of active policies";
+        }
+        
+        leaf total-templates {
+          type uint32;
+          description "Total number of templates";
+        }
+        
+        leaf total-backups {
+          type uint32;
+          description "Total number of backups";
+        }
+        
+        leaf total-validation-rules {
+          type uint32;
+          description "Total number of validation rules";
+        }
+      }
+      
+      container deployment-statistics {
+        description "Deployment operation statistics";
+        
+        leaf deployments-today {
+          type uint32;
+          description "Deployments performed today";
+        }
+        
+        leaf deployments-this-week {
+          type uint32;
+          description "Deployments performed this week";
+        }
+        
+        leaf deployments-this-month {
+          type uint32;
+          description "Deployments performed this month";
+        }
+        
+        leaf successful-deployments {
+          type uint32;
+          description "Number of successful deployments";
+        }
+        
+        leaf failed-deployments {
+          type uint32;
+          description "Number of failed deployments";
+        }
+        
+        leaf rolled-back-deployments {
+          type uint32;
+          description "Number of rolled back deployments";
+        }
+        
+        leaf average-deployment-time-seconds {
+          type uint32;
+          description "Average deployment duration";
+        }
+        
+        leaf success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          description "Deployment success rate percentage";
+        }
+      }
+      
+      container validation-statistics {
+        description "Validation operation statistics";
+        
+        leaf validations-today {
+          type uint32;
+          description "Validations performed today";
+        }
+        
+        leaf validations-this-week {
+          type uint32;
+          description "Validations performed this week";
+        }
+        
+        leaf validations-this-month {
+          type uint32;
+          description "Validations performed this month";
+        }
+        
+        leaf passed-validations {
+          type uint32;
+          description "Number of passed validations";
+        }
+        
+        leaf failed-validations {
+          type uint32;
+          description "Number of failed validations";
+        }
+        
+        leaf warnings-generated {
+          type uint32;
+          description "Number of warnings generated";
+        }
+        
+        leaf errors-generated {
+          type uint32;
+          description "Number of errors generated";
+        }
+        
+        leaf average-validation-time-ms {
+          type uint32;
+          description "Average validation time in milliseconds";
+        }
+      }
+      
+      container change-request-statistics {
+        description "Change request statistics";
+        
+        leaf created-today {
+          type uint32;
+          description "Change requests created today";
+        }
+        
+        leaf created-this-week {
+          type uint32;
+          description "Change requests created this week";
+        }
+        
+        leaf created-this-month {
+          type uint32;
+          description "Change requests created this month";
+        }
+        
+        leaf approved-change-requests {
+          type uint32;
+          description "Number of approved change requests";
+        }
+        
+        leaf rejected-change-requests {
+          type uint32;
+          description "Number of rejected change requests";
+        }
+        
+        leaf pending-approval {
+          type uint32;
+          description "Number pending approval";
+        }
+        
+        leaf average-approval-time-hours {
+          type uint32;
+          description "Average time to approval in hours";
+        }
+        
+        leaf emergency-changes {
+          type uint32;
+          description "Number of emergency changes";
+        }
+      }
+      
+      container backup-statistics {
+        description "Backup operation statistics";
+        
+        leaf backups-today {
+          type uint32;
+          description "Backups performed today";
+        }
+        
+        leaf backups-this-week {
+          type uint32;
+          description "Backups performed this week";
+        }
+        
+        leaf backups-this-month {
+          type uint32;
+          description "Backups performed this month";
+        }
+        
+        leaf successful-backups {
+          type uint32;
+          description "Number of successful backups";
+        }
+        
+        leaf failed-backups {
+          type uint32;
+          description "Number of failed backups";
+        }
+        
+        leaf total-backup-size-bytes {
+          type uint64;
+          description "Total size of all backups";
+        }
+        
+        leaf restores-performed {
+          type uint32;
+          description "Number of restore operations";
+        }
+      }
+      
+      container vendor-statistics {
+        description "Vendor-specific statistics";
+        
+        container ericsson {
+          description "Ericsson vendor statistics";
+          
+          leaf total-configurations {
+            type uint32;
+            description "Total Ericsson configurations";
+          }
+          
+          leaf deployments {
+            type uint32;
+            description "Ericsson deployments";
+          }
+          
+          leaf failed-deployments {
+            type uint32;
+            description "Failed Ericsson deployments";
+          }
+        }
+        
+        container huawei {
+          description "Huawei vendor statistics";
+          
+          leaf total-configurations {
+            type uint32;
+            description "Total Huawei configurations";
+          }
+          
+          leaf deployments {
+            type uint32;
+            description "Huawei deployments";
+          }
+          
+          leaf failed-deployments {
+            type uint32;
+            description "Failed Huawei deployments";
+          }
+        }
+      }
+    }
+  }
+
+  /***************************************************************************
+   * RPC DEFINITIONS FOR CONFIGURATION MANAGEMENT (20+)
+   ***************************************************************************/
+  
+  rpc deploy-configuration {
+    description 
+      "Deploy configuration to target resource across vendors.
+       Supports dry-run mode for validation without deployment.
+       
+       This is the primary RPC for deploying configurations to network
+       elements. It supports multiple deployment modes and automatic
+       rollback on failure.";
+    
+    input {
+      leaf config-id {
+        type config-id-type;
+        mandatory true;
+        description "Configuration UUID to deploy";
+      }
+      
+      leaf dry-run {
+        type boolean;
+        default false;
+        description 
+          "If true, validate without applying.
+          Useful for pre-deployment verification.";
+      }
+      
+      leaf rollback-window-minutes {
+        type uint32 {
+          range "0..1440";
+        }
+        default 30;
+        description 
+          "Automatic rollback window in minutes.
+           0 = No automatic rollback.";
+      }
+      
+      leaf force-deploy {
+        type boolean;
+        default false;
+        description 
+          "Force deployment even with warnings.
+           Requires elevated privileges.";
+      }
+      
+      leaf deployment-mode {
+        type identityref {
+          base deployment-mode-base;
+        }
+        default immediate-deployment;
+        description "Mode of deployment";
+      }
+      
+      leaf scheduled-time {
+        if-feature config-scheduling;
+        type yang:date-and-time;
+        description "Scheduled deployment time";
+      }
+      
+      leaf change-request-id {
+        type change-request-id-type;
+        description "Associated change request for audit trail";
+      }
+      
+      leaf notify-on-completion {
+        type boolean;
+        default true;
+        description "Send notification on deployment completion";
+      }
+    }
+    
+    output {
+      leaf deployment-job-id {
+        type string;
+        description "Deployment job UUID for tracking";
+      }
+      
+      leaf estimated-duration-seconds {
+        type uint32;
+        description "Estimated deployment duration";
+      }
+      
+      leaf validation-result {
+        type validation-status-type;
+        description "Pre-deployment validation result";
+      }
+      
+      leaf validation-messages {
+        type string;
+        description "Validation messages in JSON format";
+      }
+      
+      leaf deployment-status {
+        type deployment-status-type;
+        description "Current deployment status";
+      }
+    }
+  }
+  
+  rpc validate-configuration {
+    if-feature config-validation;
+    description 
+      "Validate configuration against schema and cross-vendor constraints.
+       Performs syntax, semantic, and cross-reference validation.
+       
+       This RPC can be called independently or as part of deployment
+       workflow to ensure configuration correctness.";
+    
+    input {
+      leaf config-id {
+        type config-id-type;
+        mandatory true;
+        description "Configuration UUID to validate";
+      }
+      
+      leaf validation-level {
+        type identityref {
+          base validation-rule-base;
+        }
+        default semantic-validation;
+        description "Depth of validation to perform";
+      }
+      
+      leaf include-warnings {
+        type boolean;
+        default true;
+        description "Include warnings in output";
+      }
+      
+      leaf validate-cross-references {
+        type boolean;
+        default true;
+        description "Validate cross-references to other configurations";
+      }
+      
+      leaf validate-policies {
+        type boolean;
+        default true;
+        description "Validate against organizational policies";
+      }
+    }
+    
+    output {
+      uses validation-result;
+    }
+  }
+  
+  rpc rollback-configuration {
+    if-feature config-rollback;
+    description 
+      "Rollback configuration to previous version.
+       Restores previous configuration state on target resource.
+       
+       Supports rollback to specific version or to the most recent
+       previous version. Automatic rollback may also be triggered
+       by deployment failures.";
+    
+    input {
+      leaf config-id {
+        type config-id-type;
+        mandatory true;
+        description "Current configuration UUID";
+      }
+      
+      leaf target-version {
+        type config-version-type;
+        description 
+          "Version to rollback to.
+           If not specified, rolls back to previous version.";
+      }
+      
+      leaf rollback-reason {
+        type rollback-reason-type;
+        mandatory true;
+        description "Reason for rollback";
+      }
+      
+      leaf rollback-description {
+        type string {
+          length "1..2048";
+        }
+        description "Detailed description of rollback reason";
+      }
+      
+      leaf force-rollback {
+        type boolean;
+        default false;
+        description "Force rollback even if validation fails";
+      }
+      
+      leaf change-request-id {
+        type change-request-id-type;
+        description "Associated change request for audit";
+      }
+    }
+    
+    output {
+      leaf rollback-job-id {
+        type string;
+        description "Rollback job UUID for tracking";
+      }
+      
+      leaf success {
+        type boolean;
+        mandatory true;
+        description "True if rollback initiated successfully";
+      }
+      
+      leaf previous-version {
+        type config-version-type;
+        description "Version before rollback";
+      }
+      
+      leaf target-version {
+        type config-version-type;
+        description "Version rolled back to";
+      }
+      
+      leaf rollback-status {
+        type deployment-status-type;
+        description "Status of rollback operation";
+      }
+    }
+  }
+  
+  rpc compare-configurations {
+    description 
+      "Compare two configurations or configuration versions.
+       Provides detailed diff output showing differences.
+       
+       Supports semantic comparison across vendors to determine
+       if configurations are equivalent even if syntactically different.";
+    
+    input {
+      leaf config-id-1 {
+        type config-id-type;
+        mandatory true;
+        description "First configuration UUID";
+      }
+      
+      leaf config-id-2 {
+        type config-id-type;
+        mandatory true;
+        description "Second configuration UUID";
+      }
+      
+      leaf comparison-mode {
+        type enumeration {
+          enum FULL {
+            value 1;
+            description "Full comparison including all details";
+          }
+          enum DIFFERENCES_ONLY {
+            value 2;
+            description "Show only differences";
+          }
+          enum SEMANTIC_EQUIVALENCE {
+            value 3;
+            description "Determine semantic equivalence";
+          }
+        }
+        default DIFFERENCES_ONLY;
+        description "Type of comparison to perform";
+      }
+      
+      leaf ignore-whitespace {
+        type boolean;
+        default true;
+        description "Ignore whitespace differences";
+      }
+      
+      leaf include-defaults {
+        type boolean;
+        default false;
+        description "Include default values in comparison";
+      }
+    }
+    
+    output {
+      leaf comparison-result {
+        type diff-result-type;
+        mandatory true;
+        description "Result of comparison";
+      }
+      
+      leaf differences-found {
+        type boolean;
+        description "True if differences exist";
+      }
+      
+      leaf difference-count {
+        type uint32;
+        description "Number of differences found";
+      }
+      
+      leaf difference-report {
+        type string;
+        description "Detailed difference report in JSON format";
+      }
+      
+      leaf semantic-equivalence {
+        type boolean;
+        description "True if configurations are semantically equivalent";
+      }
+      
+      leaf comparison-timestamp {
+        type yang:date-and-time;
+        description "When comparison was performed";
+      }
+    }
+  }
+  
+  rpc preview-configuration {
+    if-feature config-preview;
+    description 
+      "Preview the effect of a configuration change.
+       Shows what would happen if the configuration is deployed.
+       
+       Provides impact analysis and affected resources without
+       actually deploying the configuration.";
+    
+    input {
+      leaf config-id {
+        type config-id-type;
+        mandatory true;
+        description "Configuration UUID to preview";
+      }
+      
+      leaf preview-type {
+        type enumeration {
+          enum IMPACT_ANALYSIS {
+            value 1;
+            description "Analyze impact of changes";
+          }
+          enum DIFF_PREVIEW {
+            value 2;
+            description "Show diff from current configuration";
+          }
+          enum FULL_PREVIEW {
+            value 3;
+            description "Complete preview including all aspects";
+          }
+        }
+        default FULL_PREVIEW;
+        description "Type of preview to perform";
+      }
+      
+      leaf include-dependencies {
+        type boolean;
+        default true;
+        description "Include dependency analysis";
+      }
+    }
+    
+    output {
+      leaf preview-id {
+        type string;
+        description "Preview operation UUID";
+      }
+      
+      uses change-impact;
+      
+      leaf diff-preview {
+        type string;
+        description "Preview of configuration diff";
+      }
+      
+      leaf preview-timestamp {
+        type yang:date-and-time;
+        description "When preview was generated";
+      }
+      
+      leaf preview-expires {
+        type yang:date-and-time;
+        description "When preview data expires";
+      }
+    }
+  }
+  
+  rpc export-configuration {
+    description 
+      "Export configuration in specified format.
+       Supports multiple export formats for backup and migration.";
+    
+    input {
+      leaf config-id {
+        type config-id-type;
+        mandatory true;
+        description "Configuration UUID to export";
+      }
+      
+      leaf export-format {
+        type config-format-type;
+        mandatory true;
+        description "Format for export";
+      }
+      
+      leaf include-metadata {
+        type boolean;
+        default true;
+        description "Include metadata in export";
+      }
+      
+      leaf include-history {
+        type boolean;
+        default false;
+        description "Include deployment history";
+      }
+      
+      leaf compress-output {
+        type boolean;
+        default true;
+        description "Compress exported data";
+      }
+      
+      leaf encrypt-output {
+        type boolean;
+        default false;
+        description "Encrypt exported data";
+      }
+    }
+    
+    output {
+      leaf export-id {
+        type string;
+        description "Export operation UUID";
+      }
+      
+      leaf export-status {
+        type enumeration {
+          enum SUCCESS;
+          enum FAILURE;
+          enum PARTIAL;
+        }
+        description "Status of export operation";
+      }
+      
+      leaf exported-data {
+        type string;
+        description "Exported configuration data";
+      }
+      
+      leaf export-size-bytes {
+        type uint64;
+        description "Size of exported data";
+      }
+      
+      leaf checksum {
+        type string;
+        description "Checksum of exported data";
+      }
+    }
+  }
+  
+  rpc import-configuration {
+    description 
+      "Import configuration from external source.
+       Validates and creates configuration from imported data.";
+    
+    input {
+      leaf import-data {
+        type string;
+        mandatory true;
+        description "Configuration data to import";
+      }
+      
+      leaf import-format {
+        type config-format-type;
+        mandatory true;
+        description "Format of imported data";
+      }
+      
+      leaf target-vendor {
+        type vendor-type;
+        description "Target vendor for imported configuration";
+      }
+      
+      leaf target-resource {
+        type string;
+        description "Target resource path";
+      }
+      
+      leaf validate-before-import {
+        type boolean;
+        default true;
+        description "Validate before importing";
+      }
+      
+      leaf overwrite-existing {
+        type boolean;
+        default false;
+        description "Overwrite existing configuration";
+      }
+      
+      leaf source-profile {
+        type string;
+        description "Profile to apply to imported configuration";
+      }
+    }
+    
+    output {
+      leaf import-id {
+        type string;
+        description "Import operation UUID";
+      }
+      
+      leaf import-status {
+        type enumeration {
+          enum SUCCESS;
+          enum FAILURE;
+          enum PARTIAL;
+        }
+        description "Status of import operation";
+      }
+      
+      leaf config-id {
+        type config-id-type;
+        description "UUID of created configuration";
+      }
+      
+      uses validation-result;
+    }
+  }
+  
+  rpc create-change-request {
+    description 
+      "Create new configuration change request.
+       Initiates the change management workflow.
+       
+       Change requests follow organizational approval processes
+       before deployment can proceed.";
+    
+    input {
+      leaf change-title {
+        type string {
+          length "1..256";
+        }
+        mandatory true;
+        description "Brief title for change request";
+      }
+      
+      leaf reason {
+        type string {
+          length "1..2048";
+        }
+        mandatory true;
+        description "Business justification";
+      }
+      
+      leaf priority {
+        type config-priority-type;
+        default MEDIUM;
+        description "Change priority level";
+      }
+      
+      leaf emergency-change {
+        type boolean;
+        default false;
+        description "Mark as emergency change";
+      }
+      
+      leaf scheduled-start-time {
+        type yang:date-and-time;
+        description "Requested implementation time";
+      }
+      
+      leaf scheduled-end-time {
+        type yang:date-and-time;
+        description "Requested end time";
+      }
+      
+      leaf requester {
+        type string {
+          length "1..128";
+        }
+        mandatory true;
+        description "User ID of requester";
+      }
+      
+      leaf change-ticket {
+        type string;
+        description "External ticket reference";
+      }
+      
+      list proposed-changes {
+        description "List of configuration changes";
+        
+        leaf target-resource {
+          type string;
+          mandatory true;
+          description "Target resource path";
+        }
+        
+        leaf operation {
+          type config-operation-type;
+          mandatory true;
+          description "Type of operation";
+        }
+        
+        leaf parameter-name {
+          type string;
+          mandatory true;
+          description "Parameter to change";
+        }
+        
+        leaf proposed-value {
+          type string;
+          mandatory true;
+          description "New value";
+        }
+      }
+    }
+    
+    output {
+      leaf change-id {
+        type change-request-id-type;
+        description "Created change request UUID";
+      }
+      
+      leaf success {
+        type boolean;
+        mandatory true;
+        description "True if change request created";
+      }
+      
+      leaf requires-approval {
+        type boolean;
+        description "Whether approval workflow is required";
+      }
+      
+      leaf estimated-approval-time {
+        type uint32;
+        units "hours";
+        description "Estimated time to approval";
+      }
+      
+      uses change-impact;
+    }
+  }
+  
+  rpc approve-change-request {
+    if-feature change-approval-workflow;
+    description 
+      "Approve a change request at current workflow stage.
+       Moves to next stage or finalizes approval.";
+    
+    input {
+      leaf change-id {
+        type change-request-id-type;
+        mandatory true;
+        description "Change request UUID";
+      }
+      
+      leaf approver {
+        type string {
+          length "1..128";
+        }
+        mandatory true;
+        description "User ID of approver";
+      }
+      
+      leaf approval-comments {
+        type string {
+          length "1..2048";
+        }
+        description "Approval comments";
+      }
+      
+      leaf delegate-to {
+        type string {
+          length "1..128";
+        }
+        description "Delegate approval to another user";
+      }
+    }
+    
+    output {
+      leaf success {
+        type boolean;
+        mandatory true;
+        description "True if approval successful";
+      }
+      
+      leaf current-stage {
+        type uint8;
+        description "Current approval stage after action";
+      }
+      
+      leaf fully-approved {
+        type boolean;
+        description "True if all approvals complete";
+      }
+      
+      leaf next-approver {
+        type string;
+        description "Next approver in chain";
+      }
+      
+      leaf approval-deadline {
+        type yang:date-and-time;
+        description "Deadline for next approval";
+      }
+    }
+  }
+  
+  rpc reject-change-request {
+    if-feature change-approval-workflow;
+    description 
+      "Reject a change request.
+       Terminates the change request workflow.";
+    
+    input {
+      leaf change-id {
+        type change-request-id-type;
+        mandatory true;
+        description "Change request UUID";
+      }
+      
+      leaf rejector {
+        type string {
+          length "1..128";
+        }
+        mandatory true;
+        description "User ID rejecting the request";
+      }
+      
+      leaf rejection-reason {
+        type string {
+          length "1..2048";
+        }
+        mandatory true;
+        description "Reason for rejection";
+      }
+      
+      leaf allow-resubmit {
+        type boolean;
+        default true;
+        description "Allow requester to resubmit after modifications";
+      }
+    }
+    
+    output {
+      leaf success {
+        type boolean;
+        mandatory true;
+        description "True if rejection successful";
+      }
+      
+      leaf rejection-timestamp {
+        type yang:date-and-time;
+        description "When rejection was recorded";
+      }
+    }
+  }
+  
+  rpc cancel-change-request {
+    description 
+      "Cancel a pending change request.
+       Can only cancel requests not yet deployed.";
+    
+    input {
+      leaf change-id {
+        type change-request-id-type;
+        mandatory true;
+        description "Change request UUID";
+      }
+      
+      leaf cancelled-by {
+        type string {
+          length "1..128";
+        }
+        mandatory true;
+        description "User ID cancelling the request";
+      }
+      
+      leaf cancellation-reason {
+        type string {
+          length "1..2048";
+        }
+        mandatory true;
+        description "Reason for cancellation";
+      }
+    }
+    
+    output {
+      leaf success {
+        type boolean;
+        mandatory true;
+        description "True if cancellation successful";
+      }
+      
+      leaf cancellation-timestamp {
+        type yang:date-and-time;
+        description "When cancellation was recorded";
+      }
+    }
+  }
+  
+  rpc schedule-deployment {
+    if-feature config-scheduling;
+    description 
+      "Schedule a configuration deployment for future execution.
+       Supports maintenance window scheduling.";
+    
+    input {
+      leaf config-id {
+        type config-id-type;
+        mandatory true;
+        description "Configuration UUID to deploy";
+      }
+      
+      leaf scheduled-time {
+        type yang:date-and-time;
+        mandatory true;
+        description "Scheduled deployment time";
+      }
+      
+      leaf schedule-window {
+        type schedule-window-type;
+        default MAINTENANCE_WINDOW;
+        description "Type of scheduling window";
+      }
+      
+      leaf max-delay-minutes {
+        type uint32;
+        description "Maximum delay from scheduled time";
+      }
+      
+      leaf change-request-id {
+        type change-request-id-type;
+        description "Associated change request";
+      }
+      
+      leaf recurring {
+        type boolean;
+        default false;
+        description "Whether this is a recurring schedule";
+      }
+      
+      leaf recurrence-pattern {
+        type schedule-frequency-type;
+        description "Recurrence pattern if recurring";
+      }
+    }
+    
+    output {
+      leaf schedule-id {
+        type string;
+        description "Schedule UUID";
+      }
+      
+      leaf success {
+        type boolean;
+        mandatory true;
+        description "True if scheduled successfully";
+      }
+      
+      leaf estimated-start-time {
+        type yang:date-and-time;
+        description "Estimated execution time";
+      }
+    }
+  }
+  
+  rpc get-configuration-history {
+    description 
+      "Retrieve deployment history for a configuration.
+       Shows all versions and deployment records.";
+    
+    input {
+      leaf config-id {
+        type config-id-type;
+        mandatory true;
+        description "Configuration UUID";
+      }
+      
+      leaf start-time {
+        type yang:date-and-time;
+        description "Start of time range";
+      }
+      
+      leaf end-time {
+        type yang:date-and-time;
+        description "End of time range";
+      }
+      
+      leaf max-records {
+        type uint32 {
+          range "1..1000";
+        }
+        default 100;
+        description "Maximum records to return";
+      }
+    }
+    
+    output {
+      leaf total-records {
+        type uint32;
+        description "Total records found";
+      }
+      
+      list history-record {
+        key "version";
+        description "Deployment history records";
+        
+        leaf version {
+          type config-version-type;
+          description "Configuration version";
+        }
+        
+        leaf deployed-timestamp {
+          type yang:date-and-time;
+          description "When deployed";
+        }
+        
+        leaf deployed-by {
+          type string;
+          description "Who deployed";
+        }
+        
+        leaf change-summary {
+          type string;
+          description "Summary of changes";
+        }
+        
+        leaf change-request-id {
+          type change-request-id-type;
+          description "Associated change request";
+        }
+        
+        leaf rollback-available {
+          type boolean;
+          description "Whether rollback is available";
+        }
+      }
+    }
+  }
+  
+  rpc get-configuration-diff {
+    description 
+      "Get the difference between two configuration versions.
+       Shows detailed diff output.";
+    
+    input {
+      leaf config-id {
+        type config-id-type;
+        mandatory true;
+        description "Configuration UUID";
+      }
+      
+      leaf version-1 {
+        type config-version-type;
+        description "First version (defaults to current)";
+      }
+      
+      leaf version-2 {
+        type config-version-type;
+        description "Second version (defaults to previous)";
+      }
+    }
+    
+    output {
+      leaf diff-result {
+        type string;
+        description "Diff output in unified diff format";
+      }
+      
+      leaf changes-count {
+        type uint32;
+        description "Number of changes between versions";
+      }
+      
+      leaf additions {
+        type uint32;
+        description "Number of additions";
+      }
+      
+      leaf deletions {
+        type uint32;
+        description "Number of deletions";
+      }
+      
+      leaf modifications {
+        type uint32;
+        description "Number of modifications";
+      }
+    }
+  }
+  
+  rpc backup-configuration {
+    description 
+      "Create backup of configuration(s).
+       Supports full, incremental, and snapshot backups.";
+    
+    input {
+      leaf backup-name {
+        type string {
+          length "1..256";
+        }
+        description "Name for backup";
+      }
+      
+      leaf backup-type {
+        type enumeration {
+          enum FULL;
+          enum INCREMENTAL;
+          enum DIFFERENTIAL;
+          enum SNAPSHOT;
+        }
+        default FULL;
+        description "Type of backup";
+      }
+      
+      leaf target-resources {
+        type string;
+        description "Specific resources to backup (comma-separated)";
+      }
+      
+      leaf target-vendors {
+        type string;
+        description "Specific vendors to backup";
+      }
+      
+      leaf retention-days {
+        type uint32 {
+          range "1..365";
+        }
+        default 30;
+        description "Retention period in days";
+      }
+      
+      leaf encrypt-backup {
+        type boolean;
+        default true;
+        description "Encrypt backup data";
+      }
+      
+      leaf compress-backup {
+        type boolean;
+        default true;
+        description "Compress backup data";
+      }
+      
+      leaf description {
+        type string {
+          length "1..1024";
+        }
+        description "Backup description";
+      }
+    }
+    
+    output {
+      leaf backup-id {
+        type string;
+        description "Backup UUID";
+      }
+      
+      leaf success {
+        type boolean;
+        mandatory true;
+        description "True if backup initiated";
+      }
+      
+      leaf estimated-duration-seconds {
+        type uint32;
+        description "Estimated backup duration";
+      }
+      
+      leaf backup-status {
+        type backup-status-type;
+        description "Current backup status";
+      }
+    }
+  }
+  
+  rpc restore-configuration {
+    description 
+      "Restore configuration from backup.
+       Validates backup before restoration.";
+    
+    input {
+      leaf backup-id {
+        type string;
+        mandatory true;
+        description "Backup UUID to restore from";
+      }
+      
+      leaf restore-mode {
+        type enumeration {
+          enum OVERWRITE {
+            value 1;
+            description "Overwrite existing configuration";
+          }
+          enum MERGE {
+            value 2;
+            description "Merge with existing configuration";
+          }
+          enum CREATE_NEW {
+            value 3;
+            description "Create new configuration instance";
+          }
+        }
+        default CREATE_NEW;
+        description "How to restore configuration";
+      }
+      
+      leaf validate-before-restore {
+        type boolean;
+        default true;
+        description "Validate backup before restoring";
+      }
+      
+      leaf restore-target {
+        type string;
+        description "Specific resource to restore to";
+      }
+      
+      leaf automatic-rollback {
+        type boolean;
+        default true;
+        description "Enable automatic rollback on failure";
+      }
+    }
+    
+    output {
+      leaf restore-job-id {
+        type string;
+        description "Restore job UUID";
+      }
+      
+      leaf success {
+        type boolean;
+        mandatory true;
+        description "True if restore initiated";
+      }
+      
+      leaf restore-status {
+        type restore-status-type;
+        description "Current restore status";
+      }
+      
+      leaf config-id {
+        type config-id-type;
+        description "UUID of restored configuration";
+      }
+    }
+  }
+  
+  rpc validate-change-impact {
+    description 
+      "Validate and analyze the impact of proposed changes.
+       Provides detailed impact assessment.";
+    
+    input {
+      leaf change-id {
+        type change-request-id-type;
+        description "Change request UUID to analyze";
+      }
+      
+      leaf config-id {
+        type config-id-type;
+        description "Configuration UUID to analyze";
+      }
+      
+      leaf analysis-depth {
+        type enumeration {
+          enum BASIC {
+            value 1;
+            description "Basic impact analysis";
+          }
+          enum STANDARD {
+            value 2;
+            description "Standard analysis with dependencies";
+          }
+          enum COMPREHENSIVE {
+            value 3;
+            description "Full analysis including services";
+          }
+        }
+        default STANDARD;
+        description "Depth of analysis";
+      }
+    }
+    
+    output {
+      uses change-impact;
+      
+      leaf analysis-timestamp {
+        type yang:date-and-time;
+        description "When analysis was performed";
+      }
+      
+      leaf analysis-id {
+        type string;
+        description "Analysis UUID for reference";
+      }
+    }
+  }
+  
+  rpc get-pending-changes {
+    description 
+      "Retrieve list of pending change requests.
+       Shows requests awaiting approval or deployment.";
+    
+    input {
+      leaf requester {
+        type string;
+        description "Filter by requester";
+      }
+      
+      leaf status {
+        type config-status-type;
+        description "Filter by status";
+      }
+      
+      leaf priority {
+        type config-priority-type;
+        description "Filter by priority";
+      }
+      
+      leaf max-results {
+        type uint32 {
+          range "1..500";
+        }
+        default 50;
+        description "Maximum results to return";
+      }
+      
+      leaf include-expired {
+        type boolean;
+        default false;
+        description "Include expired requests";
+      }
+    }
+    
+    output {
+      leaf total-pending {
+        type uint32;
+        description "Total pending change requests";
+      }
+      
+      list pending-change {
+        key "change-id";
+        description "List of pending changes";
+        
+        leaf change-id {
+          type change-request-id-type;
+          description "Change request UUID";
+        }
+        
+        leaf change-title {
+          type string;
+          description "Change title";
+        }
+        
+        leaf requester {
+          type string;
+          description "Who requested";
+        }
+        
+        leaf status {
+          type config-status-type;
+          description "Current status";
+        }
+        
+        leaf priority {
+          type config-priority-type;
+          description "Priority level";
+        }
+        
+        leaf created-timestamp {
+          type yang:date-and-time;
+          description "When created";
+        }
+        
+        leaf awaiting-approval-from {
+          type string;
+          description "Who needs to approve";
+        }
+      }
+    }
+  }
+  
+  rpc search-configurations {
+    description 
+      "Search for configurations matching criteria.
+       Supports various search parameters.";
+    
+    input {
+      leaf search-query {
+        type string;
+        description "Search query string";
+      }
+      
+      leaf vendor {
+        type vendor-type;
+        description "Filter by vendor";
+      }
+      
+      leaf config-type {
+        type identityref {
+          base config-type-base;
+        }
+        description "Filter by configuration type";
+      }
+      
+      leaf status {
+        type config-status-type;
+        description "Filter by status";
+      }
+      
+      leaf resource-path {
+        type string;
+        description "Filter by resource path pattern";
+      }
+      
+      leaf created-after {
+        type yang:date-and-time;
+        description "Created after this time";
+      }
+      
+      leaf created-before {
+        type yang:date-and-time;
+        description "Created before this time";
+      }
+      
+      leaf max-results {
+        type uint32 {
+          range "1..500";
+        }
+        default 50;
+        description "Maximum results";
+      }
+    }
+    
+    output {
+      leaf total-matches {
+        type uint32;
+        description "Total matching configurations";
+      }
+      
+      list search-result {
+        key "config-id";
+        description "Search results";
+        
+        leaf config-id {
+          type config-id-type;
+          description "Configuration UUID";
+        }
+        
+        leaf target-resource {
+          type string;
+          description "Target resource";
+        }
+        
+        leaf config-status {
+          type config-status-type;
+          description "Status";
+        }
+        
+        leaf source-vendor {
+          type vendor-type;
+          description "Vendor";
+        }
+        
+        leaf relevance-score {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          description "Search relevance score";
+        }
+      }
+    }
+  }
+  
+  rpc clone-configuration {
+    description 
+      "Clone an existing configuration.
+       Creates a copy with optional modifications.";
+    
+    input {
+      leaf source-config-id {
+        type config-id-type;
+        mandatory true;
+        description "Configuration UUID to clone";
+      }
+      
+      leaf target-resource {
+        type string;
+        mandatory true;
+        description "Target resource for cloned configuration";
+      }
+      
+      leaf clone-name {
+        type string;
+        description "Name for cloned configuration";
+      }
+      
+      list parameter-overrides {
+        description "Parameters to override in clone";
+        
+        leaf parameter-name {
+          type string;
+          description "Parameter to override";
+        }
+        
+        leaf new-value {
+          type string;
+          description "New value for parameter";
+        }
+      }
+      
+      leaf validate-clone {
+        type boolean;
+        default true;
+        description "Validate cloned configuration";
+      }
+    }
+    
+    output {
+      leaf cloned-config-id {
+        type config-id-type;
+        description "UUID of cloned configuration";
+      }
+      
+      leaf success {
+        type boolean;
+        mandatory true;
+        description "True if clone successful";
+      }
+      
+      uses validation-result;
+    }
+  }
+
+  /***************************************************************************
+   * NOTIFICATION DEFINITIONS (10+)
+   ***************************************************************************/
+  
+  notification configuration-deployed {
+    description
+      "Notification sent when a configuration is successfully deployed.
+       Includes deployment details and affected resources.";
+    
+    leaf config-id {
+      type config-id-type;
+      mandatory true;
+      description "UUID of deployed configuration";
+    }
+    
+    leaf target-resource {
+      type string;
+      mandatory true;
+      description "Resource where configuration was deployed";
+    }
+    
+    leaf deployed-by {
+      type string;
+      mandatory true;
+      description "User who performed deployment";
+    }
+    
+    leaf deployment-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When deployment completed";
+    }
+    
+    leaf vendor {
+      type vendor-type;
+      description "Vendor of target device";
+    }
+    
+    leaf config-version {
+      type config-version-type;
+      description "Version of deployed configuration";
+    }
+    
+    leaf change-request-id {
+      type change-request-id-type;
+      description "Associated change request";
+    }
+    
+    leaf severity {
+      type notification-severity-type;
+      default INFO;
+      description "Notification severity";
+    }
+  }
+  
+  notification configuration-rollback {
+    description
+      "Notification sent when a configuration is rolled back.
+       Includes reason and target version information.";
+    
+    leaf config-id {
+      type config-id-type;
+      mandatory true;
+      description "UUID of configuration rolled back";
+    }
+    
+    leaf rollback-reason {
+      type rollback-reason-type;
+      mandatory true;
+      description "Reason for rollback";
+    }
+    
+    leaf rollback-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When rollback occurred";
+    }
+    
+    leaf rolled-back-by {
+      type string;
+      description "User who performed rollback";
+    }
+    
+    leaf previous-version {
+      type config-version-type;
+      description "Version before rollback";
+    }
+    
+    leaf target-version {
+      type config-version-type;
+      description "Version rolled back to";
+    }
+    
+    leaf severity {
+      type notification-severity-type;
+      default MAJOR;
+      description "Notification severity";
+    }
+    
+    leaf automatic-rollback {
+      type boolean;
+      description "Whether rollback was automatic";
+    }
+  }
+  
+  notification configuration-validation-failed {
+    if-feature config-validation;
+    description
+      "Notification sent when configuration validation fails.
+       Includes details of validation failures.";
+    
+    leaf config-id {
+      type config-id-type;
+      description "UUID of configuration that failed validation";
+    }
+    
+    leaf validation-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When validation was performed";
+    }
+    
+    leaf error-count {
+      type uint32;
+      description "Number of validation errors";
+    }
+    
+    leaf warning-count {
+      type uint32;
+      description "Number of validation warnings";
+    }
+    
+    list validation-errors {
+      description "List of validation errors";
+      
+      leaf error-code {
+        type string;
+        description "Error code";
+      }
+      
+      leaf error-message {
+        type string;
+        description "Error message";
+      }
+      
+      leaf xpath {
+        type config-path-type;
+        description "XPath to problematic element";
+      }
+    }
+    
+    leaf severity {
+      type notification-severity-type;
+      default MAJOR;
+      description "Notification severity";
+    }
+  }
+  
+  notification change-request-created {
+    if-feature change-approval-workflow;
+    description
+      "Notification sent when a new change request is created.
+       Alerts relevant parties of pending approval.";
+    
+    leaf change-id {
+      type change-request-id-type;
+      mandatory true;
+      description "UUID of new change request";
+    }
+    
+    leaf change-title {
+      type string;
+      description "Title of change request";
+    }
+    
+    leaf requester {
+      type string;
+      mandatory true;
+      description "User who created request";
+    }
+    
+    leaf request-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When request was created";
+    }
+    
+    leaf priority {
+      type config-priority-type;
+      description "Priority of change request";
+    }
+    
+    leaf requires-approval {
+      type boolean;
+      description "Whether approval is required";
+    }
+    
+    leaf first-approver {
+      type string;
+      description "First approver in chain";
+    }
+    
+    leaf severity {
+      type notification-severity-type;
+      default INFO;
+      description "Notification severity";
+    }
+  }
+  
+  notification change-request-approved {
+    if-feature change-approval-workflow;
+    description
+      "Notification sent when a change request is approved.
+       Can indicate stage approval or final approval.";
+    
+    leaf change-id {
+      type change-request-id-type;
+      mandatory true;
+      description "UUID of approved change request";
+    }
+    
+    leaf approver {
+      type string;
+      mandatory true;
+      description "User who approved";
+    }
+    
+    leaf approval-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When approval was given";
+    }
+    
+    leaf approval-stage {
+      type uint8;
+      description "Stage that was approved";
+    }
+    
+    leaf fully-approved {
+      type boolean;
+      description "True if all approvals complete";
+    }
+    
+    leaf ready-for-deployment {
+      type boolean;
+      description "True if ready for deployment";
+    }
+    
+    leaf next-approver {
+      type string;
+      description "Next approver if not fully approved";
+    }
+    
+    leaf severity {
+      type notification-severity-type;
+      default INFO;
+      description "Notification severity";
+    }
+  }
+  
+  notification change-request-rejected {
+    if-feature change-approval-workflow;
+    description
+      "Notification sent when a change request is rejected.
+       Includes rejection reason and details.";
+    
+    leaf change-id {
+      type change-request-id-type;
+      mandatory true;
+      description "UUID of rejected change request";
+    }
+    
+    leaf rejected-by {
+      type string;
+      mandatory true;
+      description "User who rejected";
+    }
+    
+    leaf rejection-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When rejection occurred";
+    }
+    
+    leaf rejection-reason {
+      type string;
+      mandatory true;
+      description "Reason for rejection";
+    }
+    
+    leaf resubmit-allowed {
+      type boolean;
+      description "Whether resubmission is allowed";
+    }
+    
+    leaf severity {
+      type notification-severity-type;
+      default MINOR;
+      description "Notification severity";
+    }
+  }
+  
+  notification configuration-backup-completed {
+    description
+      "Notification sent when a configuration backup completes.
+       Includes backup details and location.";
+    
+    leaf backup-id {
+      type string;
+      mandatory true;
+      description "UUID of completed backup";
+    }
+    
+    leaf backup-name {
+      type string;
+      description "Name of backup";
+    }
+    
+    leaf backup-type {
+      type enumeration {
+        enum FULL;
+        enum INCREMENTAL;
+        enum DIFFERENTIAL;
+        enum SNAPSHOT;
+      }
+      description "Type of backup";
+    }
+    
+    leaf completion-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When backup completed";
+    }
+    
+    leaf backup-status {
+      type backup-status-type;
+      description "Status of backup";
+    }
+    
+    leaf backup-size-bytes {
+      type uint64;
+      description "Size of backup";
+    }
+    
+    leaf backup-location {
+      type string;
+      description "Location of backup data";
+    }
+    
+    leaf configs-backed-up {
+      type uint32;
+      description "Number of configurations backed up";
+    }
+    
+    leaf severity {
+      type notification-severity-type;
+      default INFO;
+      description "Notification severity";
+    }
+  }
+  
+  notification configuration-restore-completed {
+    description
+      "Notification sent when a configuration restore completes.
+       Includes restore details and result.";
+    
+    leaf restore-id {
+      type string;
+      mandatory true;
+      description "UUID of restore operation";
+    }
+    
+    leaf backup-id {
+      type string;
+      mandatory true;
+      description "UUID of backup used";
+    }
+    
+    leaf completion-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When restore completed";
+    }
+    
+    leaf restore-status {
+      type restore-status-type;
+      description "Status of restore";
+    }
+    
+    leaf restored-config-id {
+      type config-id-type;
+      description "UUID of restored configuration";
+    }
+    
+    leaf restored-by {
+      type string;
+      description "User who performed restore";
+    }
+    
+    leaf severity {
+      type notification-severity-type;
+      default INFO;
+      description "Notification severity";
+    }
+  }
+  
+  notification deployment-started {
+    description
+      "Notification sent when a configuration deployment starts.
+       Provides tracking information for the deployment.";
+    
+    leaf deployment-job-id {
+      type string;
+      mandatory true;
+      description "UUID of deployment job";
+    }
+    
+    leaf config-id {
+      type config-id-type;
+      mandatory true;
+      description "UUID of configuration being deployed";
+    }
+    
+    leaf target-resource {
+      type string;
+      description "Target resource";
+    }
+    
+    leaf started-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When deployment started";
+    }
+    
+    leaf deployed-by {
+      type string;
+      description "User who initiated deployment";
+    }
+    
+    leaf estimated-duration-seconds {
+      type uint32;
+      description "Estimated deployment duration";
+    }
+    
+    leaf severity {
+      type notification-severity-type;
+      default INFO;
+      description "Notification severity";
+    }
+  }
+  
+  notification deployment-completed {
+    description
+      "Notification sent when a configuration deployment completes.
+       Includes final status and duration.";
+    
+    leaf deployment-job-id {
+      type string;
+      mandatory true;
+      description "UUID of deployment job";
+    }
+    
+    leaf config-id {
+      type config-id-type;
+      mandatory true;
+      description "UUID of deployed configuration";
+    }
+    
+    leaf completion-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When deployment completed";
+    }
+    
+    leaf deployment-status {
+      type deployment-status-type;
+      mandatory true;
+      description "Final deployment status";
+    }
+    
+    leaf actual-duration-seconds {
+      type uint32;
+      description "Actual deployment duration";
+    }
+    
+    leaf rollback-triggered {
+      type boolean;
+      description "Whether automatic rollback was triggered";
+    }
+    
+    leaf error-message {
+      type string;
+      description "Error message if failed";
+    }
+    
+    leaf severity {
+      type notification-severity-type;
+      description "Notification severity based on result";
+    }
+  }
+  
+  notification scheduled-deployment-reminder {
+    if-feature config-scheduling;
+    description
+      "Notification sent as a reminder before scheduled deployment.
+       Alerts operators of upcoming deployment.";
+    
+    leaf schedule-id {
+      type string;
+      mandatory true;
+      description "UUID of scheduled deployment";
+    }
+    
+    leaf config-id {
+      type config-id-type;
+      description "UUID of configuration to be deployed";
+    }
+    
+    leaf scheduled-time {
+      type yang:date-and-time;
+      mandatory true;
+      description "Scheduled deployment time";
+    }
+    
+    leaf reminder-time {
+      type yang:date-and-time;
+      mandatory true;
+      description "When reminder was sent";
+    }
+    
+    leaf minutes-until-deployment {
+      type uint32;
+      description "Minutes until scheduled deployment";
+    }
+    
+    leaf severity {
+      type notification-severity-type;
+      default INFO;
+      description "Notification severity";
+    }
+  }
+
+}

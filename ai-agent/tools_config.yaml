@@ -1,0 +1,86 @@
+agent:
+  name: "OSS Alarm Analysis Agent"
+  version: "1.0.0"
+  security_mode: "local_only"
+
+tools:
+  - name: alarm_analyzer
+    type: local_ml
+    model: xgboost
+    path: ./models/alarm_classifier.pkl
+    description: Predict alarm severity and priority
+    input_schema:
+      alarm_code: string
+      vendor: string
+      element_type: string
+      raw_severity: string
+    output_schema:
+      predicted_severity: string
+      confidence: float
+      model_version: string
+
+  - name: anomaly_detector
+    type: local_ml
+    model: isolation_forest
+    path: ./models/anomaly_detector.pkl
+    description: Detect anomalous alarm patterns
+    input_schema:
+      alarm_batch: array
+      time_window: integer
+    output_schema:
+      is_anomaly: boolean
+      anomaly_score: float
+      affected_elements: array
+
+  - name: correlation_engine
+    type: local_ml
+    model: bayesian_network
+    path: ./models/correlation.pkl
+    description: Root cause analysis using Bayesian inference
+    input_schema:
+      alarms: array
+      topology: object
+    output_schema:
+      root_cause: string
+      confidence: float
+      causal_chain: array
+
+  - name: config_validator
+    type: validation
+    validator: pyang
+    description: Validate YANG configurations before deployment
+    input_schema:
+      config: string
+      yang_module: string
+    output_schema:
+      valid: boolean
+      errors: array
+
+  - name: zero_trust_checker
+    type: security
+    policy_engine: opa
+    description: Verify Zero Trust compliance for operations
+    input_schema:
+      operation: string
+      user_context: object
+      resource_context: object
+    output_schema:
+      allowed: boolean
+      policy_id: string
+      audit_log_id: string
+
+  - name: vendor_mapper
+    type: translation
+    description: Map between Ericsson and Huawei alarm formats
+    input_schema:
+      source_vendor: string
+      alarm_data: object
+    output_schema:
+      normalized_alarm: object
+      mapping_confidence: float
+
+security:
+  external_api_calls: false
+  data_egress_allowed: false
+  audit_logging: true
+  zero_trust_required: true

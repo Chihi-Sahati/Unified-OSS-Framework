@@ -1,0 +1,70 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Unified OSS Framework"
+abstract: >
+  A secure unified OSS framework for multi-vendor network element 
+  management in ISP networks. This framework provides unified abstraction 
+  and management capabilities for Ericsson ENM and Huawei U2000/U2020 
+  network management systems, implementing FCAPS (Fault, Configuration, 
+  Accounting, Performance, Security) management with YANG/NETCONF 
+  standard interfaces and Zero Trust security architecture.
+authors:
+  - family-names: "Al-Sahati"
+    given-names: "Al-Hussein A."
+    orcid: "https://orcid.org/0000-0002-XXXX-XXXX"
+    affiliation: "Tunisia Telecom / IEEE Contributor"
+  - family-names: "Chihi"
+    given-names: "Houda"
+    orcid: "https://orcid.org/0000-0002-1234-5678"
+    email: "houda.chihi@ieee.org"
+    affiliation: "IEEE Member, TechWomen 2019 Fellow"
+version: 1.0.0
+doi: "10.5281/zenodo.XXXXXXX"
+date-released: 2026-03-20
+url: "https://github.com/unified-oss-framework/unified-oss-framework"
+repository-code: "https://github.com/unified-oss-framework/unified-oss-framework"
+keywords:
+  - "OSS"
+  - "BSS"
+  - "Multi-Vendor"
+  - "YANG"
+  - "NETCONF"
+  - "FCAPS"
+  - "Zero Trust"
+  - "Network Management"
+  - "Telecommunications"
+  - "ISP"
+  - "Ericsson ENM"
+  - "Huawei U2000"
+  - "Huawei U2020"
+  - "5G Core"
+  - "EPC"
+  - "IMS"
+  - "VoLTE"
+license: Apache-2.0
+commit: "main"
+identifiers:
+  - type: "swh"
+    value: "swh:1:dir:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+references:
+  - type: "article"
+    authors:
+      - family-names: "Al-Sahati"
+        given-names: "Al-Hussein A."
+      - family-names: "Chihi"
+        given-names: "Houda"
+    title: "Unified OSS Framework for Multi-Vendor Network Element Management"
+    journal: "IEEE Transactions on Network and Service Management"
+    year: 2026
+    note: "In Preparation"
+preferred-citation:
+  type: "article"
+  authors:
+    - family-names: "Al-Sahati"
+      given-names: "Al-Hussein A."
+    - family-names: "Chihi"
+      given-names: "Houda"
+  title: "Unified OSS Framework for Multi-Vendor Network Element Management"
+  journal: "IEEE Transactions on Network and Service Management"
+  year: 2026
+  note: "Submitted"

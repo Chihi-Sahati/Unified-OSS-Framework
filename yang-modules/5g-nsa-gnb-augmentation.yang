@@ -1,0 +1,232 @@
+module 5g-nsa-gnb-augmentation {
+  yang-version 1.1;
+  namespace "urn:unified-oss:5g-nsa:gnb";
+  prefix nsa-gnb;
+
+  import unified-oss-core-nrm { prefix uoss-nrm; }
+  import 5g-nsa-augmentation { prefix nsa; }
+  import ietf-inet-types { prefix inet; }
+
+  organization "Unified OSS Framework - 5G NSA SgNB Support";
+  contact "Dr. Houda Chihi - IEEE Member";
+  description 
+    "YANG augmentation for Secondary gNodeB (SgNB) in 5G NSA architecture.
+     
+     SgNB provides 5G NR boost capability in EN-DC dual connectivity,
+     managing the Secondary Cell Group (SCG) under MeNB coordination.
+     
+     Reference: 3GPP TS 38.300, TS 37.340";
+
+  revision 2026-03-21 {
+    description "Initial version for Unified OSS Framework v1.0.0";
+  }
+
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:element-type = 'sgnb'";
+    description "SgNB specific augmentations";
+    
+    container sgnb-configuration {
+      description "Secondary gNodeB configuration for EN-DC";
+      
+      leaf sgnb-id {
+        type string;
+        description "Unique SgNB identifier";
+      }
+      
+      leaf nr-mode {
+        type enumeration {
+          enum sa;
+          enum nsa;
+        }
+        default nsa;
+        description "NR operating mode";
+      }
+      
+      leaf en-dc-enabled {
+        type boolean;
+        default true;
+        description "Enable EN-DC capability on SgNB";
+      }
+      
+      leaf max-en-dc-sessions {
+        type uint32;
+        description "Maximum concurrent EN-DC sessions";
+      }
+    }
+    
+    container sgnb-cell-config {
+      description "NR cell configuration for SgNB";
+      
+      list nr-cell {
+        key "cell-id";
+        
+        leaf cell-id {
+          type uint32;
+        }
+        
+        leaf nci {
+          type uint64;
+          description "NR Cell Identity";
+        }
+        
+        leaf pci {
+          type uint16 {
+            range "0..1007";
+          }
+          description "NR Physical Cell ID";
+        }
+        
+        leaf nrarfcn {
+          type uint32;
+          description "NR Absolute Radio Frequency Channel Number";
+        }
+        
+        leaf band {
+          type uint8;
+          description "NR band number";
+        }
+        
+        leaf scs {
+          type enumeration {
+            enum khz15;
+            enum khz30;
+            enum khz60;
+            enum khz120;
+          }
+          description "Subcarrier spacing";
+        }
+        
+        leaf transmission-power {
+          type int8 {
+            range "-30..50";
+          }
+          units "dBm";
+        }
+        
+        leaf en-dc-cell-capable {
+          type boolean;
+          default true;
+        }
+      }
+    }
+    
+    container sgnb-en-dc-config {
+      description "EN-DC specific configuration for SgNB";
+      
+      leaf scg-config-enabled {
+        type boolean;
+        default true;
+        description "Enable Secondary Cell Group configuration";
+      }
+      
+      leaf scg-split-bearer-enabled {
+        type boolean;
+        default true;
+        description "Enable SCG split bearer";
+      }
+      
+      leaf scg-activation-timer {
+        type uint32;
+        units "ms";
+        default 100;
+        description "SCG activation timer";
+      }
+      
+      list menb-association {
+        key "menb-id";
+        
+        leaf menb-id {
+          type string;
+          description "Associated MeNB identifier";
+        }
+        
+        leaf x2-status {
+          type enumeration {
+            enum disabled;
+            enum establishing;
+            enum established;
+            enum failed;
+          }
+        }
+        
+        leaf en-dc-status {
+          type enumeration {
+            enum inactive;
+            enum active;
+            enum suspended;
+          }
+        }
+      }
+    }
+    
+    container sgnb-alarms {
+      description "SgNB specific alarms";
+      
+      list alarm {
+        key "alarm-id";
+        
+        leaf alarm-id {
+          type string;
+        }
+        
+        leaf alarm-type {
+          type enumeration {
+            enum scg-failure;
+            enum nr-radio-link-failure;
+            enum en-dc-session-failure;
+            enum scg-deactivation;
+            enum nr-cell-unavailable;
+          }
+        }
+        
+        leaf severity {
+          type uoss-nrm:severity-level;
+        }
+        
+        leaf affected-cell {
+          type uint32;
+          description "Affected NR cell ID";
+        }
+      }
+    }
+    
+    container sgnb-kpis {
+      description "SgNB performance KPIs";
+      
+      leaf scg-throughput {
+        type uint64;
+        units "Mbps";
+      }
+      
+      leaf scg-setup-success-rate {
+        type decimal64 {
+          fraction-digits 2;
+        }
+        units "percent";
+      }
+      
+      leaf nr-cell-availability {
+        type decimal64 {
+          fraction-digits 2;
+        }
+        units "percent";
+      }
+      
+      leaf active-scg-connections {
+        type uint32;
+      }
+      
+      leaf scg-latency {
+        type uint32;
+        units "ms";
+      }
+      
+      leaf nr-spectral-efficiency {
+        type decimal64 {
+          fraction-digits 4;
+        }
+        units "bps/Hz";
+      }
+    }
+  }
+}

@@ -1,0 +1,1020 @@
+module ericsson-bsc-augmentation {
+  yang-version 1.1;
+  namespace "urn:unified-oss:vendor:ericsson:bsc";
+  prefix eric-bsc;
+  
+  import unified-oss-core-nrm { prefix uoss-nrm; }
+  import ietf-inet-types { prefix inet; }
+  import ietf-yang-types { prefix yang; }
+  import ericsson-2g-3g-augmentation { prefix eric-2g3g; }
+  
+  organization "Unified OSS Framework - Ericsson BSC Support";
+  contact "Dr. Houda Chihi - IEEE Member, TechWomen 2019 Fellow";
+  description 
+    "YANG augmentation for Ericsson Base Station Controller (BSC).
+     
+     The BSC (Base Station Controller) is a critical 2G GSM network element
+     that manages multiple BTS (Base Transceiver Stations). It handles:
+     - Radio resource management
+     - Handover control
+     - Power control
+     - Frequency management
+     - TRX (Transceiver) management
+     
+     Key interfaces:
+     - Abis: BSC-BTS interface
+     - A: BSC-MSC interface (circuit-switched)
+     - Gb: BSC-SGSN interface (packet-switched)
+     - Ater: BSC-TRAU interface
+     
+     This module is part of the multi-generation OSS framework per
+     Dr. Chihi's request to integrate 2G/3G elements.
+     
+     Reference: 3GPP TS 48.001, TS 48.008, TS 48.058";
+  
+  revision 2026-03-21 {
+    description "Initial version for Unified OSS Framework v1.0.0";
+    reference "IEEE TNSM Submission - Multi-Generation OSS Integration";
+  }
+
+  // =============================================================
+  // BSC State and Status Types
+  // =============================================================
+  
+  typedef bsc-operational-state {
+    type enumeration {
+      enum disabled { description "BSC is disabled"; }
+      enum enabled { description "BSC is enabled but not operational"; }
+      enum operational { description "BSC is fully operational"; }
+      enum degraded { description "BSC is operational with degraded service"; }
+      enum locked { description "BSC is locked for maintenance"; }
+    }
+    description "BSC operational state";
+  }
+  
+  typedef bsc-administrative-state {
+    type enumeration {
+      enum unlocked { description "BSC is administratively unlocked"; }
+      enum locked { description "BSC is administratively locked"; }
+      enum shutting-down { description "BSC is in shutdown process"; }
+    }
+    description "BSC administrative state";
+  }
+  
+  typedef trx-state {
+    type enumeration {
+      enum disabled;
+      enum enabled;
+      enum operational;
+      enum failed;
+      enum locked;
+    }
+    description "TRX operational state";
+  }
+  
+  typedef timeslot-state {
+    type enumeration {
+      enum idle;
+      enum busy;
+      enum blocked;
+      enum failed;
+    }
+    description "Timeslot state";
+  }
+
+  // =============================================================
+  // BSC Configuration Augmentation
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'ericsson' and uoss-nrm:ne-type = 'bsc'";
+    description "BSC-specific configuration augmentations";
+    
+    container bsc-configuration {
+      description "BSC Configuration Parameters";
+      
+      leaf bsc-id {
+        type uint16 {
+          range "0..4095";
+        }
+        description "BSC Identification within the network";
+      }
+      
+      leaf bsc-name {
+        type string {
+          length "1..32";
+        }
+        description "Administrative name of the BSC";
+      }
+      
+      leaf operational-state {
+        type bsc-operational-state;
+        config false;
+        description "Current operational state";
+      }
+      
+      leaf administrative-state {
+        type bsc-administrative-state;
+        description "Administrative state";
+      }
+      
+      container capacity-config {
+        description "BSC capacity configuration";
+        
+        leaf max-bts {
+          type uint16 {
+            range "1..512";
+          }
+          default 128;
+          description "Maximum number of BTS managed by this BSC";
+        }
+        
+        leaf max-cells {
+          type uint16 {
+            range "1..2048";
+          }
+          default 512;
+          description "Maximum number of cells";
+        }
+        
+        leaf max-trx {
+          type uint16 {
+            range "1..4096";
+          }
+          default 2048;
+          description "Maximum number of TRX";
+        }
+        
+        leaf max-speech-channels {
+          type uint32;
+          default 5000;
+          description "Maximum simultaneous speech channels";
+        }
+        
+        leaf max-signaling-links {
+          type uint16;
+          default 64;
+          description "Maximum SS7 signaling links";
+        }
+      }
+      
+      // Abis Interface Configuration
+      container abis-interface-config {
+        description "Abis interface (BSC-BTS) configuration";
+        
+        leaf abis-type {
+          type enumeration {
+            enum pcm30 { description "PCM30 (E1, 30 channels)"; }
+            enum pcm24 { description "PCM24 (T1, 24 channels)"; }
+            enum ip-abis { description "IP-based Abis"; }
+          }
+          default pcm30;
+          description "Abis interface type";
+        }
+        
+        list abis-link {
+          key "link-id";
+          description "Abis link configuration";
+          
+          leaf link-id {
+            type string;
+            description "Abis link identifier";
+          }
+          
+          leaf bts-id {
+            type string;
+            description "Connected BTS identifier";
+          }
+          
+          leaf interface-type {
+            type enumeration {
+              enum e1;
+              enum t1;
+              enum ip;
+            }
+          }
+          
+          leaf timeslot-allocation {
+            type string;
+            description "Timeslot allocation pattern";
+          }
+          
+          leaf signaling-timeslots {
+            type string;
+            description "Signaling timeslots (e.g., '16' for E1)";
+          }
+          
+          leaf traffic-timeslots {
+            type string;
+            description "Traffic timeslots range";
+          }
+          
+          leaf link-state {
+            type enumeration {
+              enum up;
+              enum down;
+              enum degraded;
+            }
+            config false;
+          }
+        }
+      }
+      
+      // A Interface Configuration (BSC-MSC)
+      container a-interface-config {
+        description "A interface (BSC-MSC) configuration";
+        
+        list a-link {
+          key "link-id";
+          description "A interface link";
+          
+          leaf link-id {
+            type string;
+            description "A interface link identifier";
+          }
+          
+          leaf msc-id {
+            type string;
+            description "Connected MSC identifier";
+          }
+          
+          leaf circuit-group {
+            type string;
+            description "Circuit group identifier";
+          }
+          
+          leaf signaling-linkset {
+            type string;
+            description "SS7 signaling linkset name";
+          }
+          
+          leaf dpc {
+            type string;
+            description "Destination Point Code (SS7)";
+          }
+          
+          leaf opc {
+            type string;
+            description "Originating Point Code (SS7)";
+          }
+          
+          leaf number-of-circuits {
+            type uint16;
+            description "Number of circuits in this link";
+          }
+        }
+      }
+      
+      // Gb Interface Configuration (BSC-SGSN)
+      container gb-interface-config {
+        description "Gb interface (BSC-SGSN) for GPRS configuration";
+        
+        leaf gb-enabled {
+          type boolean;
+          default true;
+          description "Enable Gb interface for GPRS";
+        }
+        
+        list gb-link {
+          key "link-id";
+          description "Gb interface link to SGSN";
+          
+          leaf link-id {
+            type string;
+          }
+          
+          leaf sgsn-id {
+            type string;
+            description "Connected SGSN identifier";
+          }
+          
+          leaf ns-vci {
+            type uint16 {
+              range "0..65535";
+            }
+            description "Network Service Virtual Connection Identifier";
+          }
+          
+          leaf nsei {
+            type uint16 {
+              range "0..65535";
+            }
+            description "Network Service Entity Identifier";
+          }
+          
+          leaf bvci {
+            type uint16 {
+              range "0..65535";
+            }
+            description "BSSGP Virtual Connection Identifier";
+          }
+        }
+      }
+      
+      // Cell Configuration
+      container cell-config {
+        description "Cell configuration under BSC";
+        
+        list cell {
+          key "cell-id";
+          description "Cell configuration";
+          
+          leaf cell-id {
+            type string;
+            description "Cell identifier (CGI or LAC+CI)";
+          }
+          
+          leaf cell-name {
+            type string;
+            description "Cell name";
+          }
+          
+          leaf bts-id {
+            type string;
+            description "Parent BTS identifier";
+          }
+          
+          leaf lac {
+            type uint16 {
+              range "1..65533";
+            }
+            description "Location Area Code";
+          }
+          
+          leaf cell-id-value {
+            type uint16 {
+              range "0..65535";
+            }
+            description "Cell Identity value";
+          }
+          
+          leaf bsic {
+            type uint8 {
+              range "0..63";
+            }
+            description "Base Station Identity Code (NCC + BCC)";
+          }
+          
+          leaf bcch-arfcn {
+            type uint16 {
+              range "0..1023";
+            }
+            description "BCCH ARFCN";
+          }
+          
+          list trx-config {
+            key "trx-id";
+            description "TRX configuration for this cell";
+            
+            leaf trx-id {
+              type uint8 {
+                range "0..11";
+              }
+              description "TRX number within cell";
+            }
+            
+            leaf arfcn {
+              type uint16 {
+                range "0..1023";
+              }
+              description "ARFCN for this TRX";
+            }
+            
+            leaf power-level {
+              type uint8 {
+                range "0..63";
+              }
+              description "Power level in dBm";
+            }
+            
+            leaf trx-state {
+              type trx-state;
+              config false;
+              description "Current TRX state";
+            }
+            
+            list timeslot {
+              key "ts-number";
+              description "Timeslot configuration";
+              
+              leaf ts-number {
+                type uint8 {
+                  range "0..7";
+                }
+              }
+              
+              leaf channel-type {
+                type enumeration {
+                  enum tch-f { description "Full-rate traffic channel"; }
+                  enum tch-h { description "Half-rate traffic channel"; }
+                  enum sdcch { description "Standalone dedicated control channel"; }
+                  enum bcch { description "Broadcast control channel"; }
+                  enum ccch { description "Common control channel"; }
+                  enum pdtch { description "Packet data traffic channel"; }
+                }
+              }
+              
+              leaf timeslot-state {
+                type timeslot-state;
+                config false;
+              }
+            }
+          }
+          
+          leaf cell-state {
+            type enumeration {
+              enum operational;
+              enum locked;
+              enum failed;
+              enum degraded;
+            }
+            config false;
+          }
+        }
+      }
+      
+      // Neighbor Configuration
+      container neighbor-config {
+        description "Neighbor cell configuration";
+        
+        list neighbor-cell {
+          key "cell-id";
+          description "Neighbor cell definition";
+          
+          leaf cell-id {
+            type string;
+            description "Neighbor cell identifier";
+          }
+          
+          leaf-list serving-cells {
+            type string;
+            description "List of serving cells that have this neighbor";
+          }
+          
+          leaf arfcn {
+            type uint16;
+            description "Neighbor ARFCN";
+          }
+          
+          leaf bsic {
+            type uint8 {
+              range "0..63";
+            }
+            description "Neighbor BSIC";
+          }
+          
+          leaf handover-allowed {
+            type boolean;
+            default true;
+          }
+        }
+      }
+      
+      // Handover Configuration
+      container handover-config {
+        description "Handover parameters configuration";
+        
+        leaf ho-margin {
+          type int8 {
+            range "-24..24";
+          }
+          default 6;
+          units dB;
+          description "Handover margin (hysteresis)";
+        }
+        
+        leaf ho-penalty-time {
+          type uint8 {
+            range "0..60";
+          }
+          default 5;
+          units seconds;
+          description "Handover penalty time";
+        }
+        
+        leaf rxlev-min {
+          type uint8 {
+            range "0..63";
+          }
+          default 10;
+          description "Minimum RX level for handover candidate";
+        }
+        
+        leaf rxqual-max {
+          type uint8 {
+            range "0..7";
+          }
+          default 5;
+          description "Maximum RX quality threshold";
+        }
+        
+        leaf ms-range-max {
+          type uint16 {
+            range "0..35000";
+          }
+          units meters;
+          description "Maximum MS range for handover";
+        }
+      }
+      
+      // Power Control Configuration
+      container power-control-config {
+        description "Power control parameters";
+        
+        leaf ms-power-min {
+          type uint8 {
+            range "0..39";
+          }
+          default 5;
+          units dBm;
+          description "Minimum MS power";
+        }
+        
+        leaf ms-power-max {
+          type uint8 {
+            range "0..39";
+          }
+          default 33;
+          units dBm;
+          description "Maximum MS power";
+        }
+        
+        leaf bts-power-reduction {
+          type uint8 {
+            range "0..6";
+          }
+          default 0;
+          description "BTS power reduction";
+        }
+        
+        leaf power-control-interval {
+          type uint8 {
+            range "1..30";
+          }
+          default 5;
+          units "sacch-blocks";
+          description "Power control interval";
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // BSC Alarms
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'ericsson' and uoss-nrm:ne-type = 'bsc'";
+    description "BSC-specific alarm augmentations";
+    
+    container bsc-alarms {
+      description "BSC specific alarms";
+      
+      list active-alarm {
+        key "alarm-id";
+        config false;
+        description "Currently active BSC alarms";
+        
+        leaf alarm-id {
+          type string;
+        }
+        
+        leaf alarm-type {
+          type enumeration {
+            enum bsc-overload { description "BSC processor overload"; }
+            enum abis-link-down { description "Abis link to BTS down"; }
+            enum a-link-down { description "A interface link to MSC down"; }
+            enum gb-link-down { description "Gb interface to SGSN down"; }
+            enum trx-failure { description "TRX hardware failure"; }
+            enum cell-blocked { description "Cell blocked"; }
+            enum cell-failed { description "Cell failed"; }
+            enum clock-synchronization-loss { description "Clock sync lost"; }
+            enum database-error { description "BSC database error"; }
+            enum memory-exhaustion { description "Memory exhaustion"; }
+            enum signaling-link-failure { description "SS7 signaling link failure"; }
+            enum transmission-equipment-fault { description "Transmission equipment fault"; }
+          }
+        }
+        
+        leaf severity {
+          type uoss-nrm:severity-level;
+        }
+        
+        leaf affected-entity {
+          type string;
+          description "Affected BSC entity (BTS, cell, TRX, link)";
+        }
+        
+        leaf probable-cause {
+          type string;
+          description "ITU-T X.733 probable cause";
+        }
+        
+        leaf alarm-time {
+          type yang:date-and-time;
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // BSC KPIs
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'ericsson' and uoss-nrm:ne-type = 'bsc'";
+    description "BSC KPI augmentations";
+    
+    container bsc-kpis {
+      config false;
+      description "BSC Key Performance Indicators";
+      
+      container traffic-load {
+        description "Traffic load KPIs";
+        
+        leaf tch-erlang {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          description "Total TCH traffic in Erlangs";
+        }
+        
+        leaf sdcch-erlang {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          description "SDCCH traffic in Erlangs";
+        }
+        
+        leaf tch-utilization {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "TCH utilization percentage";
+        }
+        
+        leaf pdch-utilization {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "PDCH utilization for GPRS/EDGE";
+        }
+      }
+      
+      container availability {
+        description "Availability KPIs";
+        
+        leaf cell-availability {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "Cell availability rate";
+        }
+        
+        leaf trx-availability {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "TRX availability rate";
+        }
+        
+        leaf bsc-availability {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "BSC availability rate";
+        }
+      }
+      
+      container blocking {
+        description "Blocking KPIs";
+        
+        leaf sdcch-blocking-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+        }
+        
+        leaf tch-blocking-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+        }
+        
+        leaf pdch-blocking-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+        }
+      }
+      
+      container handover {
+        description "Handover KPIs";
+        
+        leaf intra-bsc-ho-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "Intra-BSC handover success rate";
+        }
+        
+        leaf inter-bsc-ho-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "Inter-BSC handover success rate";
+        }
+        
+        leaf ho-attempts {
+          type uint32;
+          description "Total handover attempts";
+        }
+        
+        leaf ho-successes {
+          type uint32;
+          description "Successful handovers";
+        }
+      }
+      
+      container signaling {
+        description "Signaling KPIs";
+        
+        leaf paging-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+        }
+        
+        leaf immediate-assignment-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+        }
+        
+        leaf sdcch-drop-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // BSC Notifications
+  // =============================================================
+  
+  notification bsc-alarm-notification {
+    description "BSC alarm notification";
+    
+    leaf bsc-id {
+      type string;
+      mandatory true;
+    }
+    
+    leaf alarm-id {
+      type string;
+    }
+    
+    leaf alarm-type {
+      type enumeration {
+        enum bsc-overload;
+        enum abis-link-down;
+        enum cell-failure;
+        enum trx-failure;
+        enum clock-sync-loss;
+        enum memory-exhaustion;
+      }
+    }
+    
+    leaf severity {
+      type uoss-nrm:severity-level;
+    }
+    
+    leaf affected-bts {
+      type string;
+    }
+    
+    leaf affected-cell {
+      type string;
+    }
+    
+    leaf timestamp {
+      type yang:date-and-time;
+    }
+  }
+  
+  notification cell-status-change {
+    description "Cell status change notification";
+    
+    leaf bsc-id {
+      type string;
+    }
+    
+    leaf cell-id {
+      type string;
+    }
+    
+    leaf old-status {
+      type enumeration {
+        enum operational;
+        enum locked;
+        enum failed;
+      }
+    }
+    
+    leaf new-status {
+      type enumeration {
+        enum operational;
+        enum locked;
+        enum failed;
+      }
+    }
+    
+    leaf reason {
+      type string;
+    }
+    
+    leaf timestamp {
+      type yang:date-and-time;
+    }
+  }
+
+  // =============================================================
+  // BSC RPC Operations
+  // =============================================================
+  
+  rpc lock-bsc-cell {
+    description "Lock a specific cell on the BSC";
+    input {
+      leaf bsc-id {
+        type string;
+        mandatory true;
+      }
+      leaf cell-id {
+        type string;
+        mandatory true;
+      }
+      leaf reason {
+        type string;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+          enum already-locked;
+          enum cell-not-found;
+        }
+      }
+      leaf message {
+        type string;
+      }
+    }
+  }
+  
+  rpc unlock-bsc-cell {
+    description "Unlock a specific cell on the BSC";
+    input {
+      leaf bsc-id {
+        type string;
+        mandatory true;
+      }
+      leaf cell-id {
+        type string;
+        mandatory true;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+          enum not-locked;
+          enum cell-not-found;
+        }
+      }
+    }
+  }
+  
+  rpc block-trx {
+    description "Block a specific TRX";
+    input {
+      leaf bsc-id {
+        type string;
+        mandatory true;
+      }
+      leaf cell-id {
+        type string;
+        mandatory true;
+      }
+      leaf trx-id {
+        type uint8 {
+          range "0..11";
+        }
+        mandatory true;
+      }
+      leaf reason {
+        type string;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+          enum already-blocked;
+          enum trx-not-found;
+        }
+      }
+    }
+  }
+  
+  rpc unblock-trx {
+    description "Unblock a specific TRX";
+    input {
+      leaf bsc-id {
+        type string;
+        mandatory true;
+      }
+      leaf cell-id {
+        type string;
+        mandatory true;
+      }
+      leaf trx-id {
+        type uint8 {
+          range "0..11";
+        }
+        mandatory true;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+          enum not-blocked;
+          enum trx-not-found;
+        }
+      }
+    }
+  }
+  
+  rpc query-bsc-status {
+    description "Query comprehensive BSC status";
+    input {
+      leaf bsc-id {
+        type string;
+        mandatory true;
+      }
+    }
+    output {
+      leaf operational-state {
+        type bsc-operational-state;
+      }
+      leaf administrative-state {
+        type bsc-administrative-state;
+      }
+      leaf active-cells {
+        type uint16;
+      }
+      leaf active-trx {
+        type uint16;
+      }
+      leaf active-abis-links {
+        type uint8;
+      }
+      leaf current-erlang {
+        type decimal64 {
+          fraction-digits 2;
+        }
+      }
+      leaf cpu-utilization {
+        type uint8 {
+          range "0..100";
+        }
+        units "percent";
+      }
+      leaf memory-utilization {
+        type uint8 {
+          range "0..100";
+        }
+        units "percent";
+      }
+    }
+  }
+}

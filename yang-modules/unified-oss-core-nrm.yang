@@ -1,0 +1,1731 @@
+module unified-oss-core-nrm {
+  yang-version 1.1;
+  namespace "urn:cim:core:v1";
+  prefix "core-nrm";
+  
+  import ietf-yang-types {
+    prefix yang;
+  }
+  import ietf-inet-types {
+    prefix inet;
+  }
+  
+  organization "Unified OSS Framework Consortium";
+  contact "oss-framework@example.com";
+  
+  description
+    "YANG data model for CORE Network Resource Management within the Unified OSS Framework.
+     This module extends the unified OSS NRM with CORE-specific network function types
+     including 4G EPC elements (MME, SGW, PGW, HSS), 5G Core elements (AMF, SMF, UPF, UDM, NRF),
+     and legacy elements (SGSN, GGSN).
+     
+     Key features:
+     - Multi-generation core support (2G/3G/4G/5G)
+     - Service-based architecture for 5G Core
+     - Diameter signaling management
+     - Session and bearer management
+     - Policy and charging control
+     
+     Copyright (c) 2024 Unified OSS Framework Consortium.
+     All rights reserved.";
+  
+  revision 2024-03-01 {
+    description 
+      "Initial version - CORE Network Resource Model for multi-vendor
+       multi-generation core network management.
+       
+       Supports:
+       - 4G EPC: MME, SGW, PGW, HSS, PCRF
+       - 5G Core: AMF, SMF, UPF, UDM, NRF, PCF, AUSF, NSSF, NEF
+       - Legacy: SGSN, GGSN
+       - IMS/VoLTE: IMS, TAS, VoLTE AS
+       - Signaling: DRA, DEA, STP";
+    reference 
+      "3GPP TS 28.541 - Network Resource Model;
+       3GPP TS 23.501 - 5G System Architecture;
+       3GPP TS 23.401 - EPC Architecture;
+       ETSI NFV IFA 011 - VNF Descriptor";
+  }
+
+  /***************************************************************************
+   * FEATURE DEFINITIONS
+   ***************************************************************************/
+  
+  feature epc-support {
+    description "Enable 4G EPC element management";
+  }
+  
+  feature fivegc-support {
+    description "Enable 5G Core element management";
+  }
+  
+  feature legacy-support {
+    description "Enable 2G/3G legacy element management (SGSN, GGSN)";
+  }
+  
+  feature ims-support {
+    description "Enable IMS/VoLTE element management";
+  }
+  
+  feature signaling-support {
+    description "Enable signaling element management (DRA, STP)";
+  }
+  
+  feature slicing-support {
+    description "Enable network slicing support for 5G";
+  }
+  
+  feature cloud-native-support {
+    description "Enable cloud-native/VNF management";
+  }
+
+  /***************************************************************************
+   * IDENTITY DEFINITIONS - Core Network Function Types
+   ***************************************************************************/
+  
+  identity core-nf-type-base {
+    description "Base identity for core network function types";
+  }
+  
+  identity mme {
+    base core-nf-type-base;
+    description "Mobility Management Entity (4G EPC)";
+  }
+  
+  identity sgw {
+    base core-nf-type-base;
+    description "Serving Gateway (4G EPC)";
+  }
+  
+  identity pgw {
+    base core-nf-type-base;
+    description "PDN Gateway (4G EPC)";
+  }
+  
+  identity hss {
+    base core-nf-type-base;
+    description "Home Subscriber Server (4G EPC/IMS)";
+  }
+  
+  identity pcrf {
+    base core-nf-type-base;
+    description "Policy and Charging Rules Function (4G EPC)";
+  }
+  
+  identity amf {
+    base core-nf-type-base;
+    description "Access and Mobility Management Function (5GC)";
+  }
+  
+  identity smf {
+    base core-nf-type-base;
+    description "Session Management Function (5GC)";
+  }
+  
+  identity upf {
+    base core-nf-type-base;
+    description "User Plane Function (5GC)";
+  }
+  
+  identity udm {
+    base core-nf-type-base;
+    description "Unified Data Management (5GC)";
+  }
+  
+  identity nrf {
+    base core-nf-type-base;
+    description "Network Repository Function (5GC)";
+  }
+  
+  identity pcf {
+    base core-nf-type-base;
+    description "Policy Control Function (5GC)";
+  }
+  
+  identity ausf {
+    base core-nf-type-base;
+    description "Authentication Server Function (5GC)";
+  }
+  
+  identity nssf {
+    base core-nf-type-base;
+    description "Network Slice Selection Function (5GC)";
+  }
+  
+  identity nef {
+    base core-nf-type-base;
+    description "Network Exposure Function (5GC)";
+  }
+  
+  identity sgsn {
+    base core-nf-type-base;
+    description "Serving GPRS Support Node (2G/3G)";
+  }
+  
+  identity ggsn {
+    base core-nf-type-base;
+    description "Gateway GPRS Support Node (2G/3G)";
+  }
+  
+  identity ims {
+    base core-nf-type-base;
+    description "IP Multimedia Subsystem";
+  }
+  
+  identity tas {
+    base core-nf-type-base;
+    description "Telephony Application Server";
+  }
+  
+  identity dra {
+    base core-nf-type-base;
+    description "Diameter Routing Agent";
+  }
+  
+  identity dea {
+    base core-nf-type-base;
+    description "Diameter Edge Agent";
+  }
+  
+  identity stp {
+    base core-nf-type-base;
+    description "Signal Transfer Point (SS7)";
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Core Network Identifiers
+   ***************************************************************************/
+  
+  typedef core-nf-id-type {
+    description 
+      "Unique identifier for core network function.
+       Format: vendor-region-function-serial";
+    type string {
+      length "1..64";
+      pattern "[A-Za-z0-9_\\-]+";
+    }
+  }
+  
+  typedef imsi-range-type {
+    description 
+      "IMSI range for HSS/UDM subscriber partitioning.
+       Format: MCC-MNC-MSINRange";
+    type string {
+      pattern "[0-9]{3}-[0-9]{2,3}-[0-9*]+";
+    }
+  }
+  
+  typedef apn-type {
+    description "Access Point Name";
+    type string {
+      length "1..128";
+      pattern "[A-Za-z0-9\\.\\-]+";
+    }
+  }
+  
+  typedef dnn-type {
+    description "Data Network Name (5G equivalent of APN)";
+    type string {
+      length "1..128";
+      pattern "[A-Za-z0-9\\.\\-]+";
+    }
+  }
+  
+  typedef s-nssai-type {
+    description 
+      "Single Network Slice Selection Assistance Information.
+       Format: SST[:SD] where SST is 1-3 digits and SD is 6 hex digits.";
+    type string {
+      pattern "[0-9]{1,3}(:[0-9a-fA-F]{6})?";
+    }
+  }
+  
+  typedef guami-type {
+    description 
+      "Globally Unique AMF Identifier.
+       Format: PLMN-ID:AMF-Region:AMF-Set:AMF-Pointer";
+    type string {
+      pattern "[0-9]{5,6}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{1}";
+    }
+  }
+  
+  typedef amf-region-type {
+    description "AMF Region identifier (8-bit)";
+    type uint8 {
+      range "0..255";
+    }
+  }
+  
+  typedef amf-set-type {
+    description "AMF Set identifier (10-bit)";
+    type uint16 {
+      range "0..1023";
+    }
+  }
+  
+  typedef amf-pointer-type {
+    description "AMF Pointer identifier (6-bit)";
+    type uint8 {
+      range "0..63";
+    }
+  }
+  
+  typedef tac-type {
+    description "Tracking Area Code";
+    type uint32 {
+      range "0..16777215";
+    }
+  }
+  
+  typedef eci-type {
+    description "E-UTRAN Cell Identifier (28-bit)";
+    type uint32 {
+      range "0..268435455";
+    }
+  }
+  
+  typedef nci-type {
+    description "NR Cell Identifier (36-bit)";
+    type uint64 {
+      range "0..68719476735";
+    }
+  }
+  
+  typedef gtp-tunnel-id-type {
+    description "GTP Tunnel Endpoint Identifier";
+    type uint32 {
+      range "0..4294967295";
+    }
+  }
+  
+  typedef teid-type {
+    description "Tunnel Endpoint Identifier for GTP";
+    type uint32;
+  }
+  
+  typedef diameter-realm-type {
+    description "Diameter realm name";
+    type string {
+      length "1..128";
+      pattern "[A-Za-z0-9\\.\\-]+";
+    }
+  }
+  
+  typedef diameter-host-type {
+    description "Diameter host identity";
+    type string {
+      length "1..128";
+      pattern "[A-Za-z0-9\\.\\-]+";
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Session and Bearer
+   ***************************************************************************/
+  
+  typedef bearer-id-type {
+    description "EPS Bearer Identifier (5-bit)";
+    type uint8 {
+      range "0..15";
+    }
+  }
+  
+  typedef qos-ci-type {
+    description "QoS Class Identifier";
+    type uint8 {
+      range "1..255";
+    }
+  }
+  
+  typedef arp-type {
+    description "Allocation and Retention Priority";
+    type uint8 {
+      range "1..15";
+    }
+  }
+  
+  typedef fiveqi-type {
+    description "5G QoS Identifier";
+    type uint8 {
+      range "0..255";
+    }
+  }
+  
+  typedef pdu-session-id-type {
+    description "PDU Session Identifier";
+    type uint8 {
+      range "0..255";
+    }
+  }
+  
+  typedef pdu-session-type {
+    description "PDU Session Type enumeration";
+    type enumeration {
+      enum IPV4;
+      enum IPV6;
+      enum IPV4V6;
+      enum ETHERNET;
+      enum UNSTRUCTURED;
+    }
+  }
+  
+  typedef session-state-type {
+    description "Session state enumeration";
+    type enumeration {
+      enum IDLE;
+      enum ACTIVE;
+      enum SUSPENDED;
+      enum TERMINATING;
+      enum TERMINATED;
+    }
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS - Capacity and Performance
+   ***************************************************************************/
+  
+  typedef subscriber-capacity-type {
+    description "Maximum number of subscribers";
+    type uint32;
+  }
+  
+  typedef session-capacity-type {
+    description "Maximum number of concurrent sessions";
+    type uint32;
+  }
+  
+  typedef bearer-capacity-type {
+    description "Maximum number of concurrent bearers";
+    type uint32;
+  }
+  
+  typedef throughput-type {
+    description "Throughput in Mbps";
+    type uint64 {
+      range "0..100000000";
+    }
+  }
+  
+  typedef cpu-utilization-type {
+    description "CPU utilization percentage";
+    type uint8 {
+      range "0..100";
+    }
+  }
+  
+  typedef memory-utilization-type {
+    description "Memory utilization percentage";
+    type uint8 {
+      range "0..100";
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS - Core Network Function Base
+   ***************************************************************************/
+  
+  grouping core-nf-common-attributes {
+    description "Common attributes for all core network functions";
+    
+    leaf nf-id {
+      type core-nf-id-type;
+      description "Unique network function identifier";
+    }
+    
+    leaf nf-type {
+      type identityref {
+        base core-nf-type-base;
+      }
+      mandatory true;
+      description "Network function type";
+    }
+    
+    leaf vendor {
+      type enumeration {
+        enum ERICSSON;
+        enum HUAWEI;
+        enum NOKIA;
+        enum ZTE;
+        enum CISCO;
+      }
+      mandatory true;
+      description "Equipment vendor";
+    }
+    
+    leaf model {
+      type string {
+        length "1..64";
+      }
+      description "Equipment model/variant";
+    }
+    
+    leaf software-version {
+      type string {
+        length "1..32";
+      }
+      description "Software/firmware version";
+    }
+    
+    leaf admin-state {
+      type enumeration {
+        enum LOCKED;
+        enum UNLOCKED;
+        enum MAINTENANCE;
+      }
+      default UNLOCKED;
+      description "Administrative state";
+    }
+    
+    leaf oper-state {
+      type enumeration {
+        enum ENABLED;
+        enum DISABLED;
+        enum FAULTY;
+        enum DEGRADED;
+      }
+      config false;
+      description "Operational state";
+    }
+    
+    leaf-list ip-addresses {
+      type inet:ip-address;
+      description "Management IP addresses";
+    }
+    
+    leaf-list service-endpoints {
+      type inet:uri;
+      description "Service endpoint URIs for SBI (5GC)";
+    }
+    
+    leaf location {
+      type string {
+        length "1..128";
+      }
+      description "Physical location (data center, site)";
+    }
+    
+    leaf region {
+      type string {
+        length "1..64";
+      }
+      description "Logical region/cluster";
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS - MME Specific
+   ***************************************************************************/
+  
+  grouping mme-attributes {
+    description "MME-specific attributes";
+    
+    leaf-list served-tacs {
+      type tac-type;
+      description "Tracking Area Codes served by this MME";
+    }
+    
+    leaf-list served-plmns {
+      type string {
+        pattern "[0-9]{5,6}";
+      }
+      description "PLMN IDs served by this MME (MCC+MNC)";
+    }
+    
+    leaf max-subscribers {
+      type subscriber-capacity-type;
+      description "Maximum subscriber capacity";
+    }
+    
+    leaf active-subscribers {
+      type uint32;
+      config false;
+      description "Current active subscriber count";
+    }
+    
+    leaf max-sessions {
+      type session-capacity-type;
+      description "Maximum session capacity";
+    }
+    
+    leaf active-sessions {
+      type uint32;
+      config false;
+      description "Current active session count";
+    }
+    
+    leaf-list connected-sgws {
+      type inet:ip-address;
+      description "Connected SGW addresses";
+    }
+    
+    leaf-list connected-pgws {
+      type inet:ip-address;
+      description "Connected PGW addresses";
+    }
+    
+    leaf-list connected-hsss {
+      type inet:ip-address;
+      description "Connected HSS addresses";
+    }
+    
+    leaf mme-group-id {
+      type uint16;
+      description "MME Group Identifier for pooling";
+    }
+    
+    leaf mme-code {
+      type uint8;
+      description "MME Code within pool";
+    }
+    
+    leaf relative-capacity {
+      type uint8 {
+        range "0..255";
+      }
+      description "Relative capacity for pool member selection";
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS - SGW/PGW Common
+   ***************************************************************************/
+  
+  grouping gateway-common-attributes {
+    description "Common attributes for SGW and PGW";
+    
+    leaf max-bearers {
+      type bearer-capacity-type;
+      description "Maximum bearer capacity";
+    }
+    
+    leaf active-bearers {
+      type uint32;
+      config false;
+      description "Current active bearer count";
+    }
+    
+    leaf max-throughput-downlink {
+      type throughput-type;
+      description "Maximum downlink throughput (Mbps)";
+    }
+    
+    leaf max-throughput-uplink {
+      type throughput-type;
+      description "Maximum uplink throughput (Mbps)";
+    }
+    
+    leaf current-throughput-downlink {
+      type throughput-type;
+      config false;
+      description "Current downlink throughput (Mbps)";
+    }
+    
+    leaf current-throughput-uplink {
+      type throughput-type;
+      config false;
+      description "Current uplink throughput (Mbps)";
+    }
+    
+    leaf gtp-u-port {
+      type inet:port-number;
+      default 2152;
+      description "GTP-U port number";
+    }
+    
+    leaf gtp-c-port {
+      type inet:port-number;
+      default 2123;
+      description "GTP-C port number";
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS - 5G Core Attributes
+   ***************************************************************************/
+  
+  grouping fivegc-common-attributes {
+    description "Common attributes for 5G Core network functions";
+    
+    leaf nf-instance-id {
+      type string {
+        length "36";
+        pattern "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+      }
+      description "NF Instance UUID for NRF registration";
+    }
+    
+    leaf-list supported-s-nssais {
+      type s-nssai-type;
+      description "Supported network slice S-NSSAIs";
+    }
+    
+    leaf sbi-port {
+      type inet:port-number;
+      default 8080;
+      description "Service Based Interface port";
+    }
+    
+    leaf sbi-protocol {
+      type enumeration {
+        enum HTTP;
+        enum HTTPS;
+      }
+      default HTTPS;
+      description "SBI protocol";
+    }
+    
+    leaf-list allowed-nf-types {
+      type identityref {
+        base core-nf-type-base;
+      }
+      description "Allowed NF types for communication";
+    }
+    
+    leaf nrf-address {
+      type inet:uri;
+      description "NRF address for service registration";
+    }
+    
+    leaf heartbeat-interval {
+      type uint16 {
+        range "1..3600";
+      }
+      units "seconds";
+      default 30;
+      description "Heartbeat interval for NRF";
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS - AMF Specific
+   ***************************************************************************/
+  
+  grouping amf-attributes {
+    description "AMF-specific attributes";
+    
+    leaf-list served-guamis {
+      type guami-type;
+      description "Served GUAMI list";
+    }
+    
+    leaf-list served-tacs {
+      type tac-type;
+      description "Served TAC list";
+    }
+    
+    leaf-list supported-tracks {
+      type string;
+      description "Supported tracking areas for network slicing";
+    }
+    
+    leaf-list connected-smfs {
+      type inet:uri;
+      description "Connected SMF service endpoints";
+    }
+    
+    leaf-list connected-udms {
+      type inet:uri;
+      description "Connected UDM service endpoints";
+    }
+    
+    leaf amf-region-id {
+      type amf-region-type;
+      description "AMF Region ID";
+    }
+    
+    leaf-list amf-set-ids {
+      type amf-set-type;
+      description "AMF Set IDs within region";
+    }
+    
+    leaf-list supported-access-types {
+      type enumeration {
+        enum THREEGPP_ACCESS;
+        enum NON_THREEGPP_ACCESS;
+      }
+      description "Supported access types";
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS - SMF Specific
+   ***************************************************************************/
+  
+  grouping smf-attributes {
+    description "SMF-specific attributes";
+    
+    leaf-list supported-dnns {
+      type dnn-type;
+      description "Supported DNN list";
+    }
+    
+    leaf-list supported-pdu-session-types {
+      type pdu-session-type;
+      description "Supported PDU session types";
+    }
+    
+    leaf-list connected-upfs {
+      type inet:uri;
+      description "Connected UPF service endpoints";
+    }
+    
+    leaf-list connected-pcfs {
+      type inet:uri;
+      description "Connected PCF service endpoints";
+    }
+    
+    leaf-list connected-udms {
+      type inet:uri;
+      description "Connected UDM service endpoints";
+    }
+    
+    leaf max-pdu-sessions {
+      type session-capacity-type;
+      description "Maximum PDU session capacity";
+    }
+    
+    leaf active-pdu-sessions {
+      type uint32;
+      config false;
+      description "Current active PDU session count";
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS - UPF Specific
+   ***************************************************************************/
+  
+  grouping upf-attributes {
+    description "UPF-specific attributes";
+    
+    leaf-list supported-dnns {
+      type dnn-type;
+      description "Supported DNN list";
+    }
+    
+    leaf-list supported-s-nssais {
+      type s-nssai-type;
+      description "Supported network slices";
+    }
+    
+    leaf-list n3-interfaces {
+      type inet:ip-address;
+      description "N3 interface addresses (AN side)";
+    }
+    
+    leaf-list n9-interfaces {
+      type inet:ip-address;
+      description "N9 interface addresses (UPF-UPF)";
+    }
+    
+    leaf-list n6-interfaces {
+      type inet:ip-address;
+      description "N6 interface addresses (DN side)";
+    }
+    
+    leaf max-session-capacity {
+      type session-capacity-type;
+      description "Maximum session capacity";
+    }
+    
+    leaf active-sessions {
+      type uint32;
+      config false;
+      description "Current active sessions";
+    }
+    
+    leaf packet-processing-capability {
+      type uint64 {
+        range "0..1000000000";
+      }
+      units "packets/second";
+      description "Packet processing capability";
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS - HSS/UDM Common
+   ***************************************************************************/
+  
+  grouping subscriber-data-attributes {
+    description "Common subscriber data management attributes";
+    
+    leaf-list served-imsi-ranges {
+      type imsi-range-type;
+      description "Served IMSI ranges";
+    }
+    
+    leaf-list served-plmns {
+      type string {
+        pattern "[0-9]{5,6}";
+      }
+      description "Served PLMN IDs";
+    }
+    
+    leaf max-subscribers {
+      type subscriber-capacity-type;
+      description "Maximum subscriber capacity";
+    }
+    
+    leaf provisioned-subscribers {
+      type uint32;
+      config false;
+      description "Currently provisioned subscriber count";
+    }
+    
+    leaf-list connected-application-servers {
+      type inet:ip-address;
+      description "Connected application servers";
+    }
+    
+    leaf database-replication-state {
+      type enumeration {
+        enum PRIMARY;
+        enum SECONDARY;
+        enum SYNCING;
+      }
+      description "Database replication role";
+    }
+    
+    leaf backup-database-address {
+      type inet:ip-address;
+      description "Backup database address";
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS - Diameter Signaling
+   ***************************************************************************/
+  
+  grouping diameter-attributes {
+    description "Diameter signaling attributes";
+    
+    leaf origin-host {
+      type diameter-host-type;
+      description "Diameter Origin-Host";
+    }
+    
+    leaf origin-realm {
+      type diameter-realm-type;
+      description "Diameter Origin-Realm";
+    }
+    
+    leaf-list supported-vendor-apps {
+      type string;
+      description "Supported vendor-specific applications";
+    }
+    
+    leaf-list supported-auth-apps {
+      type uint32;
+      description "Supported auth application IDs";
+    }
+    
+    leaf-list supported-acct-apps {
+      type uint32;
+      description "Supported accounting application IDs";
+    }
+    
+    leaf-list peer-hosts {
+      type diameter-host-type;
+      description "Configured peer hosts";
+    }
+    
+    leaf-list route-realms {
+      type diameter-realm-type;
+      description "Configured route realms";
+    }
+    
+    leaf max-connections {
+      type uint32 {
+        range "1..10000";
+      }
+      description "Maximum concurrent connections";
+    }
+    
+    leaf active-connections {
+      type uint32;
+      config false;
+      description "Current active connections";
+    }
+    
+    leaf messages-per-second {
+      type uint32;
+      config false;
+      description "Current message rate";
+    }
+  }
+
+  /***************************************************************************
+   * CONTAINER DEFINITIONS - Core Network Root
+   ***************************************************************************/
+  
+  container core-network {
+    description 
+      "Root container for core network management.
+       Contains all core network function instances and configurations.";
+    
+    leaf schema-version {
+      type string {
+        pattern "[0-9]+\\.[0-9]+\\.[0-9]+";
+      }
+      config false;
+      description "Current core NRM schema version";
+    }
+    
+    container statistics {
+      config false;
+      description "Core network statistics";
+      
+      leaf total-nfs {
+        type uint32;
+        description "Total network functions managed";
+      }
+      
+      leaf active-nfs {
+        type uint32;
+        description "Currently active network functions";
+      }
+      
+      leaf total-subscribers {
+        type uint32;
+        description "Total subscribers across all HSS/UDM";
+      }
+      
+      leaf total-sessions {
+        type uint32;
+        description "Total active sessions across all gateways";
+      }
+    }
+    
+    /*************************************************************************
+     * 4G EPC ELEMENTS
+     *************************************************************************/
+    
+    container epc {
+      if-feature epc-support;
+      description "4G EPC network elements";
+      
+      list mme {
+        key "nf-id";
+        description "MME instances";
+        
+        uses core-nf-common-attributes;
+        uses mme-attributes;
+        
+        container performance {
+          config false;
+          description "MME performance metrics";
+          
+          leaf cpu-utilization {
+            type cpu-utilization-type;
+            description "CPU utilization percentage";
+          }
+          
+          leaf memory-utilization {
+            type memory-utilization-type;
+            description "Memory utilization percentage";
+          }
+          
+          leaf s1ap-connections {
+            type uint32;
+            description "Active S1-AP connections";
+          }
+          
+          leaf s11-tunnels {
+            type uint32;
+            description "Active S11 tunnels";
+          }
+          
+          leaf attach-success-rate {
+            type decimal64 {
+              fraction-digits 2;
+              range "0.00..100.00";
+            }
+            description "Attach success rate percentage";
+          }
+          
+          leaf handover-success-rate {
+            type decimal64 {
+              fraction-digits 2;
+              range "0.00..100.00";
+            }
+            description "Handover success rate percentage";
+          }
+        }
+      }
+      
+      list sgw {
+        key "nf-id";
+        description "SGW instances";
+        
+        uses core-nf-common-attributes;
+        uses gateway-common-attributes;
+        
+        leaf-list connected-mmes {
+          type inet:ip-address;
+          description "Connected MME addresses";
+        }
+        
+        leaf-list connected-pgws {
+          type inet:ip-address;
+          description "Connected PGW addresses";
+        }
+        
+        container performance {
+          config false;
+          description "SGW performance metrics";
+          
+          uses gateway-performance-metrics;
+        }
+      }
+      
+      list pgw {
+        key "nf-id";
+        description "PGW instances";
+        
+        uses core-nf-common-attributes;
+        uses gateway-common-attributes;
+        
+        leaf-list served-apns {
+          type apn-type;
+          description "Served APN list";
+        }
+        
+        leaf-list connected-pcrfs {
+          type inet:ip-address;
+          description "Connected PCRF addresses";
+        }
+        
+        container performance {
+          config false;
+          description "PGW performance metrics";
+          
+          uses gateway-performance-metrics;
+          
+          leaf avg-session-duration {
+            type uint32;
+            units "seconds";
+            description "Average session duration";
+          }
+          
+          leaf data-volume-uplink {
+            type uint64;
+            units "bytes";
+            description "Total uplink data volume";
+          }
+          
+          leaf data-volume-downlink {
+            type uint64;
+            units "bytes";
+            description "Total downlink data volume";
+          }
+        }
+      }
+      
+      list hss {
+        key "nf-id";
+        description "HSS instances";
+        
+        uses core-nf-common-attributes;
+        uses subscriber-data-attributes;
+        
+        container performance {
+          config false;
+          description "HSS performance metrics";
+          
+          leaf auth-requests-per-second {
+            type uint32;
+            description "Authentication requests per second";
+          }
+          
+          leaf avg-response-time {
+            type uint32;
+            units "milliseconds";
+            description "Average response time";
+          }
+        }
+      }
+      
+      list pcrf {
+        key "nf-id";
+        description "PCRF instances";
+        
+        uses core-nf-common-attributes;
+        
+        leaf-list served-apns {
+          type apn-type;
+          description "Served APN list";
+        }
+        
+        leaf-list connected-pgws {
+          type inet:ip-address;
+          description "Connected PGW addresses";
+        }
+        
+        container performance {
+          config false;
+          description "PCRF performance metrics";
+          
+          leaf policy-decisions-per-second {
+            type uint32;
+            description "Policy decisions per second";
+          }
+        }
+      }
+    }
+    
+    /*************************************************************************
+     * 5G CORE ELEMENTS
+     *************************************************************************/
+    
+    container fivegc {
+      if-feature fivegc-support;
+      description "5G Core network elements";
+      
+      list amf {
+        key "nf-id";
+        description "AMF instances";
+        
+        uses core-nf-common-attributes;
+        uses fivegc-common-attributes;
+        uses amf-attributes;
+        
+        container performance {
+          config false;
+          description "AMF performance metrics";
+          
+          leaf n1-connections {
+            type uint32;
+            description "Active N1 connections";
+          }
+          
+          leaf n2-connections {
+            type uint32;
+            description "Active N2 connections";
+          }
+          
+          leaf registration-success-rate {
+            type decimal64 {
+              fraction-digits 2;
+              range "0.00..100.00";
+            }
+            description "Registration success rate";
+          }
+          
+          leaf handover-success-rate {
+            type decimal64 {
+              fraction-digits 2;
+              range "0.00..100.00";
+            }
+            description "Handover success rate";
+          }
+        }
+      }
+      
+      list smf {
+        key "nf-id";
+        description "SMF instances";
+        
+        uses core-nf-common-attributes;
+        uses fivegc-common-attributes;
+        uses smf-attributes;
+        
+        container performance {
+          config false;
+          description "SMF performance metrics";
+          
+          leaf pdu-sessions-established {
+            type uint32;
+            description "PDU sessions established";
+          }
+          
+          leaf session-establishment-rate {
+            type uint32;
+            units "per second";
+            description "Session establishment rate";
+          }
+        }
+      }
+      
+      list upf {
+        key "nf-id";
+        description "UPF instances";
+        
+        uses core-nf-common-attributes;
+        uses fivegc-common-attributes;
+        uses upf-attributes;
+        
+        container performance {
+          config false;
+          description "UPF performance metrics";
+          
+          leaf packets-per-second {
+            type uint64;
+            description "Packets processed per second";
+          }
+          
+          leaf bytes-per-second {
+            type uint64;
+            description "Bytes processed per second";
+          }
+          
+          leaf flow-entries {
+            type uint32;
+            description "Active flow entries";
+          }
+        }
+      }
+      
+      list udm {
+        key "nf-id";
+        description "UDM instances";
+        
+        uses core-nf-common-attributes;
+        uses fivegc-common-attributes;
+        uses subscriber-data-attributes;
+      }
+      
+      list nrf {
+        key "nf-id";
+        description "NRF instances";
+        
+        uses core-nf-common-attributes;
+        uses fivegc-common-attributes;
+        
+        leaf-list supported-nf-types {
+          type identityref {
+            base core-nf-type-base;
+          }
+          description "Supported NF types for discovery";
+        }
+        
+        container performance {
+          config false;
+          description "NRF performance metrics";
+          
+          leaf registered-nfs {
+            type uint32;
+            description "Currently registered NFs";
+          }
+          
+          leaf discovery-requests-per-second {
+            type uint32;
+            description "Discovery requests per second";
+          }
+        }
+      }
+      
+      list pcf {
+        key "nf-id";
+        description "PCF instances";
+        
+        uses core-nf-common-attributes;
+        uses fivegc-common-attributes;
+      }
+      
+      list ausf {
+        key "nf-id";
+        description "AUSF instances";
+        
+        uses core-nf-common-attributes;
+        uses fivegc-common-attributes;
+      }
+      
+      list nssf {
+        key "nf-id";
+        description "NSSF instances";
+        
+        uses core-nf-common-attributes;
+        uses fivegc-common-attributes;
+        
+        leaf-list supported-s-nssais {
+          type s-nssai-type;
+          description "Configured network slices";
+        }
+      }
+      
+      list nef {
+        key "nf-id";
+        description "NEF instances";
+        
+        uses core-nf-common-attributes;
+        uses fivegc-common-attributes;
+      }
+    }
+    
+    /*************************************************************************
+     * LEGACY ELEMENTS (2G/3G)
+     *************************************************************************/
+    
+    container legacy {
+      if-feature legacy-support;
+      description "2G/3G legacy network elements";
+      
+      list sgsn {
+        key "nf-id";
+        description "SGSN instances";
+        
+        uses core-nf-common-attributes;
+        
+        leaf-list served-racs {
+          type string;
+          description "Served Routing Area Codes";
+        }
+        
+        leaf max-subscribers {
+          type subscriber-capacity-type;
+          description "Maximum subscriber capacity";
+        }
+        
+        leaf active-subscribers {
+          type uint32;
+          config false;
+          description "Current active subscriber count";
+        }
+      }
+      
+      list ggsn {
+        key "nf-id";
+        description "GGSN instances";
+        
+        uses core-nf-common-attributes;
+        uses gateway-common-attributes;
+        
+        leaf-list served-apns {
+          type apn-type;
+          description "Served APN list";
+        }
+      }
+    }
+    
+    /*************************************************************************
+     * IMS/VoLTE ELEMENTS
+     *************************************************************************/
+    
+    container ims {
+      if-feature ims-support;
+      description "IMS/VoLTE network elements";
+      
+      list ims-core {
+        key "nf-id";
+        description "IMS core instances";
+        
+        uses core-nf-common-attributes;
+        
+        leaf-list served-domains {
+          type string;
+          description "Served SIP domains";
+        }
+        
+        leaf-list connected-hsss {
+          type inet:ip-address;
+          description "Connected HSS addresses";
+        }
+      }
+      
+      list tas {
+        key "nf-id";
+        description "TAS instances";
+        
+        uses core-nf-common-attributes;
+        
+        leaf-list supported-services {
+          type enumeration {
+            enum MMTel;
+            enum SMS;
+            enum CONFERENCE;
+            enum CENTREX;
+          }
+          description "Supported telephony services";
+        }
+      }
+    }
+    
+    /*************************************************************************
+     * SIGNALING ELEMENTS
+     *************************************************************************/
+    
+    container signaling {
+      if-feature signaling-support;
+      description "Signaling network elements";
+      
+      list dra {
+        key "nf-id";
+        description "DRA instances";
+        
+        uses core-nf-common-attributes;
+        uses diameter-attributes;
+        
+        container performance {
+          config false;
+          description "DRA performance metrics";
+          
+          leaf diameter-messages-per-second {
+            type uint32;
+            description "Diameter messages per second";
+          }
+          
+          leaf routing-decisions-per-second {
+            type uint32;
+            description "Routing decisions per second";
+          }
+        }
+      }
+      
+      list dea {
+        key "nf-id";
+        description "DEA instances";
+        
+        uses core-nf-common-attributes;
+        uses diameter-attributes;
+      }
+      
+      list stp {
+        key "nf-id";
+        description "STP instances";
+        
+        uses core-nf-common-attributes;
+        
+        leaf-list point-codes {
+          type string;
+          description "Configured SS7 point codes";
+        }
+        
+        container performance {
+          config false;
+          description "STP performance metrics";
+          
+          leaf msu-per-second {
+            type uint32;
+            description "MSU per second";
+          }
+          
+          leaf active-links {
+            type uint8;
+            description "Active SS7 links";
+          }
+        }
+      }
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS - Performance Metrics
+   ***************************************************************************/
+  
+  grouping gateway-performance-metrics {
+    description "Common gateway performance metrics";
+    
+    leaf cpu-utilization {
+      type cpu-utilization-type;
+      description "CPU utilization percentage";
+    }
+    
+    leaf memory-utilization {
+      type memory-utilization-type;
+      description "Memory utilization percentage";
+    }
+    
+    leaf gtp-tunnels {
+      type uint32;
+      description "Active GTP tunnels";
+    }
+    
+    leaf throughput-downlink {
+      type throughput-type;
+      description "Current downlink throughput (Mbps)";
+    }
+    
+    leaf throughput-uplink {
+      type throughput-type;
+      description "Current uplink throughput (Mbps)";
+    }
+    
+    leaf tunnel-setup-rate {
+      type uint32;
+      units "per second";
+      description "Tunnel setup rate";
+    }
+    
+    leaf tunnel-teardown-rate {
+      type uint32;
+      units "per second";
+      description "Tunnel teardown rate";
+    }
+  }
+
+  /***************************************************************************
+   * RPC DEFINITIONS
+   ***************************************************************************/
+  
+  rpc get-core-statistics {
+    description "Get aggregated core network statistics";
+    
+    input {
+      leaf nf-type {
+        type identityref {
+          base core-nf-type-base;
+        }
+        description "Filter by network function type";
+      }
+    }
+    
+    output {
+      container statistics {
+        description "Core network statistics";
+        
+        leaf total-nfs {
+          type uint32;
+          description "Total network functions";
+        }
+        
+        leaf active-nfs {
+          type uint32;
+          description "Active network functions";
+        }
+        
+        leaf total-capacity {
+          type uint64;
+          description "Total subscriber capacity";
+        }
+        
+        leaf current-load {
+          type uint64;
+          description "Current subscriber load";
+        }
+      }
+    }
+  }
+  
+  rpc restart-nf {
+    description "Restart a network function";
+    
+    input {
+      leaf nf-id {
+        type core-nf-id-type;
+        mandatory true;
+        description "Network function to restart";
+      }
+      
+      leaf graceful {
+        type boolean;
+        default true;
+        description "Perform graceful restart";
+      }
+    }
+    
+    output {
+      leaf result {
+        type enumeration {
+          enum SUCCESS;
+          enum FAILED;
+          enum TIMEOUT;
+        }
+        description "Restart result";
+      }
+      
+      leaf message {
+        type string;
+        description "Result message";
+      }
+    }
+  }
+
+  /***************************************************************************
+   * NOTIFICATION DEFINITIONS
+   ***************************************************************************/
+  
+  notification core-nf-state-change {
+    description "Core network function state change notification";
+    
+    leaf nf-id {
+      type core-nf-id-type;
+      description "Network function identifier";
+    }
+    
+    leaf nf-type {
+      type identityref {
+        base core-nf-type-base;
+      }
+      description "Network function type";
+    }
+    
+    leaf old-state {
+      type enumeration {
+        enum ENABLED;
+        enum DISABLED;
+        enum FAULTY;
+        enum DEGRADED;
+      }
+      description "Previous state";
+    }
+    
+    leaf new-state {
+      type enumeration {
+        enum ENABLED;
+        enum DISABLED;
+        enum FAULTY;
+        enum DEGRADED;
+      }
+      description "New state";
+    }
+    
+    leaf timestamp {
+      type yang:date-and-time;
+      description "State change timestamp";
+    }
+    
+    leaf reason {
+      type string;
+      description "Reason for state change";
+    }
+  }
+  
+  notification core-capacity-threshold {
+    description "Core capacity threshold crossed notification";
+    
+    leaf nf-id {
+      type core-nf-id-type;
+      description "Network function identifier";
+    }
+    
+    leaf metric {
+      type enumeration {
+        enum SUBSCRIBER_CAPACITY;
+        enum SESSION_CAPACITY;
+        enum BEARER_CAPACITY;
+        enum THROUGHPUT;
+        enum CPU;
+        enum MEMORY;
+      }
+      description "Metric that crossed threshold";
+    }
+    
+    leaf threshold {
+      type uint8 {
+        range "0..100";
+      }
+      description "Threshold percentage";
+    }
+    
+    leaf current-value {
+      type uint8 {
+        range "0..100";
+      }
+      description "Current percentage value";
+    }
+    
+    leaf direction {
+      type enumeration {
+        enum RISING;
+        enum FALLING;
+      }
+      description "Threshold crossing direction";
+    }
+    
+    leaf timestamp {
+      type yang:date-and-time;
+      description "Event timestamp";
+    }
+  }
+}
