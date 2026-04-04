@@ -170,6 +170,69 @@ resource_identifier_mappings:
       prefix: "HUAWEI_CELL_"
       format: "{prefix}{value}"
 
+  ericsson_enb_id:
+    vendor: ERICSSON
+    source_path: "/ericsson:ran/site/eNodeB/enbId"
+    target_path: "/cim:inventory/node/id"
+    mapping_type: DIRECT
+    priority: 100
+    enabled: true
+    description: "Map Ericsson eNodeB identifier"
+
+  huawei_enb_id:
+    vendor: HUAWEI
+    source_path: "/huawei:ran/enb/enbId"
+    target_path: "/cim:inventory/node/id"
+    mapping_type: DIRECT
+    priority: 100
+    enabled: true
+    description: "Map Huawei eNodeB identifier"
+
+  huawei_gnb_id:
+    vendor: HUAWEI
+    source_path: "/huawei:ran/gnb/gnbId"
+    target_path: "/cim:inventory/node/id"
+    mapping_type: DIRECT
+    priority: 100
+    enabled: true
+    description: "Map Huawei gNodeB identifier"
+
+  ericsson_mme_id:
+    vendor: ERICSSON
+    source_path: "/ericsson:ran/site/MME/mmeId"
+    target_path: "/cim:inventory/node/id"
+    mapping_type: DIRECT
+    priority: 100
+    enabled: true
+    description: "Map Ericsson MME identifier"
+
+  huawei_mme_id:
+    vendor: HUAWEI
+    source_path: "/huawei:ran/mme/mmeId"
+    target_path: "/cim:inventory/node/id"
+    mapping_type: DIRECT
+    priority: 100
+    enabled: true
+    description: "Map Huawei MME identifier"
+
+  ericsson_amf_id:
+    vendor: ERICSSON
+    source_path: "/ericsson:5gc/amf/amfId"
+    target_path: "/cim:inventory/node/id"
+    mapping_type: DIRECT
+    priority: 100
+    enabled: true
+    description: "Map Ericsson AMF identifier"
+
+  huawei_amf_id:
+    vendor: HUAWEI
+    source_path: "/huawei:5gc/amf/amfId"
+    target_path: "/cim:inventory/node/id"
+    mapping_type: DIRECT
+    priority: 100
+    enabled: true
+    description: "Map Huawei AMF identifier"
+
 # ============================================================================
 # PERFORMANCE METRIC MAPPINGS (FCAPS-P)
 # ============================================================================
@@ -288,6 +351,32 @@ performance_metric_mappings:
       warning: 80.0
       critical: 95.0
 
+  ericsson_5g_throughput:
+    vendor: ERICSSON
+    source_path: "/ericsson:performance/gnb/throughput/dlThp5G"
+    target_path: "/cim:performance/metrics/THROUGHPUT_DL_5G_MBPS"
+    mapping_type: UNIT_CONVERSION
+    priority: 110
+    enabled: true
+    description: "Ericsson 5G downlink throughput"
+    source_unit: "kbps"
+    target_unit: "Mbps"
+    conversion_factor: 0.001
+    aggregation_type: "GAUGE"
+
+  huawei_5g_throughput:
+    vendor: HUAWEI
+    source_path: "/huawei:performance/gnb/throughput/nrDlThp"
+    target_path: "/cim:performance/metrics/THROUGHPUT_DL_5G_MBPS"
+    mapping_type: UNIT_CONVERSION
+    priority: 110
+    enabled: true
+    description: "Huawei 5G downlink throughput"
+    source_unit: "kbps"
+    target_unit: "Mbps"
+    conversion_factor: 0.001
+    aggregation_type: "GAUGE"
+
 # ============================================================================
 # KPI CALCULATION MAPPINGS
 # ============================================================================
@@ -389,6 +478,22 @@ configuration_parameter_mappings:
     priority: 80
     enabled: true
     description: "Reference signal power configuration"
+
+  nsa_dual_connectivity:
+    vendor: CROSS_VENDOR
+    source_path: "/5g-nsa:dual-connectivity/config"
+    target_path: "/cim:configuration/nsa/dc_config"
+    mapping_type: AGGREGATION
+    priority: 120
+    enabled: true
+    description: "5G-NSA Dual Connectivity mapping"
+    aggregation_fields:
+      - source: "enbId"
+        target: "masterNodeId"
+      - source: "gnbId"
+        target: "secondaryNodeId"
+      - source: "dcType"
+        target: "connectivityType"
     
   ericsson_qos_profile:
     vendor: ERICSSON
