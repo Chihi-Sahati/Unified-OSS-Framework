@@ -1,13 +1,3 @@
-{
-  "generated_at": "2026-03-18T21:19:34.757392+00:00",
-  "network_elements": {
-    "total": 300,
-    "ericsson": 150,
-    "huawei": 150
-  },
-  "alarms": {
-    "total": 1200,
-    "ericsson": 600,
-    "huawei": 600
-  }
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:ef0139f76b2acadd559535d899c77c60d2c905d56dc9dc79ae4442124f4f990a
+size 219
