@@ -1,0 +1,1771 @@
+module ericsson-huawei-unified-security-management {
+  yang-version 1.1;
+  namespace "urn:cim:fcaps:security:v1";
+  prefix "fcaps-sec";
+  
+  import ietf-yang-types {
+    prefix yang;
+  }
+  import ietf-inet-types {
+    prefix inet;
+  }
+
+  organization "Unified OSS Framework Consortium";
+  contact "oss-framework@example.com";
+  
+  description
+    "YANG data model for Security Management within the Unified OSS Framework.
+     This module provides vendor-neutral security management, authentication,
+     authorization, and audit logging for multi-vendor network environments.
+     
+     Key capabilities:
+     - User authentication and credential management
+     - Role-based access control (RBAC)
+     - Zero Trust policy enforcement
+     - Comprehensive audit logging
+     - Threat detection and incident response
+     
+     Copyright (c) 2024 Unified OSS Framework Consortium.
+     All rights reserved.";
+  
+  revision 2024-03-01 {
+    description 
+      "Initial version - Security Management YANG model for Ericsson/Huawei
+       multi-vendor network element management.
+       
+       Key features:
+       - Centralized authentication management
+       - Fine-grained authorization
+       - Zero Trust architecture support
+       - Compliance tracking";
+    reference 
+      "IEEE Transactions on Network and Service Management;
+       NIST SP 800-207 - Zero Trust Architecture;
+       ISO/IEC 27001 - Information Security Management";
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS
+   ***************************************************************************/
+  
+  typedef auth-method-type {
+    description 
+      "Supported authentication methods for OSS access.";
+    type enumeration {
+      enum PASSWORD_HASH {
+        value 1;
+        description "Password with salted hash (SHA-256)";
+      }
+      enum CERTIFICATE {
+        value 2;
+        description "X.509 client certificate authentication";
+      }
+      enum LDAP {
+        value 3;
+        description "Enterprise LDAP/Active Directory";
+      }
+      enum RADIUS {
+        value 4;
+        description "RADIUS authentication server";
+      }
+      enum OAUTH2 {
+        value 5;
+        description "OAuth 2.0 / OpenID Connect";
+      }
+      enum SAML {
+        value 6;
+        description "SAML 2.0 federated authentication";
+      }
+      enum API_KEY {
+        value 7;
+        description "API key for service-to-service auth";
+      }
+    }
+  }
+  
+  typedef account-status-type {
+    description 
+      "User account operational status.";
+    type enumeration {
+      enum ACTIVE {
+        value 1;
+        description "Account is active and can authenticate";
+      }
+      enum SUSPENDED {
+        value 2;
+        description "Temporarily suspended, requires admin action";
+      }
+      enum LOCKED {
+        value 3;
+        description "Locked due to failed login attempts";
+      }
+      enum DISABLED {
+        value 4;
+        description "Administratively disabled";
+      }
+      enum PENDING_ACTIVATION {
+        value 5;
+        description "Awaiting activation confirmation";
+      }
+      enum EXPIRED {
+        value 6;
+        description "Account validity period expired";
+      }
+    }
+  }
+  
+  typedef event-type-security {
+    description 
+      "Classification of security-related events.";
+    type enumeration {
+      enum USER_LOGIN {
+        value 1;
+        description "User authentication attempt";
+      }
+      enum USER_LOGOUT {
+        value 2;
+        description "User session termination";
+      }
+      enum CONFIGURATION_CHANGE {
+        value 3;
+        description "Configuration modification event";
+      }
+      enum ALARM_MANAGEMENT {
+        value 4;
+        description "Alarm state changes by user";
+      }
+      enum POLICY_MODIFICATION {
+        value 5;
+        description "Security policy changes";
+      }
+      enum SECURITY_INCIDENT {
+        value 6;
+        description "Security incident detection";
+      }
+      enum ACCOUNT_MODIFICATION {
+        value 7;
+        description "User account changes";
+      }
+      enum PERMISSION_CHANGE {
+        value 8;
+        description "Role or permission modifications";
+      }
+      enum DATA_ACCESS {
+        value 9;
+        description "Sensitive data access event";
+      }
+      enum API_CALL {
+        value 10;
+        description "API invocation event";
+      }
+      enum EXPORT_OPERATION {
+        value 11;
+        description "Data export/download event";
+      }
+    }
+  }
+  
+  typedef action-status-type {
+    description 
+      "Result status of security event action.";
+    type enumeration {
+      enum SUCCESS {
+        value 1;
+        description "Action completed successfully";
+      }
+      enum FAILURE {
+        value 2;
+        description "Action failed";
+      }
+      enum PARTIAL {
+        value 3;
+        description "Action partially completed";
+      }
+      enum DENIED {
+        value 4;
+        description "Action denied by policy";
+      }
+      enum TIMEOUT {
+        value 5;
+        description "Action timed out";
+      }
+    }
+  }
+  
+  typedef threat-category-type {
+    description 
+      "Classification of detected security threats.";
+    type enumeration {
+      enum BRUTE_FORCE_ATTACK {
+        value 1;
+        description "Multiple failed authentication attempts";
+      }
+      enum UNAUTHORIZED_ACCESS {
+        value 2;
+        description "Access attempt without proper authorization";
+      }
+      enum PRIVILEGE_ESCALATION {
+        value 3;
+        description "Attempt to gain elevated privileges";
+      }
+      enum DATA_EXFILTRATION {
+        value 4;
+        description "Suspicious data export or transfer";
+      }
+      enum MALWARE_DETECTION {
+        value 5;
+        description "Malware or suspicious code detected";
+      }
+      enum ANOMALOUS_BEHAVIOR {
+        value 6;
+        description "Behavior deviating from normal patterns";
+      }
+      enum CONFIGURATION_TAMPERING {
+        value 7;
+        description "Unauthorized configuration changes";
+      }
+      enum INJECTION_ATTACK {
+        value 8;
+        description "SQL injection or similar attacks";
+      }
+      enum CROSS_SITE_SCRIPTING {
+        value 9;
+        description "XSS attack detected";
+      }
+      enum DENIAL_OF_SERVICE {
+        value 10;
+        description "DoS or DDoS attack indicators";
+      }
+    }
+  }
+  
+  typedef threat-severity-type {
+    description 
+      "Severity level for security threats.";
+    type enumeration {
+      enum CRITICAL {
+        value 1;
+        description "Immediate action required, active breach";
+      }
+      enum HIGH {
+        value 2;
+        description "Significant threat, prompt action needed";
+      }
+      enum MEDIUM {
+        value 3;
+        description "Moderate threat, investigation recommended";
+      }
+      enum LOW {
+        value 4;
+        description "Minor issue, monitor and review";
+      }
+      enum INFORMATIONAL {
+        value 5;
+        description "No immediate threat, awareness only";
+      }
+    }
+  }
+  
+  typedef compliance-standard-type {
+    description 
+      "Regulatory compliance standards supported.";
+    type enumeration {
+      enum SOC2 {
+        value 1;
+        description "Service Organization Control 2";
+      }
+      enum ISO27001 {
+        value 2;
+        description "ISO/IEC 27001 Information Security";
+      }
+      enum GDPR {
+        value 3;
+        description "General Data Protection Regulation";
+      }
+      enum HIPAA {
+        value 4;
+        description "Health Insurance Portability and Accountability Act";
+      }
+      enum PCI_DSS {
+        value 5;
+        description "Payment Card Industry Data Security Standard";
+      }
+      enum NIST_800_53 {
+        value 6;
+        description "NIST SP 800-53 Security Controls";
+      }
+      enum CIS_CONTROLS {
+        value 7;
+        description "Center for Internet Security Controls";
+      }
+    }
+  }
+
+  /***************************************************************************
+   * CONTAINER DEFINITIONS - Security Management
+   ***************************************************************************/
+  
+  container security-management {
+    description 
+      "Root container for multi-vendor security posture management.
+       Contains authentication, authorization, audit, and threat detection.";
+    
+    leaf security-schema-version {
+      type string;
+      config false;
+      description "Security management schema version";
+    }
+    
+    leaf last-security-scan {
+      type yang:date-and-time;
+      config false;
+      description "Timestamp of last security scan";
+    }
+
+    /*************************************************************************
+     * AUTHENTICATION MANAGEMENT
+     *************************************************************************/
+    
+    container authentication-management {
+      description 
+        "Central authentication authority for OSS platform.
+         Manages user accounts and credential policies.";
+      
+      leaf password-min-length {
+        type uint8 {
+          range "8..32";
+        }
+        default 12;
+        description "Minimum password length requirement";
+      }
+      
+      leaf password-expiry-days {
+        type uint16 {
+          range "0..365";
+        }
+        default 90;
+        description "Password expiry period (0 = never expire)";
+      }
+      
+      leaf max-failed-logins {
+        type uint8 {
+          range "3..10";
+        }
+        default 5;
+        description "Maximum failed login attempts before lockout";
+      }
+      
+      leaf lockout-duration-minutes {
+        type uint32 {
+          range "5..1440";
+        }
+        default 30;
+        description "Account lockout duration";
+      }
+      
+      leaf session-timeout-minutes {
+        type uint32 {
+          range "5..480";
+        }
+        default 60;
+        description "Session inactivity timeout";
+      }
+      
+      leaf mfa-required {
+        type boolean;
+        default false;
+        description "Require multi-factor authentication";
+      }
+      
+      container user-accounts {
+        description "OSS operator accounts management";
+        
+        list user {
+          key "user-id";
+          description "Individual user account";
+          
+          leaf user-id {
+            type string {
+              length "1..64";
+              pattern "[a-zA-Z][a-zA-Z0-9._-]*";
+            }
+            description "Unique user identifier";
+          }
+          
+          leaf username {
+            type string {
+              length "1..128";
+            }
+            mandatory true;
+            description "Display name for user";
+          }
+          
+          leaf email {
+            type string {
+              length "1..256";
+              pattern "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}";
+            }
+            mandatory true;
+            description "User email address";
+          }
+          
+          leaf department {
+            type string {
+              length "1..128";
+            }
+            description "User department or organization";
+          }
+          
+          leaf job-title {
+            type string {
+              length "1..128";
+            }
+            description "User job title";
+          }
+          
+          container authentication-credentials {
+            description "User authentication configuration";
+            
+            leaf auth-method {
+              type auth-method-type;
+              mandatory true;
+              description "Primary authentication method";
+            }
+            
+            leaf password-hash {
+              type string;
+              description 
+                "SHA-256 salted password hash.
+                 Format: {salt}:{hash}";
+            }
+            
+            leaf last-password-change {
+              type yang:date-and-time;
+              description "When password was last changed";
+            }
+            
+            leaf password-expiry-days {
+              type uint16;
+              description "Days until password expires";
+            }
+            
+            leaf mfa-enabled {
+              type boolean;
+              default false;
+              description "Multi-factor authentication enabled";
+            }
+            
+            leaf mfa-method {
+              type enumeration {
+                enum TOTP;
+                enum SMS;
+                enum EMAIL;
+                enum HARDWARE_TOKEN;
+              }
+              description "MFA method configured";
+            }
+            
+            leaf certificate-fingerprint {
+              type string;
+              description "X.509 certificate fingerprint if used";
+            }
+          }
+          
+          leaf account-status {
+            type account-status-type;
+            mandatory true;
+            description "Current account status";
+          }
+          
+          leaf created-timestamp {
+            type yang:date-and-time;
+            description "When account was created";
+          }
+          
+          leaf created-by {
+            type string;
+            description "User ID who created this account";
+          }
+          
+          leaf last-login-timestamp {
+            type yang:date-and-time;
+            description "Most recent successful login";
+          }
+          
+          leaf last-login-ip {
+            type inet:ip-address;
+            description "IP address of last login";
+          }
+          
+          leaf failed-login-count {
+            type uint8;
+            description "Current failed login attempt count";
+          }
+          
+          leaf account-expiry {
+            type yang:date-and-time;
+            description "Account expiration date if applicable";
+          }
+          
+          leaf-list assigned-roles {
+            type string;
+            description "Roles assigned to this user";
+          }
+        }
+      }
+      
+      container role-based-access-control {
+        description "RBAC policy definitions and assignments";
+        
+        list role {
+          key "role-name";
+          description 
+            "Role definition with associated permissions.
+             Roles are hierarchical - higher privilege roles inherit from lower ones.";
+          
+          leaf role-name {
+            type string {
+              length "1..64";
+              pattern "[A-Z][A-Z_0-9]*";
+            }
+            description "Unique role identifier";
+          }
+          
+          leaf display-name {
+            type string {
+              length "1..128";
+            }
+            description "Human-readable role name";
+          }
+          
+          leaf description {
+            type string {
+              length "1..512";
+            }
+            description "Role purpose and scope description";
+          }
+          
+          leaf privilege-level {
+            type uint8 {
+              range "0..10";
+            }
+            mandatory true;
+            description 
+              "Privilege hierarchy level.
+               0 = Guest (read-only, limited views)
+               5 = Operator (standard operations)
+               8 = Administrator (full access)
+               10 = Super Admin (system management)";
+          }
+          
+          leaf-list permissions {
+            type string;
+            description 
+              "Permission identifiers.
+               Format: {action}:{resource}:{scope}
+               Example: READ:ALARMS:ALL, WRITE:CONFIG:SITE_001";
+          }
+          
+          leaf-list inherited-roles {
+            type string;
+            description "Roles whose permissions are inherited";
+          }
+          
+          leaf created-timestamp {
+            type yang:date-and-time;
+            description "When role was created";
+          }
+          
+          leaf last-modified {
+            type yang:date-and-time;
+            description "When role was last modified";
+          }
+        }
+        
+        list user-role-assignment {
+          key "user-id role-name";
+          description "User to role assignment records";
+          
+          leaf user-id {
+            type string;
+            description "User ID";
+          }
+          
+          leaf role-name {
+            type string;
+            description "Assigned role name";
+          }
+          
+          leaf assignment-timestamp {
+            type yang:date-and-time;
+            description "When role was assigned";
+          }
+          
+          leaf assigned-by {
+            type string;
+            description "User ID who assigned the role";
+          }
+          
+          leaf expiry-timestamp {
+            type yang:date-and-time;
+            description "When role assignment expires";
+          }
+          
+          leaf justification {
+            type string;
+            description "Business justification for assignment";
+          }
+        }
+      }
+      
+      container api-keys {
+        description "API key management for service-to-service auth";
+        
+        list api-key {
+          key "key-id";
+          
+          leaf key-id {
+            type string;
+            description "API key identifier";
+          }
+          
+          leaf description {
+            type string;
+            description "Purpose of this API key";
+          }
+          
+          leaf service-name {
+            type string;
+            description "Service using this key";
+          }
+          
+          leaf key-hash {
+            type string;
+            description "Hashed API key value";
+          }
+          
+          leaf created-timestamp {
+            type yang:date-and-time;
+            description "When key was created";
+          }
+          
+          leaf expiry-timestamp {
+            type yang:date-and-time;
+            description "When key expires";
+          }
+          
+          leaf enabled {
+            type boolean;
+            default true;
+            description "Whether key is active";
+          }
+          
+          leaf-list allowed-operations {
+            type string;
+            description "Operations permitted with this key";
+          }
+          
+          leaf last-used-timestamp {
+            type yang:date-and-time;
+            description "When key was last used";
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * AUTHORIZATION ENFORCEMENT
+     *************************************************************************/
+    
+    container authorization-enforcement {
+      description 
+        "Access control policy enforcement engine.
+         Evaluates requests against defined policies.";
+      
+      list access-control-policy {
+        key "policy-id";
+        description 
+          "Access control policy definition.
+           Policies are evaluated in priority order.";
+        
+        leaf policy-id {
+          type string {
+            length "1..64";
+          }
+          description "Unique policy identifier";
+        }
+        
+        leaf policy-name {
+          type string {
+            length "1..128";
+          }
+          description "Human-readable policy name";
+        }
+        
+        leaf description {
+          type string {
+            length "1..512";
+          }
+          description "Policy purpose and scope";
+        }
+        
+        leaf priority {
+          type uint16 {
+            range "1..10000";
+          }
+          default 5000;
+          description 
+            "Policy evaluation priority.
+             Lower number = higher priority.";
+        }
+        
+        leaf enabled {
+          type boolean;
+          default true;
+          description "Whether policy is active";
+        }
+        
+        leaf subject {
+          type string;
+          description 
+            "User, role, or group this policy applies to.
+             Supports wildcards and patterns.";
+        }
+        
+        leaf resource {
+          type string;
+          description 
+            "Protected resource pattern (CIM path).
+             Example: /network/*/config/*";
+        }
+        
+        leaf action {
+          type enumeration {
+            enum READ {
+              value 1;
+              description "View or retrieve data";
+            }
+            enum CREATE {
+              value 2;
+              description "Create new resources";
+            }
+            enum MODIFY {
+              value 3;
+              description "Modify existing resources";
+            }
+            enum DELETE {
+              value 4;
+              description "Delete resources";
+            }
+            enum EXECUTE {
+              value 5;
+              description "Execute operations or RPCs";
+            }
+            enum ADMIN {
+              value 6;
+              description "Full administrative access";
+            }
+          }
+          mandatory true;
+          description "Action being controlled";
+        }
+        
+        leaf effect {
+          type enumeration {
+            enum ALLOW {
+              value 1;
+              description "Permit the action";
+            }
+            enum DENY {
+              value 2;
+              description "Block the action";
+            }
+          }
+          mandatory true;
+          description "Policy decision";
+        }
+        
+        leaf condition {
+          type string;
+          description 
+            "Contextual condition expression.
+             Supports time-based, location-based, and attribute-based conditions.
+             Example: time BETWEEN '09:00' AND '17:00' AND ip IN '10.0.0.0/8'";
+        }
+        
+        leaf created-by {
+          type string;
+          description "User who created this policy";
+        }
+        
+        leaf created-timestamp {
+          type yang:date-and-time;
+          description "When policy was created";
+        }
+      }
+      
+      container policy-statistics {
+        config false;
+        description "Runtime policy evaluation statistics";
+        
+        leaf total-evaluations {
+          type uint64;
+          description "Total policy evaluations performed";
+        }
+        
+        leaf allow-decisions {
+          type uint64;
+          description "Number of ALLOW decisions";
+        }
+        
+        leaf deny-decisions {
+          type uint64;
+          description "Number of DENY decisions";
+        }
+        
+        leaf evaluation-errors {
+          type uint64;
+          description "Number of evaluation errors";
+        }
+        
+        leaf average-evaluation-time-ms {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          description "Average policy evaluation time";
+        }
+      }
+    }
+
+    /*************************************************************************
+     * AUDIT LOGGING
+     *************************************************************************/
+    
+    container audit-logging {
+      description 
+        "Comprehensive audit trail for all security-relevant events.
+         Supports compliance requirements and forensic analysis.";
+      
+      leaf retention-days {
+        type uint32 {
+          range "30..2555";
+        }
+        default 365;
+        description "Audit log retention period";
+      }
+      
+      leaf log-integrity-check-enabled {
+        type boolean;
+        default true;
+        description "Enable periodic integrity verification";
+      }
+      
+      list audit-log-entry {
+        key "log-id";
+        config false;
+        description 
+          "Individual audit log entry.
+           Immutable record of security-relevant event.";
+        
+        leaf log-id {
+          type string {
+            length "36..36";
+          }
+          description "Audit log entry UUID";
+        }
+        
+        leaf event-timestamp {
+          type yang:date-and-time;
+          mandatory true;
+          description "When event occurred";
+        }
+        
+        leaf event-type {
+          type event-type-security;
+          mandatory true;
+          description "Classification of event";
+        }
+        
+        leaf actor-user-id {
+          type string;
+          mandatory true;
+          description "User ID performing the action";
+        }
+        
+        leaf actor-username {
+          type string;
+          description "Display name of actor";
+        }
+        
+        leaf actor-source-ip {
+          type inet:ip-address;
+          description "IP address of actor";
+        }
+        
+        leaf actor-user-agent {
+          type string;
+          description "Client user agent string";
+        }
+        
+        leaf actor-session-id {
+          type string;
+          description "Session identifier";
+        }
+        
+        leaf target-resource {
+          type string;
+          description "CIM path of affected resource";
+        }
+        
+        leaf target-resource-type {
+          type string;
+          description "Type of target resource";
+        }
+        
+        leaf action-performed {
+          type string {
+            length "1..512";
+          }
+          mandatory true;
+          description "Description of action taken";
+        }
+        
+        leaf action-status {
+          type action-status-type;
+          mandatory true;
+          description "Result of the action";
+        }
+        
+        leaf status-detail {
+          type string;
+          description "Additional status information";
+        }
+        
+        container change-details {
+          description "Before/after values for modifications";
+          
+          leaf previous-value {
+            type string;
+            description "Value before change";
+          }
+          
+          leaf new-value {
+            type string;
+            description "Value after change";
+          }
+          
+          leaf change-diff {
+            type string;
+            description "Structured diff representation";
+          }
+        }
+        
+        leaf correlation-id {
+          type string;
+          description "ID for correlating related events";
+        }
+        
+        leaf integrity-hash {
+          type string;
+          description "Hash for log integrity verification";
+        }
+      }
+    }
+
+    /*************************************************************************
+     * THREAT DETECTION
+     *************************************************************************/
+    
+    container threat-detection {
+      description 
+        "Anomaly and threat detection engine.
+         Monitors for security incidents and suspicious activities.";
+      
+      leaf detection-enabled {
+        type boolean;
+        default true;
+        description "Enable threat detection";
+      }
+      
+      leaf anomaly-detection-enabled {
+        type boolean;
+        default true;
+        description "Enable behavioral anomaly detection";
+      }
+      
+      container detection-rules {
+        description "Configurable threat detection rules";
+        
+        list detection-rule {
+          key "rule-id";
+          
+          leaf rule-id {
+            type string;
+            description "Rule identifier";
+          }
+          
+          leaf rule-name {
+            type string;
+            description "Human-readable rule name";
+          }
+          
+          leaf threat-category {
+            type threat-category-type;
+            description "Category of threat this rule detects";
+          }
+          
+          leaf severity {
+            type threat-severity-type;
+            description "Severity when rule triggers";
+          }
+          
+          leaf enabled {
+            type boolean;
+            default true;
+          }
+          
+          leaf condition {
+            type string;
+            description "Detection condition expression";
+          }
+          
+          leaf action {
+            type enumeration {
+              enum ALERT_ONLY;
+              enum BLOCK_AND_ALERT;
+              enum LOG_AND_MONITOR;
+              enum AUTO_REMEDIATE;
+            }
+            description "Action when rule triggers";
+          }
+        }
+      }
+      
+      list security-event {
+        key "event-id";
+        config false;
+        description 
+          "Detected security event or incident.
+           Created when threat detection rules trigger.";
+        
+        leaf event-id {
+          type string {
+            length "36..36";
+          }
+          description "Security event UUID";
+        }
+        
+        leaf event-timestamp {
+          type yang:date-and-time;
+          mandatory true;
+          description "When event was detected";
+        }
+        
+        leaf threat-category {
+          type threat-category-type;
+          mandatory true;
+          description "Classification of threat";
+        }
+        
+        leaf severity {
+          type threat-severity-type;
+          mandatory true;
+          description "Event severity level";
+        }
+        
+        leaf description {
+          type string {
+            length "1..1024";
+          }
+          mandatory true;
+          description "Human-readable event description";
+        }
+        
+        leaf affected-user {
+          type string;
+          description "User associated with event";
+        }
+        
+        leaf affected-resource {
+          type string;
+          description "Resource targeted by threat";
+        }
+        
+        leaf source-ip {
+          type inet:ip-address;
+          description "Source IP of suspicious activity";
+        }
+        
+        leaf detection-method {
+          type string;
+          description "Detection engine or rule name";
+        }
+        
+        leaf detection-confidence {
+          type decimal64 {
+            fraction-digits 2;
+            range "0.00..1.00";
+          }
+          description "Confidence score of detection";
+        }
+        
+        leaf status {
+          type enumeration {
+            enum NEW;
+            enum INVESTIGATING;
+            enum RESOLVED;
+            enum FALSE_POSITIVE;
+            enum ESCALATED;
+          }
+          description "Event handling status";
+        }
+        
+        leaf assigned-to {
+          type string;
+          description "User assigned to investigate";
+        }
+        
+        leaf recommended-action {
+          type string;
+          description "Suggested remediation action";
+        }
+        
+        leaf-list related-events {
+          type string;
+          description "Related event IDs";
+        }
+        
+        container evidence {
+          description "Supporting evidence for the event";
+          
+          leaf log-entries {
+            type string;
+            description "Related log entries";
+          }
+          
+          leaf network-capture {
+            type string;
+            description "Network capture reference if available";
+          }
+          
+          leaf additional-data {
+            type string;
+            description "Additional evidence in JSON format";
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * ENCRYPTION MANAGEMENT
+     *************************************************************************/
+    
+    container encryption-management {
+      description 
+        "Encryption policy and key management configuration.
+         Defines cryptographic standards for the platform.";
+      
+      container transport-encryption {
+        description "Transport layer encryption configuration";
+        
+        leaf tls-version {
+          type string;
+          default "1.3";
+          description "Minimum TLS version required";
+        }
+        
+        leaf-list supported-cipher-suites {
+          type string;
+          description 
+            "Allowed cipher suites in preference order.
+             Example: TLS_AES_256_GCM_SHA384";
+        }
+        
+        leaf certificate-verification-enabled {
+          type boolean;
+          default true;
+          description "Require valid certificates";
+        }
+        
+        leaf certificate-pinning-enabled {
+          type boolean;
+          default false;
+          description "Enable certificate pinning";
+        }
+        
+        leaf hsts-enabled {
+          type boolean;
+          default true;
+          description "Enable HTTP Strict Transport Security";
+        }
+      }
+      
+      container data-encryption {
+        description "Data at rest encryption configuration";
+        
+        leaf database-encryption-enabled {
+          type boolean;
+          default true;
+          description "Encrypt database at rest";
+        }
+        
+        leaf encryption-algorithm {
+          type enumeration {
+            enum AES_256_GCM {
+              value 1;
+              description "AES-256 in GCM mode";
+            }
+            enum AES_256_CBC {
+              value 2;
+              description "AES-256 in CBC mode";
+            }
+            enum CHACHA20 {
+              value 3;
+              description "ChaCha20 stream cipher";
+            }
+          }
+          default AES_256_GCM;
+          description "Symmetric encryption algorithm";
+        }
+        
+        leaf key-derivation-function {
+          type enumeration {
+            enum PBKDF2_SHA256;
+            enum ARGON2ID;
+            enum SCRYPT;
+          }
+          default PBKDF2_SHA256;
+          description "Key derivation function for passwords";
+        }
+        
+        leaf key-rotation-days {
+          type uint16 {
+            range "30..365";
+          }
+          default 90;
+          description "Encryption key rotation period";
+        }
+      }
+      
+      container key-management {
+        description "Key lifecycle management";
+        
+        list encryption-key {
+          key "key-id";
+          
+          leaf key-id {
+            type string;
+            description "Key identifier";
+          }
+          
+          leaf key-type {
+            type enumeration {
+              enum MASTER_KEY;
+              enum DATA_ENCRYPTION_KEY;
+              enum API_KEY;
+              enum CERTIFICATE_KEY;
+            }
+            description "Type of key";
+          }
+          
+          leaf algorithm {
+            type string;
+            description "Encryption algorithm";
+          }
+          
+          leaf created-timestamp {
+            type yang:date-and-time;
+            description "When key was created";
+          }
+          
+          leaf expiry-timestamp {
+            type yang:date-and-time;
+            description "When key expires";
+          }
+          
+          leaf rotation-due {
+            type yang:date-and-time;
+            description "When key rotation is due";
+          }
+          
+          leaf status {
+            type enumeration {
+              enum ACTIVE;
+              enum DEPRECATED;
+              enum EXPIRED;
+              enum REVOKED;
+            }
+            description "Key status";
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * COMPLIANCE MANAGEMENT
+     *************************************************************************/
+    
+    container compliance-management {
+      description 
+        "Regulatory compliance tracking and reporting.
+         Maps controls to requirements and tracks compliance status.";
+      
+      list compliance-requirement {
+        key "requirement-id";
+        description 
+          "Individual compliance requirement from a standard.
+           Tracks implementation and audit status.";
+        
+        leaf requirement-id {
+          type string {
+            length "1..64";
+          }
+          description "Requirement identifier from standard";
+        }
+        
+        leaf standard {
+          type compliance-standard-type;
+          mandatory true;
+          description "Compliance standard this requirement belongs to";
+        }
+        
+        leaf requirement-text {
+          type string {
+            length "1..2048";
+          }
+          mandatory true;
+          description "Full text of the requirement";
+        }
+        
+        leaf responsible-department {
+          type string {
+            length "1..128";
+          }
+          description "Department responsible for compliance";
+        }
+        
+        leaf responsible-owner {
+          type string;
+          description "Individual owner of this requirement";
+        }
+        
+        leaf-list implemented-controls {
+          type string;
+          description "Controls implemented for this requirement";
+        }
+        
+        container compliance-status {
+          config false;
+          description "Current compliance status";
+          
+          leaf is-compliant {
+            type boolean;
+            description "Whether requirement is met";
+          }
+          
+          leaf compliance-percentage {
+            type uint8 {
+              range "0..100";
+            }
+            description "Degree of compliance (0-100%)";
+          }
+          
+          leaf last-audit-date {
+            type yang:date-and-time;
+            description "Most recent audit date";
+          }
+          
+          leaf next-audit-date {
+            type yang:date-and-time;
+            description "Scheduled next audit";
+          }
+          
+          leaf findings {
+            type string;
+            description "Audit findings or notes";
+          }
+          
+          leaf remediation-status {
+            type enumeration {
+              enum COMPLIANT;
+              enum NON_COMPLIANT;
+              enum IN_PROGRESS;
+              enum NOT_APPLICABLE;
+            }
+            description "Current remediation status";
+          }
+          
+          leaf remediation-deadline {
+            type yang:date-and-time;
+            description "Deadline for remediation if non-compliant";
+          }
+        }
+      }
+      
+      container compliance-reports {
+        description "Generated compliance reports";
+        
+        list report {
+          key "report-id";
+          config false;
+          
+          leaf report-id {
+            type string;
+          }
+          
+          leaf report-type {
+            type enumeration {
+              enum AUDIT_REPORT;
+              enum GAP_ANALYSIS;
+              enum COMPLIANCE_SUMMARY;
+              enum REMEDIATION_STATUS;
+            }
+          }
+          
+          leaf standard {
+            type compliance-standard-type;
+          }
+          
+          leaf generation-timestamp {
+            type yang:date-and-time;
+          }
+          
+          leaf report-period-start {
+            type yang:date-and-time;
+          }
+          
+          leaf report-period-end {
+            type yang:date-and-time;
+          }
+          
+          leaf overall-compliance-percent {
+            type uint8;
+          }
+          
+          leaf report-url {
+            type string;
+          }
+        }
+      }
+    }
+  }
+
+  /***************************************************************************
+   * RPC DEFINITIONS FOR SECURITY MANAGEMENT
+   ***************************************************************************/
+  
+  rpc verify-zero-trust-context {
+    description 
+      "Verify Zero Trust policy for given request context.
+       Evaluates user, device, location, and behavior factors.";
+    
+    input {
+      leaf user-id {
+        type string;
+        mandatory true;
+        description "User making the request";
+      }
+      
+      leaf source-ip {
+        type inet:ip-address;
+        mandatory true;
+        description "Source IP address";
+      }
+      
+      leaf requested-resource {
+        type string;
+        mandatory true;
+        description "CIM path of requested resource";
+      }
+      
+      leaf requested-action {
+        type enumeration {
+          enum READ;
+          enum WRITE;
+          enum EXECUTE;
+          enum ADMIN;
+        }
+        mandatory true;
+        description "Action being requested";
+      }
+      
+      leaf device-id {
+        type string;
+        description "Device identifier if known";
+      }
+      
+      leaf device-health-score {
+        type decimal64 {
+          fraction-digits 2;
+          range "0.00..1.00";
+        }
+        description "Device trust score from MDM/EDR";
+      }
+      
+      leaf session-id {
+        type string;
+        description "Current session identifier";
+      }
+    }
+    
+    output {
+      leaf access-granted {
+        type boolean;
+        mandatory true;
+        description "Whether access is permitted";
+      }
+      
+      leaf trust-score {
+        type decimal64 {
+          fraction-digits 2;
+          range "0.00..1.00";
+        }
+        description "Overall trust confidence score";
+      }
+      
+      leaf denial-reason {
+        type string;
+        description "Reason if access denied";
+      }
+      
+      leaf additional-factors-required {
+        type boolean;
+        description "Whether additional authentication needed";
+      }
+      
+      leaf-list required-actions {
+        type string;
+        description "Additional actions required for access";
+      }
+      
+      leaf session-policy {
+        type string;
+        description "Session restrictions to apply";
+      }
+    }
+  }
+  
+  rpc audit-user-activity {
+    description 
+      "Query audit logs for specific user activity.
+       Returns audit trail for compliance review.";
+    
+    input {
+      leaf user-id {
+        type string;
+        mandatory true;
+        description "User to query";
+      }
+      
+      leaf start-time {
+        type yang:date-and-time;
+        mandatory true;
+        description "Query start time";
+      }
+      
+      leaf end-time {
+        type yang:date-and-time;
+        mandatory true;
+        description "Query end time";
+      }
+      
+      leaf event-type-filter {
+        type string;
+        description "Comma-separated list of event types";
+      }
+      
+      leaf limit {
+        type uint32 {
+          range "1..10000";
+        }
+        default 100;
+        description "Maximum results to return";
+      }
+    }
+    
+    output {
+      list audit-entry {
+        description "Matching audit entries";
+        
+        leaf log-id {
+          type string;
+        }
+        
+        leaf event-timestamp {
+          type yang:date-and-time;
+        }
+        
+        leaf event-type {
+          type string;
+        }
+        
+        leaf action {
+          type string;
+        }
+        
+        leaf target-resource {
+          type string;
+        }
+        
+        leaf status {
+          type string;
+        }
+      }
+      
+      leaf total-matching {
+        type uint32;
+        description "Total matching entries";
+      }
+    }
+  }
+  
+  rpc create-security-event {
+    description 
+      "Manually create a security event for incident tracking.";
+    
+    input {
+      leaf threat-category {
+        type threat-category-type;
+        mandatory true;
+      }
+      leaf severity {
+        type threat-severity-type;
+        mandatory true;
+      }
+      leaf description {
+        type string;
+        mandatory true;
+      }
+      leaf affected-user {
+        type string;
+      }
+      leaf affected-resource {
+        type string;
+      }
+      leaf source-ip {
+        type inet:ip-address;
+      }
+    }
+    
+    output {
+      leaf event-id {
+        type string;
+        description "Created event ID";
+      }
+      leaf success {
+        type boolean;
+      }
+    }
+  }
+  
+  rpc generate-compliance-report {
+    description 
+      "Generate compliance report for specified standard.";
+    
+    input {
+      leaf standard {
+        type compliance-standard-type;
+        mandatory true;
+      }
+      leaf report-type {
+        type enumeration {
+          enum AUDIT_REPORT;
+          enum GAP_ANALYSIS;
+          enum COMPLIANCE_SUMMARY;
+        }
+        default COMPLIANCE_SUMMARY;
+      }
+    }
+    
+    output {
+      leaf report-id {
+        type string;
+      }
+      leaf report-url {
+        type string;
+      }
+      leaf overall-compliance-percent {
+        type uint8;
+      }
+    }
+  }
+
+  /***************************************************************************
+   * NOTIFICATION DEFINITIONS
+   ***************************************************************************/
+  
+  notification security-event-detected {
+    description "Notification for detected security events";
+    
+    leaf event-id {
+      type string;
+      mandatory true;
+    }
+    leaf threat-category {
+      type threat-category-type;
+      mandatory true;
+    }
+    leaf severity {
+      type threat-severity-type;
+      mandatory true;
+    }
+    leaf description {
+      type string;
+      mandatory true;
+    }
+    leaf detection-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+    }
+  }
+  
+  notification authentication-failure {
+    description "Notification for authentication failures";
+    
+    leaf user-id {
+      type string;
+      mandatory true;
+    }
+    leaf source-ip {
+      type inet:ip-address;
+      mandatory true;
+    }
+    leaf failure-reason {
+      type string;
+      mandatory true;
+    }
+    leaf attempt-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+    }
+    leaf account-locked {
+      type boolean;
+    }
+  }
+  
+  notification compliance-violation {
+    description "Notification for compliance requirement violations";
+    
+    leaf requirement-id {
+      type string;
+      mandatory true;
+    }
+    leaf standard {
+      type compliance-standard-type;
+      mandatory true;
+    }
+    leaf violation-severity {
+      type enumeration {
+        enum CRITICAL;
+        enum HIGH;
+        enum MEDIUM;
+        enum LOW;
+      }
+      mandatory true;
+    }
+    leaf description {
+      type string;
+      mandatory true;
+    }
+  }
+}

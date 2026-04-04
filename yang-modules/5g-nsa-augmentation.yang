@@ -1,0 +1,359 @@
+module 5g-nsa-augmentation {
+  yang-version 1.1;
+  namespace "urn:unified-oss:5g-nsa";
+  prefix nsa;
+
+  import unified-oss-core-nrm { prefix uoss-nrm; }
+  import ietf-inet-types { prefix inet; }
+  import ietf-yang-types { prefix yang; }
+
+  organization "Unified OSS Framework - 5G NSA Support";
+  contact "Dr. Houda Chihi - IEEE Member, TechWomen 2019 Fellow";
+  description 
+    "YANG augmentation for 5G Non-Standalone (NSA) network elements.
+     
+     5G NSA uses 4G EPC core with 5G NR radio access through
+     EN-DC (E-UTRA-NR Dual Connectivity).
+     
+     Key elements:
+     - MeNB: Master eNodeB (4G anchor)
+     - SgNB: Secondary gNodeB (5G boost)
+     - EN-DC: Dual connectivity session
+     
+     Reference: 3GPP TS 37.340, TS 38.401";
+
+  revision 2026-03-21 {
+    description "Initial version for Unified OSS Framework v1.0.0";
+    reference "IEEE TNSM Submission - Dr. Houda Chihi Supervision";
+  }
+
+  identity nsa-element {
+    base uoss-nrm:network-element-type;
+    description "Base identity for 5G NSA elements";
+  }
+
+  identity menb {
+    base nsa-element;
+    description "Master eNodeB for EN-DC";
+  }
+
+  identity sgnb {
+    base nsa-element;
+    description "Secondary gNodeB for EN-DC";
+  }
+
+  identity en-dc-session {
+    base nsa-element;
+    description "EN-DC dual connectivity session";
+  }
+
+  typedef split-bearer-type {
+    type enumeration {
+      enum mcg-bearer {
+        description "Master Cell Group bearer";
+      }
+      enum scg-bearer {
+        description "Secondary Cell Group bearer";
+      }
+      enum split-bearer {
+        description "Split bearer between MCG and SCG";
+      }
+    }
+    description "Type of bearer in EN-DC";
+  }
+
+  typedef nsa-state {
+    type enumeration {
+      enum inactive;
+      enum activating;
+      enum active;
+      enum deactivating;
+      enum failed;
+    }
+    description "5G NSA operational state";
+  }
+
+  grouping nsa-common-attributes {
+    description "Common attributes for 5G NSA elements";
+    
+    leaf nsa-enabled {
+      type boolean;
+      default false;
+      description "Enable 5G NSA functionality";
+    }
+    
+    leaf en-dc-capable {
+      type boolean;
+      default false;
+      description "EN-DC dual connectivity capability";
+    }
+    
+    leaf nr-frequency {
+      type uint32;
+      description "NR frequency band in MHz";
+    }
+    
+    leaf nsa-state {
+      type nsa-state;
+      default inactive;
+      description "Current NSA operational state";
+    }
+  }
+
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:element-type = 'nsa'";
+    description "Augmentation for 5G NSA elements";
+    
+    container nsa-network-elements {
+      description "5G NSA network element configurations";
+      
+      uses nsa-common-attributes;
+      
+      container en-dc-configuration {
+        description "EN-DC dual connectivity configuration";
+        
+        leaf en-dc-enabled {
+          type boolean;
+          default true;
+        }
+        
+        leaf master-node {
+          type string;
+          description "Reference to MeNB serving as master";
+        }
+        
+        leaf secondary-node {
+          type string;
+          description "Reference to SgNB serving as secondary";
+        }
+        
+        leaf dual-connectivity-mode {
+          type enumeration {
+            enum en-dc;
+            enum ne-dc;
+            enum ng-en-dc;
+          }
+          default en-dc;
+        }
+      }
+      
+      container dual-connectivity-status {
+        description "Dual connectivity operational status";
+        
+        leaf active-sessions {
+          type uint32;
+          description "Number of active EN-DC sessions";
+        }
+        
+        leaf mcg-connections {
+          type uint32;
+          description "Master Cell Group connections";
+        }
+        
+        leaf scg-connections {
+          type uint32;
+          description "Secondary Cell Group connections";
+        }
+        
+        leaf split-bearers {
+          type uint32;
+          description "Number of split bearers";
+        }
+      }
+      
+      container split-bearer-config {
+        description "Split bearer configuration";
+        
+        leaf split-ratio {
+          type uint8 {
+            range "0..100";
+          }
+          default 50;
+          description "Traffic split ratio between MCG and SCG";
+        }
+        
+        leaf split-threshold {
+          type uint32;
+          units "kbps";
+          description "Threshold for split bearer activation";
+        }
+        
+        leaf load-balancing-enabled {
+          type boolean;
+          default true;
+        }
+      }
+    }
+    
+    container nsa-alarms {
+      description "5G NSA specific alarms";
+      
+      list nsa-alarm {
+        key "alarm-id";
+        
+        leaf alarm-id {
+          type string;
+        }
+        
+        leaf alarm-type {
+          type enumeration {
+            enum en-dc-failure;
+            enum scg-failure;
+            enum mcg-failure;
+            enum split-bearer-failure;
+            enum sgnb-addition-failure;
+            enum dual-connectivity-loss;
+          }
+        }
+        
+        leaf severity {
+          type uoss-nrm:severity-level;
+        }
+        
+        leaf affected-session {
+          type string;
+          description "Affected EN-DC session identifier";
+        }
+        
+        leaf probable-cause {
+          type string;
+          description "Probable cause per ITU-T X.733";
+        }
+      }
+    }
+    
+    container nsa-performance-metrics {
+      description "5G NSA performance KPIs";
+      
+      leaf en-dc-setup-success-rate {
+        type decimal64 {
+          fraction-digits 2;
+        }
+        units "percent";
+        description "EN-DC setup success rate";
+      }
+      
+      leaf en-dc-throughput {
+        type uint64;
+        units "Mbps";
+        description "Combined throughput via dual connectivity";
+      }
+      
+      leaf scg-throughput {
+        type uint64;
+        units "Mbps";
+        description "Secondary Cell Group throughput";
+      }
+      
+      leaf mcg-throughput {
+        type uint64;
+        units "Mbps";
+        description "Master Cell Group throughput";
+      }
+      
+      leaf sgnb-addition-latency {
+        type uint32;
+        units "ms";
+        description "SgNB addition procedure latency";
+      }
+      
+      leaf dual-connectivity-efficiency {
+        type decimal64 {
+          fraction-digits 2;
+        }
+        units "percent";
+        description "Dual connectivity resource efficiency";
+      }
+    }
+  }
+
+  notification nsa-alarm-notification {
+    description "5G NSA alarm notification";
+    
+    leaf alarm-id {
+      type string;
+    }
+    
+    leaf nsa-element {
+      type string;
+      description "NSA element generating alarm";
+    }
+    
+    leaf alarm-type {
+      type enumeration {
+        enum en-dc-session-failure;
+        enum dual-connectivity-loss;
+        enum split-bearer-degradation;
+        enum sgnb-unavailable;
+      }
+    }
+    
+    leaf severity {
+      type uoss-nrm:severity-level;
+    }
+    
+    leaf timestamp {
+      type yang:date-and-time;
+    }
+  }
+
+  rpc trigger-en-dc-setup {
+    description "Trigger EN-DC dual connectivity setup";
+    
+    input {
+      leaf menb-id {
+        type string;
+        mandatory true;
+      }
+      leaf sgnb-id {
+        type string;
+        mandatory true;
+      }
+      leaf ue-id {
+        type string;
+        mandatory true;
+      }
+    }
+    
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failure;
+        }
+      }
+      leaf session-id {
+        type string;
+      }
+      leaf error-reason {
+        type string;
+      }
+    }
+  }
+
+  rpc modify-split-bearer {
+    description "Modify split bearer configuration";
+    
+    input {
+      leaf session-id {
+        type string;
+        mandatory true;
+      }
+      leaf new-split-ratio {
+        type uint8 {
+          range "0..100";
+        }
+        mandatory true;
+      }
+    }
+    
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failure;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-03-18T21:19:34.757392+00:00",
+  "network_elements": {
+    "total": 300,
+    "ericsson": 150,
+    "huawei": 150
+  },
+  "alarms": {
+    "total": 1200,
+    "ericsson": 600,
+    "huawei": 600
+  }
+}

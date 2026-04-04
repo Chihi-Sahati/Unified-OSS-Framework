@@ -1,0 +1,1672 @@
+module ericsson-huawei-unified-performance-management {
+  yang-version 1.1;
+  namespace "urn:cim:fcaps:performance:v1";
+  prefix "fcaps-perf";
+  
+  import ietf-yang-types {
+    prefix yang;
+  }
+
+  organization "Unified OSS Framework Consortium";
+  contact "oss-framework@example.com";
+  
+  description
+    "YANG data model for Performance Management within the Unified OSS Framework.
+     This module provides vendor-neutral KPI tracking, metrics collection, and
+     performance reporting for multi-vendor network environments.
+     
+     Key capabilities:
+     - Real-time metrics collection
+     - KPI definition and calculation
+     - Threshold monitoring and alerting
+     - Performance reporting and anomaly detection
+     
+     Copyright (c) 2024 Unified OSS Framework Consortium.
+     All rights reserved.";
+  
+  revision 2024-03-01 {
+    description 
+      "Initial version - Performance Management YANG model for Ericsson/Huawei
+       multi-vendor network element management.
+       
+       Key features:
+       - Multi-vendor metric normalization
+       - KPI derivation and aggregation
+       - Threshold-based alerting
+       - Time-series data management";
+    reference 
+      "IEEE Transactions on Network and Service Management;
+       3GPP TS 28.552 - Management data and procedures;
+       3GPP TS 32.425 - Performance Management";
+  }
+
+  /***************************************************************************
+   * TYPEDEF DEFINITIONS FOR METRICS
+   ***************************************************************************/
+  
+  typedef metric-aggregation-type {
+    description 
+      "Type of metric aggregation used for data collection.
+       
+       Determines how raw measurements are processed and stored.";
+    type enumeration {
+      enum COUNTER {
+        value 1;
+        description 
+          "Monotonically increasing value.
+           Rate calculated by difference between samples.
+           Example: Total packets transmitted, Total errors.";
+      }
+      enum GAUGE {
+        value 2;
+        description 
+          "Instantaneous measurement at collection time.
+           Value can increase or decrease.
+           Example: Current CPU utilization, Active connections.";
+      }
+      enum HISTOGRAM {
+        value 3;
+        description 
+          "Distribution of values across buckets.
+           Used for latency and size distributions.
+           Example: Request latency percentiles, Packet size distribution.";
+      }
+      enum RATE {
+        value 4;
+        description 
+          "Change per time unit.
+           Pre-calculated rate from counter differences.
+           Example: Throughput in Mbps, Error rate per second.";
+      }
+    }
+  }
+  
+  typedef aggregation-function-type {
+    description 
+      "Aggregation function applied to metrics over time windows.
+       Used for downsampling and historical aggregation.";
+    type enumeration {
+      enum SUM {
+        value 1;
+        description "Sum of all values in window";
+      }
+      enum AVG {
+        value 2;
+        description "Arithmetic mean of values";
+      }
+      enum MIN {
+        value 3;
+        description "Minimum value in window";
+      }
+      enum MAX {
+        value 4;
+        description "Maximum value in window";
+      }
+      enum PERCENTILE_50 {
+        value 5;
+        description "50th percentile (median)";
+      }
+      enum PERCENTILE_95 {
+        value 6;
+        description "95th percentile";
+      }
+      enum PERCENTILE_99 {
+        value 7;
+        description "99th percentile";
+      }
+      enum STDEV {
+        value 8;
+        description "Standard deviation";
+      }
+      enum DERIVATIVE {
+        value 9;
+        description "Rate of change";
+      }
+      enum COUNT {
+        value 10;
+        description "Number of samples";
+      }
+    }
+  }
+  
+  typedef metric-threshold-direction {
+    description 
+      "Direction of threshold comparison.
+       Determines how threshold violations are evaluated.";
+    type enumeration {
+      enum ABOVE_THRESHOLD {
+        value 1;
+        description "Violation when value exceeds threshold";
+      }
+      enum BELOW_THRESHOLD {
+        value 2;
+        description "Violation when value falls below threshold";
+      }
+      enum WITHIN_RANGE {
+        value 3;
+        description "Violation when value is outside specified range";
+      }
+    }
+  }
+  
+  typedef quality-indicator-type {
+    description 
+      "Quality indicator for metric measurements.
+       Used to filter and qualify data for analysis.";
+    type enumeration {
+      enum GOOD {
+        value 1;
+        description "High quality measurement, fully reliable";
+      }
+      enum DEGRADED {
+        value 2;
+        description "Partial quality, may have gaps or approximations";
+      }
+      enum UNAVAILABLE {
+        value 3;
+        description "Measurement not available or unreliable";
+      }
+      enum SUSPECT {
+        value 4;
+        description "Measurement may be inaccurate, requires validation";
+      }
+    }
+  }
+  
+  typedef threshold-status-type {
+    description 
+      "Current threshold crossing status for a metric or KPI.";
+    type enumeration {
+      enum NORMAL {
+        value 1;
+        description "Within normal operating range";
+      }
+      enum WARNING {
+        value 2;
+        description "Crossed warning threshold, monitoring";
+      }
+      enum CRITICAL {
+        value 3;
+        description "Crossed critical threshold, action required";
+      }
+    }
+  }
+  
+  typedef trend-direction-type {
+    description 
+      "Trend direction for time-series analysis.
+       Indicates whether values are increasing, decreasing, or stable.";
+    type enumeration {
+      enum IMPROVING {
+        value 1;
+        description "Values trending toward better performance";
+      }
+      enum STABLE {
+        value 2;
+        description "No significant trend detected";
+      }
+      enum DEGRADING {
+        value 3;
+        description "Values trending toward worse performance";
+      }
+      enum INSUFFICIENT_DATA {
+        value 4;
+        description "Not enough data to determine trend";
+      }
+    }
+  }
+
+  /***************************************************************************
+   * GROUPING DEFINITIONS
+   ***************************************************************************/
+  
+  grouping metric-value-container {
+    description 
+      "Container for metric measurement values with metadata.";
+    
+    leaf value {
+      type decimal64 {
+        fraction-digits 4;
+      }
+      mandatory true;
+      description "Numeric measurement value";
+    }
+    
+    leaf measurement-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+      description "When measurement was taken";
+    }
+    
+    leaf quality-indicator {
+      type quality-indicator-type;
+      default GOOD;
+      description "Quality assessment of this measurement";
+    }
+    
+    leaf source-element {
+      type string;
+      description "Network element that provided this measurement";
+    }
+    
+    leaf collection-method {
+      type enumeration {
+        enum SNMP;
+        enum NETCONF;
+        enum FILE_TRANSFER;
+        enum STREAMING;
+        enum CALCULATED;
+      }
+      description "Method used to collect this measurement";
+    }
+  }
+  
+  grouping threshold-configuration {
+    description 
+      "Threshold configuration for metrics and KPIs.";
+    
+    leaf warning-threshold {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      description 
+        "Warning level threshold.
+         Crossing triggers warning notification.";
+    }
+    
+    leaf critical-threshold {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      description 
+        "Critical level threshold.
+         Crossing triggers critical alert.";
+    }
+    
+    leaf threshold-direction {
+      type metric-threshold-direction;
+      default ABOVE_THRESHOLD;
+      description "Direction of threshold evaluation";
+    }
+    
+    leaf sustained-violation-window-seconds {
+      type uint32 {
+        range "1..3600";
+      }
+      default 60;
+      description 
+        "Duration threshold must be exceeded before alert.
+         Prevents alerts from transient spikes.";
+    }
+    
+    leaf hysteresis-percent {
+      type decimal64 {
+        fraction-digits 1;
+        range "0..50";
+      }
+      default 5;
+      description 
+        "Hysteresis percentage for threshold reset.
+         Prevents alert flapping near threshold boundary.";
+    }
+  }
+  
+  grouping vendor-metric-metadata {
+    description 
+      "Vendor-specific metric identification and conversion data.";
+    
+    leaf vendor-metric-id {
+      type string {
+        length "1..128";
+      }
+      description 
+        "Original vendor metric identifier.
+         Ericsson: Counter name from ENM
+         Huawei: KPI code from U2000";
+    }
+    
+    leaf vendor-metric-name {
+      type string {
+        length "1..256";
+      }
+      description "Vendor-specific metric name";
+    }
+    
+    leaf vendor-unit {
+      type string {
+        length "1..32";
+      }
+      description 
+        "Vendor's unit of measurement.
+         May differ from standard CIM unit.";
+    }
+    
+    leaf conversion-formula {
+      type string {
+        length "1..512";
+      }
+      description 
+        "Formula to convert vendor units to standard unit.
+         Example: 'value / 100' for centipercent to percent
+         Uses simple arithmetic expressions.";
+    }
+    
+    leaf vendor-collection-interval {
+      type uint32;
+      units "seconds";
+      description "Vendor's native collection interval";
+    }
+  }
+
+  /***************************************************************************
+   * CONTAINER DEFINITIONS - Performance Management
+   ***************************************************************************/
+  
+  container performance-management {
+    description 
+      "Root container for KPI and performance metrics management.
+       Contains metrics collection, KPI definitions, and reporting.";
+    config false;
+    
+    leaf schema-version {
+      type string;
+      description "Performance management schema version";
+    }
+    
+    leaf total-metrics-monitored {
+      type uint32;
+      description "Count of active metrics being monitored";
+    }
+    
+    leaf total-kpis-defined {
+      type uint32;
+      description "Count of KPI definitions";
+    }
+    
+    leaf last-collection-timestamp {
+      type yang:date-and-time;
+      description "Most recent metric collection time";
+    }
+
+    /*************************************************************************
+     * METRICS COLLECTION
+     *************************************************************************/
+    
+    container metrics-collection {
+      description 
+        "Real-time and historical metric collection.
+         Contains individual metric instances with current and historical values.";
+      
+      list metric-instance {
+        key "metric-id";
+        description 
+          "Individual metric instance with collection and storage metadata.
+           Each instance represents a single measurable quantity.";
+        
+        leaf metric-id {
+          type string {
+            length "36..36";
+          }
+          description 
+            "Unique metric identifier (UUID v4).
+             Generated at metric registration time.";
+        }
+        
+        leaf metric-name {
+          type string {
+            length "1..256";
+          }
+          mandatory true;
+          description 
+            "Human-readable metric name.
+             Format: {CATEGORY}_{SUBCATEGORY}_{MEASUREMENT}
+             Example: RRC_CONNECTED_USERS, THROUGHPUT_DL_MBPS";
+        }
+        
+        leaf metric-path {
+          type string {
+            length "1..512";
+          }
+          mandatory true;
+          description 
+            "CIM hierarchical path for metric source.
+             Example: /network/ericsson/enodeb/CELL_001/rrc/stats";
+        }
+        
+        leaf source-vendor {
+          type enumeration {
+            enum ERICSSON {
+              value 1;
+              description "Metric from Ericsson ENM";
+            }
+            enum HUAWEI {
+              value 2;
+              description "Metric from Huawei U2000/iManager";
+            }
+            enum CALCULATED {
+              value 3;
+              description "Derived metric, not from single vendor";
+            }
+          }
+          mandatory true;
+          description "Originating vendor or calculation source";
+        }
+        
+        leaf aggregation-type {
+          type metric-aggregation-type;
+          mandatory true;
+          description "Type of metric aggregation";
+        }
+        
+        leaf unit-of-measurement {
+          type string {
+            length "1..32";
+          }
+          description 
+            "Standard unit (users, %, Mbps, ms, etc.).
+             Normalized across vendors.";
+        }
+        
+        leaf collection-interval-seconds {
+          type uint32 {
+            range "1..86400";
+          }
+          mandatory true;
+          description 
+            "Interval between metric collections.
+             Common values: 5, 15, 60, 300, 900, 3600 seconds";
+        }
+        
+        leaf last-collection-timestamp {
+          type yang:date-and-time;
+          description "Most recent successful collection";
+        }
+        
+        leaf next-collection-timestamp {
+          type yang:date-and-time;
+          description "Scheduled next collection time";
+        }
+        
+        leaf collection-status {
+          type enumeration {
+            enum ACTIVE;
+            enum PAUSED;
+            enum FAILED;
+            enum DISABLED;
+          }
+          description "Current collection status";
+        }
+        
+        container current-value {
+          description "Most recent measurement";
+          uses metric-value-container;
+        }
+        
+        container statistics {
+          description 
+            "Statistical summary over configurable time windows.";
+          
+          container last-5-minutes {
+            uses metric-value-container;
+            leaf sample-count {
+              type uint32;
+              description "Number of samples in window";
+            }
+          }
+          
+          container last-15-minutes {
+            uses metric-value-container;
+            leaf sample-count {
+              type uint32;
+            }
+          }
+          
+          container last-1-hour {
+            uses metric-value-container;
+            leaf sample-count {
+              type uint32;
+            }
+          }
+          
+          container last-24-hours {
+            uses metric-value-container;
+            leaf sample-count {
+              type uint32;
+            }
+          }
+        }
+        
+        container historical-data {
+          description 
+            "Time-series historical values.
+             Stored in TimescaleDB for efficient time-based queries.";
+          
+          list measurement {
+            key "measurement-timestamp";
+            
+            leaf measurement-timestamp {
+              type yang:date-and-time;
+              description "When measurement was taken";
+            }
+            
+            leaf measured-value {
+              type decimal64 {
+                fraction-digits 4;
+              }
+              description "Measured value at this timestamp";
+            }
+            
+            leaf quality-indicator {
+              type quality-indicator-type;
+              description "Quality of this measurement";
+            }
+          }
+        }
+        
+        container vendor-specific-metadata {
+          description "Vendor-specific KPI information for mapping";
+          uses vendor-metric-metadata;
+        }
+        
+        container thresholds {
+          description "Threshold configuration for this metric";
+          uses threshold-configuration;
+        }
+        
+        container current-threshold-status {
+          description "Current threshold crossing status";
+          
+          leaf status {
+            type threshold-status-type;
+            mandatory true;
+          }
+          
+          leaf status-change-timestamp {
+            type yang:date-and-time;
+            description "When status last changed";
+          }
+          
+          leaf current-value {
+            type decimal64 {
+              fraction-digits 4;
+            }
+            description "Value that triggered status";
+          }
+          
+          leaf violation-duration-seconds {
+            type uint32;
+            description "How long in current status";
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * KPI DEFINITIONS
+     *************************************************************************/
+    
+    container kpi-definitions {
+      description 
+        "Key Performance Indicator schema and thresholds.
+         KPIs are derived from metrics through calculation formulas.";
+      
+      list kpi {
+        key "kpi-id";
+        description 
+          "Individual KPI definition with calculation logic and thresholds.
+           KPIs represent business-relevant performance indicators.";
+        
+        leaf kpi-id {
+          type string {
+            length "1..64";
+          }
+          description "Unique KPI identifier";
+        }
+        
+        leaf kpi-name {
+          type string {
+            length "1..256";
+          }
+          mandatory true;
+          description 
+            "Business-oriented KPI name.
+             Example: Network_Availability, User_Throughput_Avg";
+        }
+        
+        leaf description {
+          type string {
+            length "1..1024";
+          }
+          description "Detailed KPI description and purpose";
+        }
+        
+        leaf enabled {
+          type boolean;
+          default true;
+          description "Enable KPI calculation and monitoring";
+        }
+        
+        leaf kpi-category {
+          type enumeration {
+            enum AVAILABILITY {
+              value 1;
+              description "System availability and uptime metrics";
+            }
+            enum PERFORMANCE {
+              value 2;
+              description "System performance metrics";
+            }
+            enum QUALITY {
+              value 3;
+              description "Service quality metrics";
+            }
+            enum UTILIZATION {
+              value 4;
+              description "Resource utilization metrics";
+            }
+            enum RELIABILITY {
+              value 5;
+              description "System reliability metrics";
+            }
+            enum CUSTOMER_EXPERIENCE {
+              value 6;
+              description "Customer-facing quality metrics";
+            }
+          }
+          mandatory true;
+          description "Business category for KPI grouping";
+        }
+        
+        leaf business-owner {
+          type string;
+          description "Business unit responsible for this KPI";
+        }
+        
+        leaf target-value {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          description "Target or SLA value for this KPI";
+        }
+        
+        container kpi-calculation {
+          description "Mathematical derivation of KPI from metrics";
+          
+          leaf-list source-metrics {
+            type string;
+            min-elements 1;
+            description 
+              "Metric IDs used in KPI calculation.
+               Ordered by appearance in formula.";
+          }
+          
+          leaf calculation-formula {
+            type string {
+              length "1..512";
+            }
+            mandatory true;
+            description 
+              "Mathematical expression for KPI derivation.
+               Supports standard operators and functions.
+               Example: (metric_a / metric_b) * 100
+               Example: sum(metric_list) / count(metric_list)";
+          }
+          
+          leaf aggregation-method {
+            type aggregation-function-type;
+            default AVG;
+            description "Aggregation over time windows";
+          }
+          
+          leaf aggregation-window-seconds {
+            type uint32 {
+              range "60..86400";
+            }
+            default 900;
+            description "Time window for KPI calculation";
+          }
+          
+          leaf calculation-frequency-seconds {
+            type uint32 {
+              range "60..86400";
+            }
+            default 300;
+            description "How often KPI is recalculated";
+          }
+        }
+        
+        container threshold-management {
+          description "Threshold configuration for KPI";
+          uses threshold-configuration;
+        }
+        
+        container alert-policy {
+          description "Alerting configuration for KPI threshold violations";
+          
+          leaf alert-enabled {
+            type boolean;
+            default true;
+            description "Enable alerting on threshold violations";
+          }
+          
+          leaf alert-severity {
+            type enumeration {
+              enum CRITICAL;
+              enum MAJOR;
+              enum MINOR;
+              enum WARNING;
+            }
+            default MAJOR;
+            description "Severity for generated alerts";
+          }
+          
+          leaf notification-groups {
+            type string;
+            description 
+              "Distribution lists for alert notifications.
+               Comma-separated list of group IDs.";
+          }
+          
+          leaf auto-ticket-creation {
+            type boolean;
+            default false;
+            description "Automatically create ticket on critical threshold";
+          }
+          
+          leaf ticket-assignment-group {
+            type string;
+            description "Group to assign auto-created tickets";
+          }
+        }
+        
+        container current-kpi-value {
+          config false;
+          description "Most recently calculated KPI value";
+          
+          leaf calculated-value {
+            type decimal64 {
+              fraction-digits 2;
+            }
+            mandatory true;
+            description "Current KPI value";
+          }
+          
+          leaf calculation-timestamp {
+            type yang:date-and-time;
+            mandatory true;
+            description "When KPI was calculated";
+          }
+          
+          leaf threshold-status {
+            type threshold-status-type;
+            mandatory true;
+            description "Current threshold status";
+          }
+          
+          leaf status-change-timestamp {
+            type yang:date-and-time;
+            description "When threshold status changed";
+          }
+          
+          leaf previous-value {
+            type decimal64 {
+              fraction-digits 2;
+            }
+            description "Previous KPI value for comparison";
+          }
+          
+          leaf change-percent {
+            type decimal64 {
+              fraction-digits 2;
+            }
+            description "Percentage change from previous value";
+          }
+          
+          leaf trend {
+            type trend-direction-type;
+            description "Current trend direction";
+          }
+          
+          leaf data-quality {
+            type quality-indicator-type;
+            description "Quality of source data for calculation";
+          }
+        }
+        
+        container historical-values {
+          config false;
+          description "Historical KPI calculations";
+          
+          list kpi-calculation {
+            key "calculation-timestamp";
+            
+            leaf calculation-timestamp {
+              type yang:date-and-time;
+            }
+            
+            leaf calculated-value {
+              type decimal64 {
+                fraction-digits 2;
+              }
+            }
+            
+            leaf threshold-status {
+              type threshold-status-type;
+            }
+          }
+        }
+      }
+    }
+
+    /*************************************************************************
+     * PERFORMANCE REPORTS
+     *************************************************************************/
+    
+    container performance-reports {
+      description 
+        "Generated performance analysis reports.
+         Reports aggregate KPIs and metrics over defined periods.";
+      
+      list report {
+        key "report-id";
+        config false;
+        description 
+          "Individual performance report with KPI summaries and analysis.";
+        
+        leaf report-id {
+          type string {
+            length "36..36";
+          }
+          description "Report UUID";
+        }
+        
+        leaf report-name {
+          type string {
+            length "1..256";
+          }
+          description "Human-readable report name";
+        }
+        
+        leaf report-type {
+          type enumeration {
+            enum DAILY {
+              value 1;
+              description "Daily performance summary";
+            }
+            enum WEEKLY {
+              value 2;
+              description "Weekly performance analysis";
+            }
+            enum MONTHLY {
+              value 3;
+              description "Monthly performance review";
+            }
+            enum QUARTERLY {
+              value 4;
+              description "Quarterly business review";
+            }
+            enum CUSTOM {
+              value 5;
+              description "Custom date range report";
+            }
+          }
+          mandatory true;
+          description "Type of report";
+        }
+        
+        leaf generation-timestamp {
+          type yang:date-and-time;
+          description "When report was generated";
+        }
+        
+        leaf report-period-start {
+          type yang:date-and-time;
+          description "Start of reporting period";
+        }
+        
+        leaf report-period-end {
+          type yang:date-and-time;
+          description "End of reporting period";
+        }
+        
+        leaf generated-by {
+          type string;
+          description "User or system that requested report";
+        }
+        
+        container kpi-summary {
+          description "KPI performance summary for report period";
+          
+          list kpi-entry {
+            key "kpi-name";
+            
+            leaf kpi-name {
+              type string;
+              description "KPI name";
+            }
+            
+            leaf kpi-category {
+              type enumeration {
+                enum AVAILABILITY;
+                enum PERFORMANCE;
+                enum QUALITY;
+                enum UTILIZATION;
+                enum RELIABILITY;
+                enum CUSTOMER_EXPERIENCE;
+              }
+              description "KPI category";
+            }
+            
+            leaf period-average {
+              type decimal64 {
+                fraction-digits 2;
+              }
+              description "Average value over period";
+            }
+            
+            leaf period-min {
+              type decimal64 {
+                fraction-digits 2;
+              }
+              description "Minimum value in period";
+            }
+            
+            leaf period-max {
+              type decimal64 {
+                fraction-digits 2;
+              }
+              description "Maximum value in period";
+            }
+            
+            leaf period-stdev {
+              type decimal64 {
+                fraction-digits 2;
+              }
+              description "Standard deviation in period";
+            }
+            
+            leaf threshold-violations {
+              type uint32;
+              description "Count of threshold violations";
+            }
+            
+            leaf trend {
+              type trend-direction-type;
+              description "Trend direction for period";
+            }
+            
+            leaf compared-to-previous {
+              type decimal64 {
+                fraction-digits 2;
+              }
+              units "percent";
+              description "Change compared to previous period (%)";
+            }
+            
+            leaf target-achievement {
+              type decimal64 {
+                fraction-digits 2;
+              }
+              units "percent";
+              description "Percentage of time target was met";
+            }
+          }
+        }
+        
+        container vendor-comparison {
+          description "Cross-vendor performance comparison";
+          
+          list vendor-metrics {
+            key "vendor";
+            
+            leaf vendor {
+              type enumeration {
+                enum ERICSSON;
+                enum HUAWEI;
+              }
+            }
+            
+            leaf resource-count {
+              type uint32;
+              description "Number of resources monitored";
+            }
+            
+            leaf availability-percent {
+              type decimal64 {
+                fraction-digits 2;
+              }
+            }
+            
+            leaf top-issues {
+              type string;
+              description "Top performance issues identified";
+            }
+          }
+        }
+        
+        container anomaly-detection {
+          description "Anomaly detection results for report period";
+          
+          leaf anomalies-detected {
+            type boolean;
+            description "Whether anomalies were found";
+          }
+          
+          list detected-anomaly {
+            key "anomaly-id";
+            
+            leaf anomaly-id {
+              type string;
+              description "Anomaly identifier";
+            }
+            
+            leaf anomaly-timestamp {
+              type yang:date-and-time;
+              description "When anomaly was detected";
+            }
+            
+            leaf affected-metric {
+              type string;
+              description "Metric showing anomalous behavior";
+            }
+            
+            leaf affected-resource {
+              type string;
+              description "Resource with anomalous metric";
+            }
+            
+            leaf anomaly-severity {
+              type enumeration {
+                enum HIGH;
+                enum MEDIUM;
+                enum LOW;
+              }
+              description "Severity of anomaly";
+            }
+            
+            leaf deviation-percent {
+              type decimal64 {
+                fraction-digits 2;
+              }
+              description "Percentage deviation from expected";
+            }
+            
+            leaf anomaly-type {
+              type enumeration {
+                enum SPIKE;
+                enum DROP;
+                enum TREND_CHANGE;
+                enum OUTLIER;
+                enum PATTERN_CHANGE;
+              }
+              description "Type of anomaly detected";
+            }
+            
+            leaf possible-causes {
+              type string;
+              description "Potential causes identified";
+            }
+            
+            leaf recommended-actions {
+              type string;
+              description "Suggested remediation actions";
+            }
+          }
+        }
+        
+        container recommendations {
+          description "Performance optimization recommendations";
+          
+          list recommendation {
+            key "recommendation-id";
+            
+            leaf recommendation-id {
+              type string;
+            }
+            
+            leaf priority {
+              type enumeration {
+                enum HIGH;
+                enum MEDIUM;
+                enum LOW;
+              }
+            }
+            
+            leaf category {
+              type string;
+              description "Category of recommendation";
+            }
+            
+            leaf description {
+              type string;
+              description "Detailed recommendation";
+            }
+            
+            leaf expected-benefit {
+              type string;
+              description "Expected improvement if implemented";
+            }
+            
+            leaf affected-resources {
+              type string;
+              description "Resources that would be affected";
+            }
+          }
+        }
+        
+        leaf report-html-url {
+          type string;
+          description "URL to HTML version of report";
+        }
+        
+        leaf report-pdf-url {
+          type string;
+          description "URL to PDF version of report";
+        }
+        
+        leaf report-csv-url {
+          type string;
+          description "URL to CSV data export";
+        }
+      }
+    }
+    
+    /*************************************************************************
+     * DASHBOARD CONFIGURATION
+     *************************************************************************/
+    
+    container dashboard-configuration {
+      description 
+        "Real-time dashboard widget configuration.
+         Defines which metrics and KPIs appear on dashboards.";
+      config true;
+      
+      list dashboard {
+        key "dashboard-id";
+        
+        leaf dashboard-id {
+          type string;
+          description "Dashboard identifier";
+        }
+        
+        leaf dashboard-name {
+          type string;
+          description "Display name for dashboard";
+        }
+        
+        leaf description {
+          type string;
+          description "Dashboard purpose and scope";
+        }
+        
+        leaf owner {
+          type string;
+          description "User who owns this dashboard";
+        }
+        
+        leaf enabled {
+          type boolean;
+          default true;
+        }
+        
+        leaf refresh-interval-seconds {
+          type uint32 {
+            range "5..3600";
+          }
+          default 60;
+          description "Auto-refresh interval";
+        }
+        
+        list widget {
+          key "widget-id";
+          
+          leaf widget-id {
+            type string;
+          }
+          
+          leaf widget-type {
+            type enumeration {
+              enum LINE_CHART;
+              enum GAUGE;
+              enum NUMBER;
+              enum TABLE;
+              enum PIE_CHART;
+              enum HEAT_MAP;
+              enum STATUS_INDICATOR;
+            }
+          }
+          
+          leaf title {
+            type string;
+          }
+          
+          leaf metric-id {
+            type string;
+            description "Metric or KPI to display";
+          }
+          
+          leaf time-range {
+            type enumeration {
+              enum LAST_5_MINUTES;
+              enum LAST_15_MINUTES;
+              enum LAST_1_HOUR;
+              enum LAST_24_HOURS;
+              enum LAST_7_DAYS;
+              enum LAST_30_DAYS;
+            }
+            default LAST_1_HOUR;
+          }
+          
+          leaf position-x {
+            type uint8;
+            description "Grid column position";
+          }
+          
+          leaf position-y {
+            type uint8;
+            description "Grid row position";
+          }
+          
+          leaf width {
+            type uint8;
+            description "Widget width in grid units";
+          }
+          
+          leaf height {
+            type uint8;
+            description "Widget height in grid units";
+          }
+        }
+      }
+    }
+  }
+
+  /***************************************************************************
+   * RPC DEFINITIONS FOR PERFORMANCE MANAGEMENT
+   ***************************************************************************/
+  
+  rpc query-metrics {
+    description 
+      "Query historical metrics with time-range and aggregation.
+       Primary method for retrieving metric time-series data.";
+    
+    input {
+      leaf metric-id {
+        type string;
+        mandatory true;
+        description "Metric UUID to query";
+      }
+      leaf start-time {
+        type yang:date-and-time;
+        mandatory true;
+        description "Query start time";
+      }
+      leaf end-time {
+        type yang:date-and-time;
+        mandatory true;
+        description "Query end time";
+      }
+      leaf aggregation-function {
+        type aggregation-function-type;
+        default AVG;
+        description "Aggregation to apply";
+      }
+      leaf aggregation-interval-seconds {
+        type uint32 {
+          range "60..86400";
+        }
+        description "Interval for aggregation buckets";
+      }
+      leaf max-data-points {
+        type uint32 {
+          range "1..10000";
+        }
+        default 1000;
+        description "Maximum number of data points to return";
+      }
+    }
+    
+    output {
+      leaf metric-name {
+        type string;
+        description "Name of queried metric";
+      }
+      leaf unit {
+        type string;
+        description "Unit of measurement";
+      }
+      list data-point {
+        description "Aggregated data points";
+        
+        leaf timestamp {
+          type yang:date-and-time;
+        }
+        
+        leaf aggregated-value {
+          type decimal64 {
+            fraction-digits 4;
+          }
+        }
+        
+        leaf sample-count {
+          type uint32;
+          description "Number of samples in aggregation";
+        }
+      }
+      leaf query-duration-ms {
+        type uint32;
+        description "Query execution time";
+      }
+    }
+  }
+  
+  rpc calculate-kpi {
+    description 
+      "Force immediate KPI recalculation.
+       Useful for ad-hoc analysis or after data correction.";
+    
+    input {
+      leaf kpi-id {
+        type string;
+        mandatory true;
+        description "KPI to recalculate";
+      }
+      leaf calculation-time {
+        type yang:date-and-time;
+        description 
+          "Specific time for calculation.
+           If not specified, uses current time.";
+      }
+    }
+    
+    output {
+      leaf calculated-value {
+        type decimal64 {
+          fraction-digits 2;
+        }
+        mandatory true;
+        description "Calculated KPI value";
+      }
+      
+      leaf calculation-timestamp {
+        type yang:date-and-time;
+        mandatory true;
+        description "Time used for calculation";
+      }
+      
+      leaf threshold-status {
+        type threshold-status-type;
+        mandatory true;
+        description "Resulting threshold status";
+      }
+      
+      leaf source-metrics-used {
+        type string;
+        description "JSON list of metrics used in calculation";
+      }
+    }
+  }
+  
+  rpc generate-performance-report {
+    description 
+      "Generate comprehensive performance report.
+       Creates report asynchronously and returns job ID.";
+    
+    input {
+      leaf report-type {
+        type enumeration {
+          enum DAILY;
+          enum WEEKLY;
+          enum MONTHLY;
+          enum QUARTERLY;
+          enum CUSTOM;
+        }
+        mandatory true;
+        description "Type of report to generate";
+      }
+      leaf start-date {
+        type yang:date-and-time;
+        description 
+          "Report start date.
+           Required for CUSTOM type.";
+      }
+      leaf end-date {
+        type yang:date-and-time;
+        description 
+          "Report end date.
+           Required for CUSTOM type.";
+      }
+      leaf include-anomaly-detection {
+        type boolean;
+        default true;
+        description "Include anomaly analysis in report";
+      }
+      leaf include-recommendations {
+        type boolean;
+        default true;
+        description "Include optimization recommendations";
+      }
+      leaf format {
+        type enumeration {
+          enum HTML;
+          enum PDF;
+          enum BOTH;
+        }
+        default BOTH;
+        description "Output format for report";
+      }
+      leaf recipient-emails {
+        type string;
+        description 
+          "Email addresses to send report.
+           Comma-separated list.";
+      }
+    }
+    
+    output {
+      leaf report-id {
+        type string;
+        description "Generated report UUID";
+      }
+      
+      leaf report-url {
+        type string;
+        description "URL to access report when ready";
+      }
+      
+      leaf estimated-completion-seconds {
+        type uint32;
+        description "Estimated time until report is ready";
+      }
+    }
+  }
+  
+  rpc get-metric-statistics {
+    description 
+      "Get statistical summary for metric over time range.";
+    
+    input {
+      leaf metric-id {
+        type string;
+        mandatory true;
+      }
+      leaf start-time {
+        type yang:date-and-time;
+        mandatory true;
+      }
+      leaf end-time {
+        type yang:date-and-time;
+        mandatory true;
+      }
+    }
+    
+    output {
+      leaf metric-name {
+        type string;
+      }
+      leaf unit {
+        type string;
+      }
+      leaf min-value {
+        type decimal64 {
+          fraction-digits 4;
+        }
+      }
+      leaf max-value {
+        type decimal64 {
+          fraction-digits 4;
+        }
+      }
+      leaf avg-value {
+        type decimal64 {
+          fraction-digits 4;
+        }
+      }
+      leaf sum-value {
+        type decimal64 {
+          fraction-digits 4;
+        }
+      }
+      leaf std-dev {
+        type decimal64 {
+          fraction-digits 4;
+        }
+      }
+      leaf percentile-5 {
+        type decimal64 {
+          fraction-digits 4;
+        }
+      }
+      leaf percentile-50 {
+        type decimal64 {
+          fraction-digits 4;
+        }
+      }
+      leaf percentile-95 {
+        type decimal64 {
+          fraction-digits 4;
+        }
+      }
+      leaf percentile-99 {
+        type decimal64 {
+          fraction-digits 4;
+        }
+      }
+      leaf sample-count {
+        type uint32;
+      }
+    }
+  }
+
+  /***************************************************************************
+   * NOTIFICATION DEFINITIONS
+   ***************************************************************************/
+  
+  notification threshold-violation {
+    description "Notification when metric or KPI crosses threshold";
+    
+    leaf metric-id {
+      type string;
+      mandatory true;
+    }
+    leaf metric-name {
+      type string;
+      mandatory true;
+    }
+    leaf current-value {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      mandatory true;
+    }
+    leaf threshold-type {
+      type enumeration {
+        enum WARNING;
+        enum CRITICAL;
+      }
+      mandatory true;
+    }
+    leaf threshold-value {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      mandatory true;
+    }
+    leaf violation-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+    }
+  }
+  
+  notification threshold-recovery {
+    description "Notification when metric or KPI returns to normal";
+    
+    leaf metric-id {
+      type string;
+      mandatory true;
+    }
+    leaf metric-name {
+      type string;
+      mandatory true;
+    }
+    leaf current-value {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      mandatory true;
+    }
+    leaf recovery-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+    }
+    leaf previous-status {
+      type threshold-status-type;
+      mandatory true;
+    }
+  }
+  
+  notification anomaly-detected {
+    description "Notification when anomaly is detected in metric data";
+    
+    leaf anomaly-id {
+      type string;
+      mandatory true;
+    }
+    leaf affected-metric {
+      type string;
+      mandatory true;
+    }
+    leaf affected-resource {
+      type string;
+      mandatory true;
+    }
+    leaf anomaly-type {
+      type enumeration {
+        enum SPIKE;
+        enum DROP;
+        enum TREND_CHANGE;
+        enum OUTLIER;
+        enum PATTERN_CHANGE;
+      }
+      mandatory true;
+    }
+    leaf severity {
+      type enumeration {
+        enum HIGH;
+        enum MEDIUM;
+        enum LOW;
+      }
+      mandatory true;
+    }
+    leaf deviation-percent {
+      type decimal64 {
+        fraction-digits 2;
+      }
+      mandatory true;
+    }
+    leaf detection-timestamp {
+      type yang:date-and-time;
+      mandatory true;
+    }
+  }
+}

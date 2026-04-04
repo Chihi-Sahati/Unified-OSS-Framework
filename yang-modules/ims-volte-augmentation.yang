@@ -1,0 +1,737 @@
+module ims-volte-augmentation {
+  yang-version 1.1;
+  namespace "urn:unified-oss:ims-volte";
+  prefix ims;
+  
+  import unified-oss-core-nrm { prefix uoss-nrm; }
+  import ietf-inet-types { prefix inet; }
+  import ietf-yang-types { prefix yang; }
+  
+  organization "Unified OSS Framework - IMS/VoLTE Support";
+  contact "Dr. Houda Chihi - IEEE Member, TechWomen 2019 Fellow";
+  description 
+    "YANG augmentation for IMS (IP Multimedia Subsystem) and 
+     VoLTE (Voice over LTE) network elements.
+     
+     This module addresses Dr. Chihi's CORE network element
+     integration requirement for voice and data management.
+     
+     Supported Elements:
+     - IMS Core (P-CSCF, I-CSCF, S-CSCF)
+     - TAS (Telephony Application Server)
+     - VoLTE AS (Application Server)
+     - MGC (Media Gateway Controller)
+     - MGW (Media Gateway)
+     
+     Reference: 3GPP TS 23.228, TS 24.229, GSMA IR.92";
+
+  revision 2026-03-20 {
+    description "Initial version for Unified OSS Framework v1.0.0";
+    reference "IEEE TNSM Submission - Dr. Houda Chihi Supervision";
+  }
+
+  // =============================================================
+  // IMS Core Configuration
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:ne-type = 'ims-core' or uoss-nrm:ne-type = 'pcscf' or 
+          uoss-nrm:ne-type = 'icscf' or uoss-nrm:ne-type = 'scscf'";
+    description "IMS Core augmentations";
+    
+    container ims-config {
+      description "IMS Core Configuration";
+      
+      leaf ims-domain {
+        type string;
+        description "IMS domain name (e.g., ims.mnc001.mcc001.3gppnetwork.org)";
+      }
+      
+      leaf ims-ctx-id {
+        type string {
+          length "1..32";
+        }
+        description "IMS Context Identifier";
+      }
+      
+      container p-cscf-config {
+        when "../uoss-nrm:ne-type = 'pcscf' or ../uoss-nrm:ne-type = 'ims-core'";
+        description "Proxy-CSCF Configuration";
+        
+        leaf pcscf-sip-port {
+          type uint16;
+          default 5060;
+        }
+        
+        leaf pcscf-sips-port {
+          type uint16;
+          default 5061;
+        }
+        
+        leaf pcscf-ip-address {
+          type inet:ip-address;
+          description "P-CSCF IPv4 or IPv6 address";
+        }
+        
+        container access-network-info {
+          description "Access Network Information";
+          leaf network-type {
+            type enumeration {
+              enum lte;
+              enum nr;
+              enum wifi;
+              enum fixed;
+            }
+            default lte;
+          }
+          leaf epdg-address {
+            type inet:ip-address;
+            description "ePDG address for WiFi access";
+          }
+        }
+        
+        container qos-config {
+          description "QoS Configuration for SIP";
+          leaf dedicated-bearer-enabled {
+            type boolean;
+            default true;
+          }
+          leaf default-qci {
+            type uint8 {
+              range "1..9";
+            }
+            default 5;
+          }
+          leaf dedicated-qci {
+            type uint8 {
+              range "1..9";
+            }
+            default 1;
+          }
+        }
+        
+        container rx-config {
+          description "Rx Interface (P-CSCF to PCRF) Configuration";
+          leaf rx-enabled {
+            type boolean;
+            default true;
+          }
+          leaf pcrf-address {
+            type inet:ip-address;
+          }
+          leaf pcrf-port {
+            type uint16;
+            default 3868;
+          }
+        }
+      }
+      
+      container i-cscf-config {
+        when "../uoss-nrm:ne-type = 'icscf' or ../uoss-nrm:ne-type = 'ims-core'";
+        description "Interrogating-CSCF Configuration";
+        
+        leaf icscf-sip-port {
+          type uint16;
+          default 5060;
+        }
+        
+        leaf icscf-ip-address {
+          type inet:ip-address;
+        }
+        
+        container cxd-config {
+          description "Cx/Dx Interface (I-CSCF to HSS/SLF)";
+          leaf cxd-enabled {
+            type boolean;
+            default true;
+          }
+          leaf hss-address {
+            type inet:ip-address;
+          }
+          leaf dx-enabled {
+            type boolean;
+            default false;
+            description "Use SLF for HSS selection";
+          }
+          leaf slf-address {
+            type inet:ip-address;
+          }
+        }
+      }
+      
+      container s-cscf-config {
+        when "../uoss-nrm:ne-type = 'scscf' or ../uoss-nrm:ne-type = 'ims-core'";
+        description "Serving-CSCF Configuration";
+        
+        leaf scscf-sip-port {
+          type uint16;
+          default 5060;
+        }
+        
+        leaf scscf-ip-address {
+          type inet:ip-address;
+        }
+        
+        leaf scscf-capabilities {
+          type bits {
+            bit registration;
+            bit session;
+            bit orig-cdiv;
+            bit term-cdiv;
+            bit orig-cf;
+            bit term-cf;
+            bit orig-cw;
+            bit term-cw;
+          }
+          description "S-CSCF service capabilities";
+        }
+        
+        container registration-config {
+          description "Registration Management";
+          leaf registration-expiry {
+            type uint32;
+            units seconds;
+            default 3600;
+          }
+          leaf max-registration-time {
+            type uint32;
+            units seconds;
+            default 86400;
+          }
+          leaf min-registration-time {
+            type uint32;
+            units seconds;
+            default 60;
+          }
+        }
+        
+        container cx-config {
+          description "Cx Interface (S-CSCF to HSS)";
+          leaf cx-enabled {
+            type boolean;
+            default true;
+          }
+          leaf hss-address {
+            type inet:ip-address;
+          }
+          leaf hss-port {
+            type uint16;
+            default 3868;
+          }
+        }
+        
+        container charging-config {
+          description "IMS Charging Configuration";
+          leaf online-charging-enabled {
+            type boolean;
+            default true;
+          }
+          leaf offline-charging-enabled {
+            type boolean;
+            default true;
+          }
+          container ro-config {
+            description "Ro Interface (Online Charging)";
+            leaf ocs-address {
+              type inet:ip-address;
+            }
+            leaf ocs-port {
+              type uint16;
+              default 3868;
+            }
+          }
+          container rf-config {
+            description "Rf Interface (Offline Charging)";
+            leaf cdf-address {
+              type inet:ip-address;
+            }
+          }
+        }
+        
+        container application-servers {
+          description "Application Server Configuration";
+          list as {
+            key "as-name";
+            leaf as-name {
+              type string;
+            }
+            leaf as-address {
+              type inet:ip-address;
+            }
+            leaf as-port {
+              type uint16;
+              default 5060;
+            }
+            leaf as-function {
+              type enumeration {
+                enum tas;
+                enum voicemail;
+                enum sms-as;
+                enum presence;
+                enum conference;
+                enum custom;
+              }
+            }
+            leaf default-handling {
+              type enumeration {
+                enum continue;
+                enum terminate;
+              }
+              default continue;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // TAS - Telephony Application Server
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:ne-type = 'tas'";
+    description "TAS-specific augmentations";
+    
+    container tas-config {
+      description "Telephony Application Server Configuration";
+      
+      leaf tas-id {
+        type string;
+      }
+      
+      leaf tas-ip-address {
+        type inet:ip-address;
+      }
+      
+      container supplementary-services {
+        description "Supplementary Services Configuration";
+        
+        container call-forwarding {
+          description "Call Forwarding Services";
+          leaf cfu-enabled {
+            type boolean;
+            default true;
+          }
+          leaf cfb-enabled {
+            type boolean;
+            default true;
+          }
+          leaf cfnr-enabled {
+            type boolean;
+            default true;
+          }
+          leaf cfnrc-enabled {
+            type boolean;
+            default true;
+          }
+        }
+        
+        container call-waiting {
+          description "Call Waiting Service";
+          leaf cw-enabled {
+            type boolean;
+            default true;
+          }
+        }
+        
+        container call-hold {
+          description "Call Hold Service";
+          leaf hold-enabled {
+            type boolean;
+            default true;
+          }
+        }
+        
+        container clip-clir {
+          description "CLIP/CLIR Services";
+          leaf clip-enabled {
+            type boolean;
+            default true;
+          }
+          leaf clir-enabled {
+            type boolean;
+            default true;
+          }
+        }
+        
+        container multiparty {
+          description "Multiparty Conference Service";
+          leaf multiparty-enabled {
+            type boolean;
+            default true;
+          }
+          leaf max-participants {
+            type uint8;
+            default 6;
+          }
+        }
+        
+        container call-barring {
+          description "Call Barring Services";
+          leaf barr-all-outgoing {
+            type boolean;
+            default true;
+          }
+          leaf barr-all-incoming {
+            type boolean;
+            default true;
+          }
+          leaf barr-roaming-outgoing {
+            type boolean;
+            default true;
+          }
+          leaf barr-roaming-incoming {
+            type boolean;
+            default true;
+          }
+        }
+      }
+      
+      container volte-services {
+        description "VoLTE Specific Services";
+        
+        leaf volte-enabled {
+          type boolean;
+          default true;
+        }
+        
+        leaf hd-voice-enabled {
+          type boolean;
+          default true;
+        }
+        
+        leaf video-call-enabled {
+          type boolean;
+          default true;
+        }
+        
+        leaf emergency-call-enabled {
+          type boolean;
+          default true;
+        }
+        
+        container codec-config {
+          description "Codec Configuration";
+          leaf preferred-audio-codec {
+            type enumeration {
+              enum amr-wb;
+              enum amr-nb;
+              enum evs;
+            }
+            default amr-wb;
+          }
+          leaf preferred-video-codec {
+            type enumeration {
+              enum h264;
+              enum h265;
+            }
+            default h264;
+          }
+        }
+        
+        container srtp-config {
+          description "SRTP Configuration for Media Security";
+          leaf srtp-enabled {
+            type boolean;
+            default true;
+          }
+          leaf crypto-suite {
+            type enumeration {
+              enum aes-cm-128-hmac-sha1-80;
+              enum aes-cm-128-hmac-sha1-32;
+              enum aes-gcm;
+            }
+            default aes-cm-128-hmac-sha1-80;
+          }
+        }
+      }
+      
+      container sip-config {
+        description "SIP Configuration";
+        leaf sip-port {
+          type uint16;
+          default 5060;
+        }
+        leaf sips-port {
+          type uint16;
+          default 5061;
+        }
+        leaf sip-timer-t1 {
+          type uint16;
+          units milliseconds;
+          default 500;
+        }
+        leaf sip-timer-t2 {
+          type uint16;
+          units milliseconds;
+          default 4000;
+        }
+        leaf sip-timer-t4 {
+          type uint16;
+          units milliseconds;
+          default 5000;
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // VoLTE AS - VoLTE Application Server
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:ne-type = 'volte-as'";
+    description "VoLTE AS-specific augmentations";
+    
+    container volte-as-config {
+      description "VoLTE Application Server Configuration";
+      
+      leaf as-id {
+        type string;
+      }
+      
+      leaf as-address {
+        type inet:ip-address;
+      }
+      
+      container service-config {
+        description "VoLTE Service Configuration";
+        
+        leaf service-type {
+          type enumeration {
+            enum scas;
+            enum sms-as;
+            enum ip-sm-gw;
+            enum mmtel-as;
+          }
+          default scas;
+        }
+        
+        leaf max-sessions {
+          type uint32;
+          default 100000;
+        }
+        
+        leaf session-timeout {
+          type uint32;
+          units seconds;
+          default 7200;
+        }
+      }
+      
+      container ims-pcscf-config {
+        description "Connection to P-CSCF";
+        leaf pcscf-address {
+          type inet:ip-address;
+        }
+        leaf pcscf-port {
+          type uint16;
+          default 5060;
+        }
+      }
+      
+      container ims-scscf-config {
+        description "Connection to S-CSCF";
+        leaf scscf-address {
+          type inet:ip-address;
+        }
+        leaf scscf-port {
+          type uint16;
+          default 5060;
+        }
+      }
+      
+      container hss-config {
+        description "HSS Integration";
+        leaf hss-address {
+          type inet:ip-address;
+        }
+        leaf sh-enabled {
+          type boolean;
+          default true;
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // IMS Notifications
+  // =============================================================
+  
+  notification ims-registration-failure {
+    description "IMS registration failure detected";
+    leaf ne-id {
+      type string;
+    }
+    leaf user-impu {
+      type string;
+      description "IMS Public User Identity";
+    }
+    leaf failure-reason {
+      type enumeration {
+        enum authentication-failed;
+        enum timeout;
+        enum hss-unavailable;
+        enum service-unauthorized;
+        enum network-error;
+      }
+    }
+    leaf retry-count {
+      type uint8;
+    }
+  }
+  
+  notification ims-session-failure {
+    description "IMS session setup failure";
+    leaf ne-id {
+      type string;
+    }
+    leaf call-id {
+      type string;
+    }
+    leaf failure-reason {
+      type enumeration {
+        enum no-resources;
+        enum user-busy;
+        enum no-answer;
+        enum service-unavailable;
+        enum media-negotiation-failed;
+      }
+    }
+    leaf calling-party {
+      type string;
+    }
+    leaf called-party {
+      type string;
+    }
+  }
+  
+  notification volte-qos-degradation {
+    description "VoLTE QoS degradation detected";
+    leaf ne-id {
+      type string;
+    }
+    leaf qos-metric {
+      type enumeration {
+        enum jitter-high;
+        enum packet-loss-high;
+        enum latency-high;
+        enum mos-low;
+      }
+    }
+    leaf current-value {
+      type string;
+    }
+    leaf threshold {
+      type string;
+    }
+    leaf affected-users {
+      type uint32;
+    }
+  }
+
+  // =============================================================
+  // IMS RPCs
+  // =============================================================
+  
+  rpc ims-deregister-user {
+    description "Administratively deregister IMS user";
+    input {
+      leaf ne-id {
+        type string;
+        mandatory true;
+      }
+      leaf impu {
+        type string;
+        mandatory true;
+        description "IMS Public User Identity to deregister";
+      }
+      leaf reason {
+        type enumeration {
+          enum administrative;
+          enum security;
+          enum maintenance;
+        }
+        default administrative;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum user-not-found;
+          enum failed;
+        }
+      }
+      leaf deregistration-time {
+        type yang:date-and-time;
+      }
+    }
+  }
+  
+  rpc ims-query-user {
+    description "Query IMS user registration status";
+    input {
+      leaf ne-id {
+        type string;
+        mandatory true;
+      }
+      leaf impu {
+        type string;
+        mandatory true;
+      }
+    }
+    output {
+      leaf registered {
+        type boolean;
+      }
+      leaf registration-state {
+        type enumeration {
+          enum registered;
+          enum unregistered;
+          enum pending;
+        }
+      }
+      leaf scscf-name {
+        type string;
+        description "S-CSCF assigned to user";
+      }
+      leaf contact-uri {
+        type string;
+      }
+      leaf expires {
+        type uint32;
+        units seconds;
+      }
+    }
+  }
+  
+  rpc volte-clear-session {
+    description "Clear active VoLTE session";
+    input {
+      leaf ne-id {
+        type string;
+        mandatory true;
+      }
+      leaf call-id {
+        type string;
+        mandatory true;
+      }
+      leaf release-cause {
+        type uint16;
+        description "SIP response code for release";
+        default 503;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum session-not-found;
+          enum failed;
+        }
+      }
+    }
+  }
+}

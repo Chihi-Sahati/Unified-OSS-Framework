@@ -1,0 +1,51 @@
+# Unified OSS Framework - Python Dependencies
+# Production dependencies
+
+# Core
+python>=3.10
+typing-extensions>=4.0.0
+
+# Data Processing
+PyYAML>=6.0
+lxml>=4.9.0
+
+# Database
+asyncpg>=0.28.0
+psycopg2-binary>=2.9.0
+redis>=4.5.0
+
+# Async
+aiofiles>=23.0.0
+aiohttp>=3.8.0
+
+# API Framework
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+
+# CLI
+click>=8.1.0
+rich>=13.0.0
+
+# Security
+cryptography>=41.0.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# Utilities
+python-dateutil>=2.8.0
+pytz>=2023.0
+
+# Logging
+structlog>=23.0.0
+
+# Configuration
+python-dotenv>=1.0.0
+
+# AI/ML dependencies (ALL LOCAL - NO EXTERNAL API)
+xgboost>=1.7.0
+scikit-learn>=1.2.0
+pgmpy>=0.1.20
+prophet>=1.1.0
+numpy>=1.24.0
+pandas>=2.0.0

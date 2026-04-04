@@ -1,0 +1,929 @@
+module huawei-core-augmentation {
+  yang-version 1.1;
+  namespace "urn:unified-oss:vendor:huawei:core";
+  prefix hcore;
+  
+  import unified-oss-core-nrm { prefix uoss-nrm; }
+  import ietf-inet-types { prefix inet; }
+  import ietf-yang-types { prefix yang; }
+  
+  organization "Unified OSS Framework - Huawei Core Network Support";
+  contact "Dr. Houda Chihi - IEEE Member, TechWomen 2019 Fellow";
+  description 
+    "YANG augmentation for Huawei 5G Core Network Elements.
+     
+     This module provides vendor-specific augmentations for:
+     - AMF (Access and Mobility Management Function)
+     - SMF (Session Management Function)
+     - UPF (User Plane Function)
+     - UDM (Unified Data Management)
+     - NRF (Network Repository Function)
+     - AUSF (Authentication Server Function)
+     
+     Reference: 3GPP TS 23.501, TS 29.500 series";
+
+  revision 2026-03-20 {
+    description "Initial version for Unified OSS Framework v1.0.0";
+    reference "IEEE TNSM Submission - Dr. Houda Chihi Supervision";
+  }
+
+  // =============================================================
+  // AMF - Access and Mobility Management Function (5GC)
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'huawei' and uoss-nrm:ne-type = 'amf'";
+    description "AMF-specific augmentations";
+    
+    container amf-config {
+      description "AMF Configuration Parameters";
+      
+      leaf amf-id {
+        type string {
+          length "6";
+          pattern '[0-9A-Fa-f]{6}';
+        }
+        description "AMF Identifier (AMF Region ID + AMF Set ID + AMF Pointer)";
+        reference "3GPP TS 23.501 Section 5.21.3";
+      }
+      
+      leaf amf-region-id {
+        type uint8 {
+          range "0..255";
+        }
+        description "AMF Region ID (8 bits)";
+      }
+      
+      leaf amf-set-id {
+        type uint16 {
+          range "0..1023";
+        }
+        description "AMF Set ID (10 bits)";
+      }
+      
+      container namf-interfaces {
+        description "AMF Service-Based Interfaces";
+        
+        list sbi-service {
+          key "service-name";
+          leaf service-name {
+            type enumeration {
+              enum namf-comm;
+              enum namf-evts;
+              enum namf-mt;
+              enum namf-loc;
+            }
+            description "AMF SBI service name";
+          }
+          leaf service-version {
+            type string;
+            default "v1";
+          }
+          leaf service-port {
+            type uint16;
+            default 8080;
+          }
+          leaf service-uri {
+            type string;
+          }
+        }
+      }
+      
+      container n1-n2-config {
+        description "N1/N2 Interface Configuration";
+        leaf n1-interface-enabled {
+          type boolean;
+          default true;
+        }
+        leaf n2-interface-enabled {
+          type boolean;
+          default true;
+        }
+        leaf ngap-port {
+          type uint16;
+          default 38412;
+          description "NG-AP SCTP port";
+        }
+      }
+      
+      container n11-config {
+        description "N11 Interface (AMF-SMF) Configuration";
+        leaf n11-enabled {
+          type boolean;
+          default true;
+        }
+      }
+      
+      container n12-config {
+        description "N12 Interface (AMF-AUSF) Configuration";
+        leaf ausf-address {
+          type inet:ip-address;
+        }
+        leaf ausf-port {
+          type uint16;
+          default 8080;
+        }
+      }
+      
+      container n8-config {
+        description "N8 Interface (AMF-UDM) Configuration";
+        leaf udm-address {
+          type inet:ip-address;
+        }
+        leaf udm-port {
+          type uint16;
+          default 8080;
+        }
+      }
+      
+      container n22-config {
+        description "N22 Interface (AMF-NSSF) Configuration";
+        leaf nssf-address {
+          type inet:ip-address;
+        }
+        leaf nssf-port {
+          type uint16;
+          default 8080;
+        }
+      }
+      
+      container registration-config {
+        description "Registration Management Configuration";
+        leaf registration-timer {
+          type uint16;
+          units minutes;
+          default 60;
+          description "Registration periodic timer";
+        }
+        leaf max-registration-attempts {
+          type uint8;
+          default 5;
+        }
+        leaf implicit-deregistration-timer {
+          type uint16;
+          units minutes;
+          default 240;
+        }
+      }
+      
+      container paging-config {
+        description "Paging Configuration";
+        leaf paging-timer {
+          type uint8;
+          units seconds;
+          default 2;
+        }
+        leaf paging-retry-count {
+          type uint8;
+          default 3;
+        }
+        leaf paging-priority-levels {
+          type uint8 {
+            range "1..8";
+          }
+          default 8;
+        }
+      }
+      
+      container slice-config {
+        description "Network Slice Configuration";
+        list slice {
+          key "s-nssai";
+          leaf s-nssai {
+            type string;
+            description "Single Network Slice Selection Assistance Information";
+          }
+          leaf slice-service-type {
+            type enumeration {
+              enum eMBB;
+              enum URLLC;
+              enum mMTC;
+              enum V2X;
+            }
+          }
+          leaf slice-differentiator {
+            type string {
+              length "6";
+              pattern '[0-9A-Fa-f]{6}';
+            }
+            description "Slice Differentiator (optional)";
+          }
+          leaf max-ue-count {
+            type uint32;
+          }
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // SMF - Session Management Function (5GC)
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'huawei' and uoss-nrm:ne-type = 'smf'";
+    description "SMF-specific augmentations";
+    
+    container smf-config {
+      description "SMF Configuration Parameters";
+      
+      leaf smf-id {
+        type string;
+        description "SMF Instance Identifier";
+      }
+      
+      container nsmf-interfaces {
+        description "SMF Service-Based Interfaces";
+        
+        list sbi-service {
+          key "service-name";
+          leaf service-name {
+            type enumeration {
+              enum nsmf-pdusession;
+              enum nsmf-event-exposure;
+              enum nsmf-nidd;
+              enum nsmf-oam;
+            }
+          }
+          leaf service-port {
+            type uint16;
+            default 8080;
+          }
+        }
+      }
+      
+      container n4-config {
+        description "N4 Interface (SMF-UPF) Configuration";
+        leaf pfcp-port {
+          type uint16;
+          default 8805;
+          description "PFCP port";
+        }
+        leaf pfcp-heartbeat-interval {
+          type uint16;
+          units seconds;
+          default 30;
+        }
+      }
+      
+      container n7-config {
+        description "N7 Interface (SMF-PCF) Configuration";
+        leaf pcf-address {
+          type inet:ip-address;
+        }
+        leaf pcf-port {
+          type uint16;
+          default 8080;
+        }
+      }
+      
+      container n10-config {
+        description "N10 Interface (SMF-UDM) Configuration";
+        leaf udm-address {
+          type inet:ip-address;
+        }
+      }
+      
+      container n11-config {
+        description "N11 Interface (SMF-AMF) Configuration";
+        leaf amf-address {
+          type inet:ip-address;
+        }
+      }
+      
+      container pdu-config {
+        description "PDU Session Configuration";
+        leaf max-pdu-sessions {
+          type uint64;
+          default 1000000;
+        }
+        leaf pdu-session-timeout {
+          type uint32;
+          units seconds;
+          default 86400;
+        }
+        leaf pdu-ipv4-pool {
+          type string;
+          description "IPv4 address pool for PDU sessions";
+        }
+        leaf pdu-ipv6-prefix-pool {
+          type string;
+          description "IPv6 prefix pool for PDU sessions";
+        }
+      }
+      
+      container qos-config {
+        description "QoS Configuration for Sessions";
+        leaf default-5qi {
+          type uint8 {
+            range "0..255";
+          }
+          default 9;
+        }
+        leaf default-arp {
+          type uint8 {
+            range "1..15";
+          }
+          default 8;
+        }
+        leaf session-ambr-downlink {
+          type uint32;
+          units "kbps";
+          default 100000;
+        }
+        leaf session-ambr-uplink {
+          type uint32;
+          units "kbps";
+          default 50000;
+        }
+      }
+      
+      container charging-config {
+        description "Charging Configuration";
+        leaf offline-charging-enabled {
+          type boolean;
+          default true;
+        }
+        leaf online-charging-enabled {
+          type boolean;
+          default false;
+        }
+        container nchf-config {
+          description "Nchf Interface (SMF-CHF) Configuration";
+          leaf chf-address {
+            type inet:ip-address;
+          }
+          leaf chf-port {
+            type uint16;
+            default 8080;
+          }
+        }
+      }
+      
+      container upf-selection {
+        description "UPF Selection Configuration";
+        list upf-pool {
+          key "pool-name";
+          leaf pool-name {
+            type string;
+          }
+          list upf {
+            key "upf-id";
+            leaf upf-id {
+              type string;
+            }
+            leaf upf-address {
+              type inet:ip-address;
+            }
+            leaf priority {
+              type uint8 {
+                range "1..100";
+              }
+              default 50;
+            }
+            leaf capacity {
+              type uint32;
+              units "gbps";
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // UPF - User Plane Function (5GC)
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'huawei' and uoss-nrm:ne-type = 'upf'";
+    description "UPF-specific augmentations";
+    
+    container upf-config {
+      description "UPF Configuration Parameters";
+      
+      leaf upf-id {
+        type string;
+        description "UPF Instance Identifier";
+      }
+      
+      container n4-config {
+        description "N4 Interface (UPF-SMF) Configuration";
+        leaf pfcp-port {
+          type uint16;
+          default 8805;
+        }
+        leaf pfcp-node-id {
+          type string;
+          description "PFCP Node ID";
+        }
+      }
+      
+      container n3-config {
+        description "N3 Interface (gNB-UPF) Configuration";
+        leaf gtpu-port {
+          type uint16;
+          default 2152;
+        }
+        leaf gtpu-version {
+          type enumeration {
+            enum gtpu-v1;
+            enum gtpu-v2;
+          }
+          default gtpu-v1;
+        }
+      }
+      
+      container n6-config {
+        description "N6 Interface (UPF-DN) Configuration";
+        leaf n6-vlan-id {
+          type uint16 {
+            range "0..4094";
+          }
+        }
+        leaf n6-mtu {
+          type uint16 {
+            range "576..9000";
+          }
+          default 1500;
+        }
+        list ip-pool {
+          key "pool-name";
+          leaf pool-name {
+            type string;
+          }
+          leaf ipv4-start {
+            type inet:ipv4-address;
+          }
+          leaf ipv4-end {
+            type inet:ipv4-address;
+          }
+          leaf ipv6-prefix {
+            type inet:ipv6-prefix;
+          }
+        }
+      }
+      
+      container n9-config {
+        description "N9 Interface (UPF-UPF) Configuration";
+        leaf n9-enabled {
+          type boolean;
+          default true;
+        }
+      }
+      
+      container packet-processing {
+        description "Packet Processing Configuration";
+        leaf processing-mode {
+          type enumeration {
+            enum kernel;
+            enum dpdk;
+            enum smartnic;
+          }
+          default dpdk;
+        }
+        leaf cpu-cores {
+          type uint8;
+          default 4;
+        }
+        leaf hugepages {
+          type uint16;
+          units MB;
+          default 1024;
+        }
+      }
+      
+      container qos-config {
+        description "QoS Enforcement Configuration";
+        leaf gbr-policy-enforcement {
+          type boolean;
+          default true;
+        }
+        leaf rate-limit-mode {
+          type enumeration {
+            enum per-session;
+            enum per-ue;
+            enum per-slice;
+          }
+          default per-session;
+        }
+        leaf traffic-steering-enabled {
+          type boolean;
+          default false;
+        }
+      }
+      
+      container performance {
+        description "Performance Configuration";
+        leaf throughput-capacity {
+          type uint32;
+          units "gbps";
+          default 100;
+        }
+        leaf session-capacity {
+          type uint64;
+          default 5000000;
+        }
+        leaf packet-rate-pps {
+          type uint64;
+          default 100000000;
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // UDM - Unified Data Management (5GC)
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'huawei' and uoss-nrm:ne-type = 'udm'";
+    description "UDM-specific augmentations";
+    
+    container udm-config {
+      description "UDM Configuration Parameters";
+      
+      leaf udm-id {
+        type string;
+        description "UDM Instance Identifier";
+      }
+      
+      container nudm-interfaces {
+        description "UDM Service-Based Interfaces";
+        list sbi-service {
+          key "service-name";
+          leaf service-name {
+            type enumeration {
+              enum nudm-uecm;
+              enum nudm-sdm;
+              enum nudm-eea;
+              enum nudm-ueau;
+              enum nudm-pp;
+              enum nudm-niddau;
+            }
+          }
+          leaf service-port {
+            type uint16;
+            default 8080;
+          }
+        }
+      }
+      
+      container subscriber-config {
+        description "Subscriber Management Configuration";
+        leaf max-subscribers {
+          type uint64;
+          default 50000000;
+        }
+        leaf authentication-method {
+          type enumeration {
+            enum 5g-aka;
+            enum eap-aka;
+            enum eap-tls;
+          }
+          default 5g-aka;
+        }
+      }
+      
+      container udr-config {
+        description "UDR (Unified Data Repository) Configuration";
+        leaf udr-address {
+          type inet:ip-address;
+        }
+        leaf udr-port {
+          type uint16;
+          default 8080;
+        }
+        leaf data-replication-enabled {
+          type boolean;
+          default true;
+        }
+        leaf backup-interval {
+          type uint16;
+          units minutes;
+          default 60;
+        }
+      }
+      
+      container sudr-config {
+        description "SDR (Structured Data Storage) Configuration";
+        leaf sudr-enabled {
+          type boolean;
+          default true;
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // NRF - Network Repository Function (5GC)
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'huawei' and uoss-nrm:ne-type = 'nrf'";
+    description "NRF-specific augmentations";
+    
+    container nrf-config {
+      description "NRF Configuration Parameters";
+      
+      leaf nrf-id {
+        type string;
+        description "NRF Instance Identifier";
+      }
+      
+      container nnrf-interfaces {
+        description "NRF Service-Based Interfaces";
+        list sbi-service {
+          key "service-name";
+          leaf service-name {
+            type enumeration {
+              enum nnrf-nfm;
+              enum nnrf-disc;
+            }
+          }
+          leaf service-port {
+            type uint16;
+            default 8080;
+          }
+        }
+      }
+      
+      container discovery-config {
+        description "Service Discovery Configuration";
+        leaf discovery-timeout {
+          type uint16;
+          units seconds;
+          default 30;
+        }
+        leaf cache-ttl {
+          type uint16;
+          units seconds;
+          default 300;
+        }
+        leaf max-results {
+          type uint16;
+          default 100;
+        }
+      }
+      
+      container registration-config {
+        description "NF Registration Configuration";
+        leaf heartbeat-interval {
+          type uint16;
+          units seconds;
+          default 60;
+        }
+        leaf registration-validity {
+          type uint16;
+          units minutes;
+          default 10;
+        }
+        leaf auto-deregistration-enabled {
+          type boolean;
+          default true;
+        }
+      }
+      
+      container nf-profiles {
+        description "NF Profile Management";
+        list nf-type {
+          key "type";
+          leaf type {
+            type enumeration {
+              enum AMF;
+              enum SMF;
+              enum UPF;
+              enum UDM;
+              enum AUSF;
+              enum PCF;
+              enum NSSF;
+              enum NEF;
+              enum CHF;
+            }
+          }
+          leaf max-instances {
+            type uint16;
+            default 100;
+          }
+          leaf service-names {
+            type string;
+            description "Comma-separated list of service names";
+          }
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // AUSF - Authentication Server Function (5GC)
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'huawei' and uoss-nrm:ne-type = 'ausf'";
+    description "AUSF-specific augmentations";
+    
+    container ausf-config {
+      description "AUSF Configuration Parameters";
+      
+      leaf ausf-id {
+        type string;
+      }
+      
+      container nausf-interfaces {
+        description "AUSF Service-Based Interfaces";
+        list sbi-service {
+          key "service-name";
+          leaf service-name {
+            type enumeration {
+              enum nausf-auth;
+              enum nausf-sores;
+            }
+          }
+          leaf service-port {
+            type uint16;
+            default 8080;
+          }
+        }
+      }
+      
+      container auth-config {
+        description "Authentication Configuration";
+        leaf auth-method {
+          type enumeration {
+            enum 5g-aka;
+            enum eap-aka;
+            enum eap-tls;
+          }
+          default 5g-aka;
+        }
+        leaf auth-timeout {
+          type uint16;
+          units seconds;
+          default 10;
+        }
+        leaf max-retries {
+          type uint8;
+          default 3;
+        }
+      }
+      
+      container udm-integration {
+        description "UDM Integration Configuration";
+        leaf udm-address {
+          type inet:ip-address;
+        }
+        leaf udm-port {
+          type uint16;
+          default 8080;
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // 5G Core Notifications
+  // =============================================================
+  
+  notification amf-overload {
+    description "AMF overload detected";
+    leaf ne-id {
+      type string;
+    }
+    leaf cpu-utilization {
+      type uint8 {
+        range "0..100";
+      }
+    }
+    leaf session-count {
+      type uint64;
+    }
+    leaf overload-action {
+      type enumeration {
+        enum none;
+        enum reject-non-emergency;
+        enum reject-all;
+      }
+    }
+  }
+  
+  notification upf-session-threshold {
+    description "UPF session threshold reached";
+    leaf ne-id {
+      type string;
+    }
+    leaf current-sessions {
+      type uint64;
+    }
+    leaf max-sessions {
+      type uint64;
+    }
+    leaf threshold-percent {
+      type uint8;
+    }
+  }
+  
+  notification nrf-nf-status-change {
+    description "NRF NF instance status changed";
+    leaf nf-instance-id {
+      type string;
+    }
+    leaf nf-type {
+      type enumeration {
+        enum AMF;
+        enum SMF;
+        enum UPF;
+        enum UDM;
+        enum AUSF;
+        enum PCF;
+        enum NSSF;
+        enum NEF;
+      }
+    }
+    leaf old-status {
+      type enumeration {
+        enum registered;
+        enum suspended;
+        enum deregistered;
+      }
+    }
+    leaf new-status {
+      type enumeration {
+        enum registered;
+        enum suspended;
+        enum deregistered;
+      }
+    }
+  }
+
+  // =============================================================
+  // 5G Core RPCs
+  // =============================================================
+  
+  rpc deregister-amf-ue {
+    description "Deregister UE from AMF";
+    input {
+      leaf amf-id {
+        type string;
+        mandatory true;
+      }
+      leaf ue-supi {
+        type string;
+        mandatory true;
+        description "Subscription Permanent Identifier";
+      }
+      leaf dereg-type {
+        type enumeration {
+          enum network-initiated;
+          enum access-initiated;
+        }
+        default network-initiated;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+          enum ue-not-found;
+        }
+      }
+    }
+  }
+  
+  rpc release-smf-pdu-session {
+    description "Release PDU session from SMF";
+    input {
+      leaf smf-id {
+        type string;
+        mandatory true;
+      }
+      leaf pdu-session-id {
+        type uint8 {
+          range "1..255";
+        }
+        mandatory true;
+      }
+      leaf release-cause {
+        type enumeration {
+          enum ue-requested;
+          enum network-requested;
+          enum timeout;
+          enum handover;
+        }
+        default ue-requested;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+          enum session-not-found;
+        }
+      }
+      leaf released-resources {
+        type string;
+      }
+    }
+  }
+}

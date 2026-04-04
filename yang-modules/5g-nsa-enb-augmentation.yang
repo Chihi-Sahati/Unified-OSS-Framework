@@ -1,0 +1,222 @@
+module 5g-nsa-enb-augmentation {
+  yang-version 1.1;
+  namespace "urn:unified-oss:5g-nsa:enb";
+  prefix nsa-enb;
+
+  import unified-oss-core-nrm { prefix uoss-nrm; }
+  import 5g-nsa-augmentation { prefix nsa; }
+  import ietf-inet-types { prefix inet; }
+
+  organization "Unified OSS Framework - 5G NSA MeNB Support";
+  contact "Dr. Houda Chihi - IEEE Member";
+  description 
+    "YANG augmentation for Master eNodeB (MeNB) in 5G NSA architecture.
+     
+     MeNB serves as the anchor node in EN-DC dual connectivity,
+     managing the Master Cell Group (MCG) and coordinating with
+     SgNB for 5G NR secondary connectivity.
+     
+     Reference: 3GPP TS 36.300, TS 37.340";
+
+  revision 2026-03-21 {
+    description "Initial version for Unified OSS Framework v1.0.0";
+  }
+
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:element-type = 'menb'";
+    description "MeNB specific augmentations";
+    
+    container menb-configuration {
+      description "Master eNodeB configuration for EN-DC";
+      
+      leaf menb-id {
+        type string;
+        description "Unique MeNB identifier";
+      }
+      
+      leaf en-dc-enabled {
+        type boolean;
+        default true;
+        description "Enable EN-DC capability on MeNB";
+      }
+      
+      leaf max-sgnb-per-ue {
+        type uint8 {
+          range "1..8";
+        }
+        default 2;
+        description "Maximum SgNBs per UE";
+      }
+      
+      leaf x2-interface-enabled {
+        type boolean;
+        default true;
+        description "X2 interface for MeNB-SgNB communication";
+      }
+    }
+    
+    container menb-cell-config {
+      description "Cell configuration for MeNB";
+      
+      list cell {
+        key "cell-id";
+        
+        leaf cell-id {
+          type uint32;
+        }
+        
+        leaf pci {
+          type uint16 {
+            range "0..503";
+          }
+          description "Physical Cell ID";
+        }
+        
+        leaf earfcn {
+          type uint32;
+          description "E-UTRA Absolute Radio Frequency Channel Number";
+        }
+        
+        leaf transmission-power {
+          type int8 {
+            range "-30..50";
+          }
+          units "dBm";
+          description "Cell transmission power";
+        }
+        
+        leaf en-dc-cell-capable {
+          type boolean;
+          default true;
+          description "Cell supports EN-DC";
+        }
+      }
+    }
+    
+    container menb-s1-interface {
+      description "S1 interface configuration to EPC";
+      
+      leaf s1-mme-enabled {
+        type boolean;
+        default true;
+      }
+      
+      leaf s1-u-enabled {
+        type boolean;
+        default true;
+      }
+      
+      leaf mme-pool-id {
+        type string;
+        description "MME pool identifier";
+      }
+      
+      leaf sgw-address {
+        type inet:ip-address;
+        description "Serving Gateway address";
+      }
+    }
+    
+    container menb-x2-interface {
+      description "X2 interface for EN-DC coordination";
+      
+      list x2-neighbor {
+        key "sgnb-id";
+        
+        leaf sgnb-id {
+          type string;
+          description "Connected SgNB identifier";
+        }
+        
+        leaf x2-status {
+          type enumeration {
+            enum disabled;
+            enum establishing;
+            enum established;
+            enum failed;
+          }
+        }
+        
+        leaf en-dc-enabled {
+          type boolean;
+          description "EN-DC enabled on this X2 link";
+        }
+        
+        leaf scg-activation-enabled {
+          type boolean;
+          default true;
+        }
+      }
+    }
+    
+    container menb-alarms {
+      description "MeNB specific alarms";
+      
+      list alarm {
+        key "alarm-id";
+        
+        leaf alarm-id {
+          type string;
+        }
+        
+        leaf alarm-type {
+          type enumeration {
+            enum x2-connection-failure;
+            enum en-dc-session-failure;
+            enum mcg-failure;
+            enum split-bearer-failure;
+            enum sgnb-coordination-failure;
+          }
+        }
+        
+        leaf severity {
+          type uoss-nrm:severity-level;
+        }
+        
+        leaf affected-sgnb {
+          type string;
+          description "Affected SgNB if applicable";
+        }
+      }
+    }
+    
+    container menb-kpis {
+      description "MeNB performance KPIs";
+      
+      leaf en-dc-setup-success-rate {
+        type decimal64 {
+          fraction-digits 2;
+        }
+        units "percent";
+      }
+      
+      leaf mcg-throughput {
+        type uint64;
+        units "Mbps";
+      }
+      
+      leaf sgnb-addition-success-rate {
+        type decimal64 {
+          fraction-digits 2;
+        }
+        units "percent";
+      }
+      
+      leaf x2-latency {
+        type uint32;
+        units "ms";
+        description "X2 interface latency";
+      }
+      
+      leaf active-en-dc-sessions {
+        type uint32;
+        description "Number of active EN-DC sessions";
+      }
+      
+      leaf split-bearer-count {
+        type uint32;
+        description "Number of split bearers";
+      }
+    }
+  }
+}

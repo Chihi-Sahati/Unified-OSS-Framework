@@ -1,0 +1,2263 @@
+module unified-oss-tree-model {
+  yang-version 1.1;
+  namespace "urn:unified-oss:tree-model:v1";
+  prefix "oss-tree";
+
+  /***********************************************************************
+   * IMPORTS - All 18 Unified OSS Framework Modules
+   *
+   * Module #1:  Core NRM (Network Resource Model)
+   * Module #2:  Fault Management (FCAPS-F)
+   * Module #3:  Configuration Management (FCAPS-C)
+   * Module #4:  Performance Management (FCAPS-P)
+   * Module #5:  Security Management (FCAPS-S)
+   * Module #6:  Accounting Management (FCAPS-A)
+   * Modules #7-9: 5G NSA Augmentations (enb, gnb, generic)
+   * Module #10: 5G NSA Dual Connectivity
+   * Modules #11-14: Ericsson Vendor Augmentations (2G-3G, BSC, Core, MSC)
+   * Modules #15-17: Huawei Vendor Augmentations (Core, SPS, U2020)
+   * Module #18: IMS/VoLTE Augmentation
+   ***********************************************************************/
+
+  // --- Module #1: Core NRM ---
+  import unified-oss-core-nrm {
+    prefix core-nrm;
+    description
+      "Core Network Resource Model providing EPC, 5GC, legacy,
+       IMS, and signaling network element definitions.";
+  }
+
+  // --- Module #2: Fault Management ---
+  import ericsson-huawei-unified-fault-management {
+    prefix fcaps-fault;
+    description
+      "Fault Management module for vendor-neutral alarm handling,
+       correlation, root-cause analysis, and service impact assessment.";
+  }
+
+  // --- Module #3: Configuration Management ---
+  import ericsson-huawei-unified-configuration-management {
+    prefix fcaps-config;
+    description
+      "Configuration Management module for provisioning, change
+       management, policy enforcement, validation, and rollback.";
+  }
+
+  // --- Module #4: Performance Management ---
+  import ericsson-huawei-unified-performance-management {
+    prefix fcaps-perf;
+    description
+      "Performance Management module for KPI tracking, metrics
+       collection, threshold monitoring, and anomaly detection.";
+  }
+
+  // --- Module #5: Security Management ---
+  import ericsson-huawei-unified-security-management {
+    prefix fcaps-sec;
+    description
+      "Security Management module for authentication, RBAC,
+       audit logging, threat detection, and compliance tracking.";
+  }
+
+  // --- Module #6: Accounting Management ---
+  import ericsson-huawei-unified-accounting-management {
+    prefix fcaps-acct;
+    description
+      "Accounting Management module for resource metering,
+       license tracking, billing, cost allocation, and budgeting.";
+  }
+
+  // --- Modules #7: 5G NSA General Augmentation ---
+  import 5g-nsa-augmentation {
+    prefix nsa;
+    description
+      "5G Non-Standalone augmentation for MeNB, SgNB,
+       and EN-DC session management.";
+  }
+
+  // --- Module #8: 5G NSA eNodeB Augmentation ---
+  import 5g-nsa-enb-augmentation {
+    prefix nsa-enb;
+    description
+      "5G NSA eNodeB-specific augmentation for 4G anchor
+       base station configuration and monitoring.";
+  }
+
+  // --- Module #9: 5G NSA gNodeB Augmentation ---
+  import 5g-nsa-gnb-augmentation {
+    prefix nsa-gnb;
+    description
+      "5G NSA gNodeB-specific augmentation for 5G NR
+       secondary node configuration and monitoring.";
+  }
+
+  // --- Module #10: 5G NSA Dual Connectivity ---
+  import 5g-nsa-dual-connectivity {
+    prefix nsa-dc;
+    description
+      "EN-DC dual connectivity management for MCG, SCG,
+       split bearer, and session lifecycle.";
+  }
+
+  // --- Module #11: Ericsson 2G/3G Augmentation ---
+  import ericsson-2g-3g-augmentation {
+    prefix eric-2g3g;
+    description
+      "Ericsson 2G GSM and 3G UMTS augmentation for BSC,
+       MSC, RNC, BTS, and NodeB management.";
+  }
+
+  // --- Module #12: Ericsson BSC Augmentation ---
+  import ericsson-bsc-augmentation {
+    prefix eric-bsc;
+    description
+      "Ericsson BSC-specific augmentation for Base Station
+       Controller configuration and performance.";
+  }
+
+  // --- Module #13: Ericsson Core Augmentation ---
+  import ericsson-core-augmentation {
+    prefix eric-core;
+    description
+      "Ericsson core network augmentation for MSC Server,
+       MGW, and core element management.";
+  }
+
+  // --- Module #14: Ericsson MSC Augmentation ---
+  import ericsson-msc-augmentation {
+    prefix eric-msc;
+    description
+      "Ericsson MSC-specific augmentation for Mobile Switching
+       Center voice and circuit-switched management.";
+  }
+
+  // --- Module #15: Huawei Core Augmentation ---
+  import huawei-core-augmentation {
+    prefix hcore;
+    description
+      "Huawei core network augmentation for CN element
+       management and vendor-specific extensions.";
+  }
+
+  // --- Module #16: Huawei SPS Augmentation ---
+  import huawei-sps-augmentation {
+    prefix hsps;
+    description
+      "Huawei SPS (Service Processing System) augmentation
+       for signaling and service platform management.";
+  }
+
+  // --- Module #17: Huawei U2020 Augmentation ---
+  import huawei-u2020-augmentation {
+    prefix hu2020;
+    description
+      "Huawei U2020/iManager NMS augmentation for network
+       management system integration.";
+  }
+
+  // --- Module #18: IMS/VoLTE Augmentation ---
+  import ims-volte-augmentation {
+    prefix ims-volte;
+    description
+      "IMS/VoLTE augmentation for P-CSCF, I-CSCF, S-CSCF,
+       TAS, VoLTE AS, and SIP session management.";
+  }
+
+  // --- Standard Library Imports ---
+  import ietf-yang-types {
+    prefix yang;
+    description "Standard YANG type definitions.";
+  }
+  import ietf-inet-types {
+    prefix inet;
+    description "Standard inet type definitions.";
+  }
+
+  /***********************************************************************
+   * MODULE METADATA
+   ***********************************************************************/
+
+  organization
+    "Unified OSS Framework Consortium";
+
+  contact
+    "Unified OSS Framework Team
+     Email: oss-framework@example.com
+     Primary: Dr. Houda Chihi - IEEE Member, TechWomen 2019 Fellow";
+
+  description
+    "Unified OSS Tree Model - Single Entry Point for the Complete YANG Model.
+
+     This module aggregates all 18 YANG modules of the Unified OSS Framework
+     into a single coherent tree structure. It provides a unified management
+     view across multi-vendor (Ericsson, Huawei), multi-generation (2G/3G/4G/5G),
+     and multi-technology (Core, RAN, IMS, Signaling) network environments.
+
+     ARCHITECTURE:
+
+     The unified tree is organized into three primary domains:
+
+     1. FCAPS Domain (Fault, Configuration, Accounting, Performance, Security)
+        - fault-management:     Alarm lifecycle, correlation, root-cause analysis
+        - configuration-management: Provisioning, change mgmt, policy enforcement
+        - accounting-management:  Resource metering, billing, license tracking
+        - performance-management: KPI tracking, metrics collection, anomaly detection
+        - security-management:    Authentication, RBAC, audit, threat detection
+
+     2. Network Inventory Domain
+        - core-network:          EPC (4G), 5GC, Legacy (2G/3G), IMS, Signaling
+        - en-dc-management:      5G NSA dual connectivity sessions
+        - legacy-network-config: 2G/3G BSC, MSC, RNC configurations
+
+     3. Vendor Extensions Domain
+        - ericsson-augmentations: 2G-3G, BSC, Core, MSC specific extensions
+        - huawei-augmentations:    Core, SPS, U2020 specific extensions
+        - 5g-nsa-augmentations:    MeNB, SgNB, EN-DC augmentations
+        - ims-volte-augmentation:  IMS Core, TAS, VoLTE AS extensions
+
+     DESIGN PRINCIPLES:
+
+     - Single Entry Point: All YANG data accessible via /unified-oss root
+     - Vendor Neutrality: Normalized data model across Ericsson/Huawei
+     - Generation Agnostic: Unified view of 2G through 5G elements
+     - Standards Based: 3GPP, ITU-T, TM Forum, IETF compliance
+     - Extensible: Augmentation-friendly for future module additions
+
+     DEPENDENCY GRAPH:
+
+     unified-oss-tree-model (this module)
+     |-- unified-oss-core-nrm
+     |   |-- 5g-nsa-augmentation
+     |   |   |-- 5g-nsa-enb-augmentation
+     |   |   |-- 5g-nsa-gnb-augmentation
+     |   |-- 5g-nsa-dual-connectivity
+     |   |-- ericsson-2g-3g-augmentation
+     |   |   |-- ericsson-bsc-augmentation
+     |   |-- ericsson-core-augmentation
+     |   |-- ericsson-msc-augmentation
+     |   |-- huawei-core-augmentation
+     |   |-- huawei-sps-augmentation
+     |   |-- huawei-u2020-augmentation
+     |   |-- ims-volte-augmentation
+     |-- ericsson-huawei-unified-fault-management
+     |-- ericsson-huawei-unified-configuration-management
+     |-- ericsson-huawei-unified-performance-management
+     |-- ericsson-huawei-unified-security-management
+     |-- ericsson-huawei-unified-accounting-management
+
+     Copyright (c) 2024 Unified OSS Framework Consortium.
+     All rights reserved.";
+
+  revision 2024-03-15 {
+    description
+      "Initial version of the Unified OSS Tree Model.
+
+       Creates a single coherent YANG tree that aggregates all 18 modules
+       into three main domains: FCAPS, Network Inventory, and Vendor
+       Extensions.
+
+       Provides:
+       - Unified root container (unified-oss) as single entry point
+       - Organized sub-containers for each management domain
+       - Module registry and version tracking
+       - Schema mapping between vendor and normalized models
+       - Tree introspection RPCs
+       - Change event notifications";
+    reference
+      "IEEE Transactions on Network and Service Management;
+       3GPP TS 28.541 - Network Resource Model (NRM);
+       3GPP TS 28.550 - Management of 5G networks;
+       ITU-T X.733 - Alarm Reporting Function;
+       ITU-T M.3100 - Generic Network Information Model;
+       TM Forum GB922 - Information Framework (SID);
+       TM Forum TMF512 - Alarm Management;
+       IETF RFC 7950 - YANG 1.1 Data Modeling Language;
+       IETF RFC 8340 - YANG Tree Diagrams;
+       IETF RFC 8341 - Network Configuration Access Control Model;
+       IETF RFC 8342 - Network Management Datastore Architecture";
+  }
+
+  /***********************************************************************
+   * FEATURE DEFINITIONS
+   *
+   * Features enable conditional compilation of model sections based
+   * on deployment requirements. Not all features need to be active
+   * in every deployment scenario.
+   ***********************************************************************/
+
+  feature full-fcaps {
+    description
+      "Enable all five FCAPS management domains.
+       When disabled, individual FCAPS features must be enabled explicitly.";
+  }
+
+  feature fault-management-enabled {
+    description
+      "Enable fault management integration in the unified tree.";
+  }
+
+  feature configuration-management-enabled {
+    description
+      "Enable configuration management integration in the unified tree.";
+  }
+
+  feature performance-management-enabled {
+    description
+      "Enable performance management integration in the unified tree.";
+  }
+
+  feature security-management-enabled {
+    description
+      "Enable security management integration in the unified tree.";
+  }
+
+  feature accounting-management-enabled {
+    description
+      "Enable accounting management integration in the unified tree.";
+  }
+
+  feature multi-vendor-support {
+    description
+      "Enable multi-vendor (Ericsson/Huawei) extension support.
+       When enabled, vendor-extension containers are available.";
+  }
+
+  feature legacy-network-support {
+    description
+      "Enable 2G/3G legacy network management.
+       Required for networks still operating GSM/UMTS elements.";
+  }
+
+  feature 5g-nsa-support {
+    description
+      "Enable 5G Non-Standalone (NSA) dual connectivity support.
+       Required for EN-DC deployments with MeNB and SgNB.";
+  }
+
+  feature ims-volte-support {
+    description
+      "Enable IMS/VoLTE management integration.
+       Required for voice-over-LTE deployments.";
+  }
+
+  feature schema-introspection {
+    description
+      "Enable YANG schema introspection RPCs.
+       Provides get-yang-tree, get-module-list, and get-schema-mapping.";
+  }
+
+  feature change-notification {
+    description
+      "Enable tree change event notifications.
+       Provides real-time alerts when the model tree changes.";
+  }
+
+  /***********************************************************************
+   * IDENTITY DEFINITIONS
+   *
+   * Hierarchical identity tree for module classification.
+   ***********************************************************************/
+
+  identity module-category-base {
+    description
+      "Base identity for module categorization in the unified tree.";
+  }
+
+  identity core-module {
+    base module-category-base;
+    description
+      "Core framework module (NRM, tree model).";
+  }
+
+  identity fcaps-module {
+    base module-category-base;
+    description
+      "FCAPS management module.";
+  }
+
+  identity vendor-augmentation-module {
+    base module-category-base;
+    description
+      "Vendor-specific augmentation module.";
+  }
+
+  identity technology-augmentation-module {
+    base module-category-base;
+    description
+      "Technology-specific augmentation module (5G NSA, IMS/VoLTE).";
+  }
+
+  /***********************************************************************
+   * TYPEDEF DEFINITIONS
+   ***********************************************************************/
+
+  typedef module-name-type {
+    description
+      "YANG module name identifier.
+       Must match the actual module statement name in the YANG file.";
+    type string {
+      length "1..128";
+      pattern "[a-zA-Z][a-zA-Z0-9_-]*";
+    }
+  }
+
+  typedef namespace-type {
+    description
+      "YANG module namespace URI.";
+    type inet:uri;
+  }
+
+  typedef tree-node-path {
+    description
+      "XPath-like path to a node in the unified YANG tree.
+       Format: /unified-oss/{domain}/{container}/{node}";
+    type string {
+      length "1..1024";
+    }
+  }
+
+  typedef schema-version-type {
+    description
+      "Unified tree model schema version.
+       Format: MAJOR.MINOR.PATCH per Semantic Versioning 2.0.";
+    type string {
+      pattern "[0-9]+\\.[0-9]+\\.[0-9]+";
+    }
+  }
+
+  typedef module-status-type {
+    description
+      "Operational status of an imported module.";
+    type enumeration {
+      enum LOADED {
+        value 1;
+        description "Module successfully loaded and parsed.";
+      }
+      enum ACTIVE {
+        value 2;
+        description "Module actively contributing data to the tree.";
+      }
+      enum DEPRECATED {
+        value 3;
+        description "Module loaded but marked for future removal.";
+      }
+      enum ERROR {
+        value 4;
+        description "Module failed to load or has schema errors.";
+      }
+      enum DISABLED {
+        value 5;
+        description "Module explicitly disabled by configuration.";
+      }
+    }
+  }
+
+  typedef change-event-type {
+    description
+      "Type of change event that occurred in the model tree.";
+    type enumeration {
+      enum MODULE_LOADED {
+        value 1;
+        description "A new module was loaded into the tree.";
+      }
+      enum MODULE_UNLOADED {
+        value 2;
+        description "A module was unloaded from the tree.";
+      }
+      enum CONTAINER_CREATED {
+        value 3;
+        description "A new data container was created.";
+      }
+      enum CONTAINER_DELETED {
+        value 4;
+        description "A data container was removed.";
+      }
+      enum LEAF_MODIFIED {
+        value 5;
+        description "A leaf value was changed.";
+      }
+      enum LIST_ENTRY_ADDED {
+        value 6;
+        description "A list entry was added.";
+      }
+      enum LIST_ENTRY_REMOVED {
+        value 7;
+        description "A list entry was removed.";
+      }
+      enum AUGMENT_APPLIED {
+        value 8;
+        description "An augmentation was applied to the tree.";
+      }
+      enum AUGMENT_REMOVED {
+        value 9;
+        description "An augmentation was removed from the tree.";
+      }
+      enum SCHEMA_VALIDATION_ERROR {
+        value 10;
+        description "A schema validation error was detected.";
+      }
+    }
+  }
+
+  /***********************************************************************
+   * GROUPING DEFINITIONS
+   *
+   * Reusable groupings for common structures in the unified tree.
+   ***********************************************************************/
+
+  grouping module-info-common {
+    description
+      "Common module information attributes used in the module registry.";
+
+    leaf module-name {
+      type module-name-type;
+      mandatory true;
+      description "YANG module name.";
+    }
+
+    leaf namespace {
+      type namespace-type;
+      mandatory true;
+      description "Module namespace URI.";
+    }
+
+    leaf prefix {
+      type string {
+        length "1..32";
+      }
+      description "Module prefix used in import statements.";
+    }
+
+    leaf revision {
+      type string;
+      description "Module revision date (YYYY-MM-DD).";
+    }
+
+    leaf yang-version {
+      type string;
+      default "1.1";
+      description "YANG language version.";
+    }
+
+    leaf status {
+      type module-status-type;
+      default LOADED;
+      config false;
+      description "Current operational status of the module.";
+    }
+
+    leaf schema-file {
+      type string;
+      description "Path to the YANG module source file.";
+    }
+  }
+
+  grouping tree-branch-summary {
+    description
+      "Summary statistics for a branch of the unified tree.";
+
+    leaf container-count {
+      type uint32;
+      config false;
+      description "Number of container nodes in this branch.";
+    }
+
+    leaf list-count {
+      type uint32;
+      config false;
+      description "Number of list nodes in this branch.";
+    }
+
+    leaf leaf-count {
+      type uint32;
+      config false;
+      description "Number of leaf nodes in this branch.";
+    }
+
+    leaf total-nodes {
+      type uint32;
+      config false;
+      description "Total number of data nodes in this branch.";
+    }
+
+    leaf depth {
+      type uint8;
+      config false;
+      description "Maximum depth of the tree branch.";
+    }
+  }
+
+  grouping unified-tree-metadata {
+    description
+      "Metadata for the unified YANG tree model.";
+
+    leaf tree-version {
+      type schema-version-type;
+      config false;
+      description "Current unified tree model version.";
+    }
+
+    leaf generated-timestamp {
+      type yang:date-and-time;
+      config false;
+      description "Timestamp when this tree was generated/compiled.";
+    }
+
+    leaf total-modules {
+      type uint8;
+      config false;
+      description "Total number of modules integrated in the tree.";
+    }
+
+    leaf total-containers {
+      type uint32;
+      config false;
+      description "Total number of container nodes across all modules.";
+    }
+
+    leaf total-lists {
+      type uint32;
+      config false;
+      description "Total number of list nodes across all modules.";
+    }
+
+    leaf total-leafs {
+      type uint32;
+      config false;
+      description "Total number of leaf nodes across all modules.";
+    }
+
+    leaf total-rpcs {
+      type uint16;
+      config false;
+      description "Total number of RPC operations available.";
+    }
+
+    leaf total-notifications {
+      type uint16;
+      config false;
+      description "Total number of notification definitions.";
+    }
+  }
+
+  /***********************************************************************
+   * ROOT CONTAINER - unified-oss
+   *
+   * Single entry point for the entire Unified OSS YANG data model.
+   * All management data is accessible under this container.
+   *
+   * Tree Structure:
+   *   unified-oss:
+   *   +-- system-metadata
+   *   +-- module-registry
+   *   +-- fcaps
+   *   |   +-- fault-management
+   *   |   +-- configuration-management
+   *   |   +-- performance-management
+   *   |   +-- security-management
+   *   |   +-- accounting-management
+   *   +-- network-inventory
+   *   |   +-- core-network
+   *   |   +-- en-dc-management
+   *   |   +-- legacy-network-config
+   *   +-- vendor-extensions
+   *       +-- ericsson
+   *       +-- huawei
+   *       +-- 5g-nsa
+   *       +-- ims-volte
+   ***********************************************************************/
+
+  container unified-oss {
+    description
+      "Root container for the Unified OSS Framework YANG tree model.
+       Provides a single entry point to access all managed network
+       resources, FCAPS data, and vendor-specific extensions.
+
+       This container serves as the top-level organizing structure
+       for multi-vendor, multi-generation network management.
+       All subordinate containers map directly to imported modules
+       or organize their augmentation targets.";
+
+    /*********************************************************************
+     * SYSTEM METADATA
+     * Provides version information, compilation timestamp, and tree
+     * statistics for the unified model.
+     *********************************************************************/
+
+    container system-metadata {
+      config false;
+      description
+        "System-level metadata for the unified tree model.
+         Contains version tracking, generation info, and tree statistics.";
+
+      uses unified-tree-metadata;
+
+      leaf framework-version {
+        type string;
+        description "Unified OSS Framework version string.";
+      }
+
+      leaf yang-library-version {
+        type string;
+        description "YANG Library (RFC 8525) version if supported.";
+      }
+    }
+
+    /*********************************************************************
+     * MODULE REGISTRY
+     * Tracks all 18 imported modules with their status, namespace,
+     * and schema information.
+     *********************************************************************/
+
+    container module-registry {
+      description
+        "Registry of all imported YANG modules in the unified tree.
+         Tracks module status, dependencies, and schema information.
+
+         Each entry corresponds to one of the 18 modules that compose
+         the Unified OSS Framework YANG model.";
+
+      list module {
+        key "module-name";
+        description "Individual module registration entry.";
+
+        uses module-info-common;
+
+        leaf category {
+          type identityref {
+            base module-category-base;
+          }
+          mandatory true;
+          description "Module category classification.";
+        }
+
+        leaf-list imports {
+          type module-name-type;
+          description "List of modules this module imports.";
+        }
+
+        leaf-list imported-by {
+          type module-name-type;
+          description "List of modules that import this module.";
+        }
+
+        leaf-list exported-groupings {
+          type string;
+          description "Grouping names exported by this module.";
+        }
+
+        leaf-list exported-identities {
+          type string;
+          description "Identity names exported by this module.";
+        }
+
+        leaf-list exported-containers {
+          type string;
+          description "Top-level container names exported by this module.";
+        }
+
+        leaf-list exported-augments {
+          type string;
+          description "Augment target paths defined by this module.";
+        }
+
+        leaf-list exported-rpcs {
+          type string;
+          description "RPC names exported by this module.";
+        }
+
+        leaf-list exported-notifications {
+          type string;
+          description "Notification names exported by this module.";
+        }
+
+        container tree-statistics {
+          config false;
+          description "Tree statistics for this module's contribution.";
+          uses tree-branch-summary;
+        }
+      }
+    }
+
+    /*********************************************************************
+     * FCAPS DOMAIN
+     *
+     * The FCAPS (Fault, Configuration, Accounting, Performance,
+     * Security) domain provides the five pillars of telecom management.
+     *
+     * Each sub-container maps to its corresponding top-level container
+     * in the imported FCAPS module. The containers provide logical
+     * grouping while the actual data nodes come from the imported modules.
+     *********************************************************************/
+
+    container fcaps {
+      description
+        "FCAPS Management Domain.
+
+        Organizes the five ITU-T recommended management functional
+        areas into a unified hierarchy:
+
+        - Fault (F):      Alarm management, correlation, root-cause analysis
+        - Configuration (C): Provisioning, change management, policy enforcement
+        - Accounting (A):  Resource metering, billing, cost allocation
+        - Performance (P): KPI tracking, metrics collection, threshold monitoring
+        - Security (S):    Authentication, RBAC, audit logging, threat detection
+
+        Reference: ITU-T M.3400 - TMN Management Functions";
+
+      container fault-management {
+        if-feature fault-management-enabled;
+        description
+          "Fault Management (FCAPS-F) integration.
+
+          Maps to container 'faults' from module
+          'ericsson-huawei-unified-fault-management'.
+
+          Capabilities:
+          - Normalized alarm severity (CRITICAL/MAJOR/MINOR/WARNING/CLEARED)
+          - Cross-vendor alarm correlation (Ericsson ENM, Huawei U2000)
+          - Automated root-cause analysis
+          - Service impact assessment
+          - Remedial action tracking
+          - Alarm suppression and escalation";
+
+        leaf data-source-path {
+          type string;
+          default "/faults";
+          config false;
+          description
+            "Path to the fault management data container.
+             Actual data resides at the module's top-level 'faults' container.";
+        }
+
+        container summary {
+          config false;
+          description "Fault management summary statistics.";
+
+          leaf total-active-alarms {
+            type uint32;
+            description "Count of currently active alarms across all vendors.";
+          }
+
+          leaf critical-alarms {
+            type uint32;
+            description "Count of CRITICAL severity alarms.";
+          }
+
+          leaf correlation-groups {
+            type uint32;
+            description "Number of active alarm correlation groups.";
+          }
+
+          leaf pending-escalations {
+            type uint32;
+            description "Count of alarms pending escalation action.";
+          }
+
+          uses tree-branch-summary;
+        }
+      }
+
+      container configuration-management {
+        if-feature configuration-management-enabled;
+        description
+          "Configuration Management (FCAPS-C) integration.
+
+          Maps to container 'configuration-management' from module
+          'ericsson-huawei-unified-configuration-management'.
+
+          Capabilities:
+          - Configuration profiles and templates
+          - Multi-stage approval workflow
+          - Vendor-neutral policy enforcement
+          - Validation and rollback support
+          - Scheduling and preview
+          - Audit trail and compliance tracking";
+
+        leaf data-source-path {
+          type string;
+          default "/configuration-management";
+          config false;
+          description
+            "Path to the configuration management data container.";
+        }
+
+        container summary {
+          config false;
+          description "Configuration management summary statistics.";
+
+          leaf pending-change-requests {
+            type uint32;
+            description "Change requests awaiting approval.";
+          }
+
+          leaf deployed-configurations {
+            type uint32;
+            description "Currently deployed configuration versions.";
+          }
+
+          leaf active-templates {
+            type uint32;
+            description "Number of active configuration templates.";
+          }
+
+          leaf validation-failures {
+            type uint32;
+            description "Configurations that failed validation.";
+          }
+
+          uses tree-branch-summary;
+        }
+      }
+
+      container accounting-management {
+        if-feature accounting-management-enabled;
+        description
+          "Accounting Management (FCAPS-A) integration.
+
+          Maps to container 'accounting-management' from module
+          'ericsson-huawei-unified-accounting-management'.
+
+          Capabilities:
+          - Resource consumption tracking and metering
+          - License management and compliance
+          - Billing record generation and invoicing
+          - Cost allocation and chargeback
+          - Rate card management
+          - Usage analytics and reporting";
+
+        leaf data-source-path {
+          type string;
+          default "/accounting-management";
+          config false;
+          description
+            "Path to the accounting management data container.";
+        }
+
+        container summary {
+          config false;
+          description "Accounting management summary statistics.";
+
+          leaf active-licenses {
+            type uint32;
+            description "Currently active software licenses.";
+          }
+
+          leaf license-compliance-status {
+            type enumeration {
+              enum COMPLIANT;
+              enum WARNING;
+              enum OVER_LIMIT;
+              enum VIOLATION;
+            }
+            description "Overall license compliance status.";
+          }
+
+          leaf pending-invoices {
+            type uint32;
+            description "Invoices pending review or payment.";
+          }
+
+          leaf budget-utilization-percent {
+            type decimal64 {
+              fraction-digits 2;
+              range "0.00..100.00";
+            }
+            description "Overall budget utilization percentage.";
+
+            uses tree-branch-summary;
+          }
+        }
+      }
+
+      container performance-management {
+        if-feature performance-management-enabled;
+        description
+          "Performance Management (FCAPS-P) integration.
+
+          Maps to container 'performance-management' from module
+          'ericsson-huawei-unified-performance-management'.
+
+          Capabilities:
+          - Real-time metrics collection (SNMP, NETCONF, streaming)
+          - KPI definition and calculation engine
+          - Threshold monitoring with hysteresis
+          - Time-series data management
+          - Anomaly detection and trend analysis
+          - Dashboard and report generation";
+
+        leaf data-source-path {
+          type string;
+          default "/performance-management";
+          config false;
+          description
+            "Path to the performance management data container.";
+        }
+
+        container summary {
+          config false;
+          description "Performance management summary statistics.";
+
+          leaf metrics-monitored {
+            type uint32;
+            description "Total metrics being actively monitored.";
+          }
+
+          leaf kpis-defined {
+            type uint32;
+            description "Total KPI definitions configured.";
+          }
+
+          leaf threshold-violations {
+            type uint32;
+            description "Current threshold violations across all metrics.";
+          }
+
+          leaf anomalies-detected {
+            type uint32;
+            description "Anomalies detected in current analysis window.";
+          }
+
+          uses tree-branch-summary;
+        }
+      }
+
+      container security-management {
+        if-feature security-management-enabled;
+        description
+          "Security Management (FCAPS-S) integration.
+
+          Maps to container 'security-management' from module
+          'ericsson-huawei-unified-security-management'.
+
+          Capabilities:
+          - Centralized authentication (LDAP, RADIUS, OAuth2)
+          - Role-based access control (RBAC)
+          - Zero Trust policy enforcement
+          - Comprehensive audit logging
+          - Threat detection and incident response
+          - Encryption management
+          - Compliance tracking (SOC2, ISO27001, GDPR)";
+
+        leaf data-source-path {
+          type string;
+          default "/security-management";
+          config false;
+          description
+            "Path to the security management data container.";
+        }
+
+        container summary {
+          config false;
+          description "Security management summary statistics.";
+
+          leaf active-user-accounts {
+            type uint32;
+            description "Currently active user accounts.";
+          }
+
+          leaf defined-roles {
+            type uint32;
+            description "Total RBAC roles defined.";
+          }
+
+          leaf active-policies {
+            type uint32;
+            description "Currently active access control policies.";
+          }
+
+          leaf open-security-events {
+            type uint32;
+            description "Security events requiring investigation.";
+          }
+
+          uses tree-branch-summary;
+        }
+      }
+    }
+
+    /*********************************************************************
+     * NETWORK INVENTORY DOMAIN
+     *
+     * Manages the complete network resource inventory across all
+     * generations and technologies.
+     *
+     * Tree Structure:
+     *   network-inventory:
+     *   +-- core-network (4G EPC, 5G Core, Legacy, IMS, Signaling)
+     *   +-- en-dc-management (5G NSA dual connectivity sessions)
+     *   +-- legacy-network-config (2G/3G BSC, MSC, RNC configurations)
+     *********************************************************************/
+
+    container network-inventory {
+      description
+        "Network Inventory Domain.
+
+        Manages all network resource instances across technologies:
+
+        - 4G EPC:  MME, SGW, PGW, HSS, PCRF
+        - 5G Core: AMF, SMF, UPF, UDM, NRF, PCF, AUSF, NSSF, NEF
+        - Legacy:   SGSN, GGSN
+        - IMS:      IMS Core, TAS
+        - Signaling: DRA, DEA, STP
+        - 5G NSA:   MeNB, SgNB, EN-DC sessions
+        - 2G/3G:    BSC, MSC, RNC, BTS, NodeB
+
+        Reference: 3GPP TS 28.541 - Network Resource Model";
+
+      container core-network-inventory {
+        description
+          "Core Network Resource Inventory.
+
+          This container provides the organizational view for the
+          'core-network' container defined in the
+          'unified-oss-core-nrm' module.
+
+          The actual data tree structure is:
+            core-network
+            +-- epc (4G EPC: MME, SGW, PGW, HSS, PCRF)
+            +-- fivegc (5G Core: AMF, SMF, UPF, UDM, NRF, etc.)
+            +-- legacy (2G/3G: SGSN, GGSN)
+            +-- ims (IMS Core, TAS)
+            +-- signaling (DRA, DEA, STP)";
+
+        leaf data-source-path {
+          type string;
+          default "/core-network";
+          config false;
+          description
+            "Path to the core-network data container from core-nrm module.";
+        }
+
+        container summary {
+          config false;
+          description "Core network inventory summary.";
+
+          leaf total-network-functions {
+            type uint32;
+            description "Total network function instances across all generations.";
+          }
+
+          leaf epc-elements {
+            type uint32;
+            description "Count of 4G EPC network elements.";
+          }
+
+          leaf fivegc-elements {
+            type uint32;
+            description "Count of 5G Core network functions.";
+          }
+
+          leaf legacy-elements {
+            type uint32;
+            description "Count of 2G/3G legacy elements.";
+          }
+
+          leaf ims-elements {
+            type uint32;
+            description "Count of IMS/VoLTE elements.";
+          }
+
+          leaf signaling-elements {
+            type uint32;
+            description "Count of signaling elements (DRA, STP).";
+          }
+
+          container vendor-distribution {
+            config false;
+            description "Network function distribution by vendor.";
+
+            leaf ericsson-count {
+              type uint32;
+              description "Ericsson-managed network functions.";
+            }
+
+            leaf huawei-count {
+              type uint32;
+              description "Huawei-managed network functions.";
+            }
+
+            leaf multi-vendor-sites {
+              type uint32;
+              description "Sites with equipment from both vendors.";
+            }
+          }
+
+          uses tree-branch-summary;
+        }
+      }
+
+      container en-dc-management {
+        if-feature 5g-nsa-support;
+        description
+          "5G NSA EN-DC Dual Connectivity Management.
+
+          Maps to container 'en-dc-management' from module
+          '5g-nsa-dual-connectivity'.
+
+          Manages:
+          - EN-DC session lifecycle (setup, active, release)
+          - Master Cell Group (MCG) configuration
+          - Secondary Cell Group (SCG) configuration
+          - Split bearer management
+          - Bearer type assignment (MCG, SCG, Split)
+          - Performance metrics for dual connectivity
+
+          Reference: 3GPP TS 37.340 - EN-DC";
+
+        leaf data-source-path {
+          type string;
+          default "/en-dc-management";
+          config false;
+          description
+            "Path to the EN-DC management data container.";
+        }
+
+        container summary {
+          config false;
+          description "EN-DC management summary.";
+
+          leaf active-en-dc-sessions {
+            type uint32;
+            description "Currently active EN-DC sessions.";
+          }
+
+          leaf total-throughput-gbps {
+            type decimal64 {
+              fraction-digits 2;
+            }
+            description "Combined throughput across all EN-DC sessions.";
+          }
+
+          leaf split-bearer-efficiency {
+            type decimal64 {
+              fraction-digits 2;
+            }
+            description "Average split bearer efficiency percentage.";
+          }
+
+          uses tree-branch-summary;
+        }
+      }
+
+      container legacy-network-config {
+        if-feature legacy-network-support;
+        description
+          "2G/3G Legacy Network Configuration.
+
+          Maps to container 'legacy-network-config' from module
+          'ericsson-2g-3g-augmentation'.
+
+          Manages:
+          - GSM: BSC, BTS configurations
+          - UMTS: RNC, NodeB configurations
+          - Circuit Switched: MSC pool configurations
+          - Frequency band assignments
+          - Location/Service Area Codes
+
+          Reference: 3GPP TS 23.002 - Network Architecture";
+
+        leaf data-source-path {
+          type string;
+          default "/legacy-network-config";
+          config false;
+          description
+            "Path to the legacy network configuration container.";
+        }
+
+        container summary {
+          config false;
+          description "Legacy network summary.";
+
+          leaf bsc-count {
+            type uint32;
+            description "Number of BSC instances.";
+          }
+
+          leaf rnc-count {
+            type uint32;
+            description "Number of RNC instances.";
+          }
+
+          leaf msc-count {
+            type uint32;
+            description "Number of MSC instances.";
+          }
+
+          uses tree-branch-summary;
+        }
+      }
+    }
+
+    /*********************************************************************
+     * VENDOR EXTENSIONS DOMAIN
+     *
+     * Organizes all vendor-specific and technology-specific
+     * augmentations into a logical hierarchy.
+     *
+     * Tree Structure:
+     *   vendor-extensions:
+     *   +-- ericsson
+     *   |   +-- 2g-3g (BSC, MSC, RNC augmentations)
+     *   |   +-- bsc (BSC-specific)
+     *   |   +-- core (Core-specific)
+     *   |   +-- msc (MSC-specific)
+     *   +-- huawei
+     *   |   +-- core (Core network)
+     *   |   +-- sps (SPS platform)
+     *   |   +-- u2020 (U2020 NMS)
+     *   +-- 5g-nsa
+     *   |   +-- general (MeNB/SgNB)
+     *   |   +-- enb (eNodeB-specific)
+     *   |   +-- gnb (gNodeB-specific)
+     *   |   +-- dual-connectivity (EN-DC)
+     *   +-- ims-volte
+     *       +-- ims-core (P/I/S-CSCF)
+     *       +-- tas (Telephony AS)
+     *       +-- volte-as (VoLTE AS)
+     *********************************************************************/
+
+    container vendor-extensions {
+      if-feature multi-vendor-support;
+      description
+        "Vendor Extensions Domain.
+
+        Organizes all vendor-specific and technology-specific YANG
+        augmentations into a unified hierarchy. Each vendor section
+        groups related augmentation modules.
+
+        Augmentation modules extend the base network-element model
+        from the core NRM with vendor or technology-specific attributes,
+        configuration parameters, and operational data.";
+
+      container ericsson {
+        description
+          "Ericsson vendor extensions.
+
+          Aggregates augmentations from:
+          - ericsson-2g-3g-augmentation (GSM, UMTS elements)
+          - ericsson-bsc-augmentation (BSC-specific parameters)
+          - ericsson-core-augmentation (Core network extensions)
+          - ericsson-msc-augmentation (MSC-specific parameters)
+
+          These modules augment the network-element list from the
+          core NRM module with Ericsson-specific configuration,
+          alarms, and performance metrics.";
+
+        container augmentation-2g-3g {
+          description
+            "Ericsson 2G/3G augmentation registration.
+            Module: ericsson-2g-3g-augmentation
+            Prefix: eric-2g3g
+            Namespace: urn:unified-oss:vendor:ericsson:2g-3g";
+
+          leaf module-name {
+            type string;
+            default "ericsson-2g-3g-augmentation";
+            config false;
+          }
+
+          leaf augment-target {
+            type string;
+            default "/unified-oss-core-nrm:network-elements/unified-oss-core-nrm:network-element";
+            config false;
+            description "XPath target of the augmentation.";
+          }
+
+          leaf-list supported-element-types {
+            type string;
+            config false;
+            description "Element types supported by this augmentation.";
+          }
+
+          container capabilities {
+            config false;
+            description "Augmentation capabilities summary.";
+            uses tree-branch-summary;
+          }
+        }
+
+        container augmentation-bsc {
+          description
+            "Ericsson BSC-specific augmentation registration.
+            Module: ericsson-bsc-augmentation
+            Prefix: eric-bsc
+            Namespace: urn:unified-oss:vendor:ericsson:bsc";
+
+          leaf module-name {
+            type string;
+            default "ericsson-bsc-augmentation";
+            config false;
+          }
+
+          leaf augment-target {
+            type string;
+            default "/unified-oss-core-nrm:network-elements/unified-oss-core-nrm:network-element";
+            config false;
+            description "XPath target of the augmentation.";
+          }
+
+          uses tree-branch-summary;
+        }
+
+        container augmentation-core {
+          description
+            "Ericsson Core network augmentation registration.
+            Module: ericsson-core-augmentation
+            Prefix: eric-core
+            Namespace: urn:unified-oss:vendor:ericsson:core";
+
+          leaf module-name {
+            type string;
+            default "ericsson-core-augmentation";
+            config false;
+          }
+
+          leaf augment-target {
+            type string;
+            default "/unified-oss-core-nrm:network-elements/unified-oss-core-nrm:network-element";
+            config false;
+            description "XPath target of the augmentation.";
+          }
+
+          uses tree-branch-summary;
+        }
+
+        container augmentation-msc {
+          description
+            "Ericsson MSC augmentation registration.
+            Module: ericsson-msc-augmentation
+            Prefix: eric-msc
+            Namespace: urn:unified-oss:vendor:ericsson:msc";
+
+          leaf module-name {
+            type string;
+            default "ericsson-msc-augmentation";
+            config false;
+          }
+
+          leaf augment-target {
+            type string;
+            default "/unified-oss-core-nrm:network-elements/unified-oss-core-nrm:network-element";
+            config false;
+            description "XPath target of the augmentation.";
+          }
+
+          uses tree-branch-summary;
+        }
+      }
+
+      container huawei {
+        description
+          "Huawei vendor extensions.
+
+          Aggregates augmentations from:
+          - huawei-core-augmentation (Core network)
+          - huawei-sps-augmentation (SPS platform)
+          - huawei-u2020-augmentation (U2020/iManager NMS)
+
+          These modules extend the base model with Huawei-specific
+          parameters for managing Huawei equipment.";
+
+        container augmentation-core {
+          description
+            "Huawei Core augmentation registration.
+            Module: huawei-core-augmentation
+            Prefix: hcore
+            Namespace: urn:unified-oss:vendor:huawei:core";
+
+          leaf module-name {
+            type string;
+            default "huawei-core-augmentation";
+            config false;
+          }
+
+          leaf augment-target {
+            type string;
+            default "/unified-oss-core-nrm:network-elements/unified-oss-core-nrm:network-element";
+            config false;
+            description "XPath target of the augmentation.";
+          }
+
+          uses tree-branch-summary;
+        }
+
+        container augmentation-sps {
+          description
+            "Huawei SPS augmentation registration.
+            Module: huawei-sps-augmentation
+            Prefix: hsps
+            Namespace: urn:unified-oss:vendor:huawei:sps";
+
+          leaf module-name {
+            type string;
+            default "huawei-sps-augmentation";
+            config false;
+          }
+
+          leaf augment-target {
+            type string;
+            default "/unified-oss-core-nrm:network-elements/unified-oss-core-nrm:network-element";
+            config false;
+            description "XPath target of the augmentation.";
+          }
+
+          uses tree-branch-summary;
+        }
+
+        container augmentation-u2020 {
+          description
+            "Huawei U2020/iManager augmentation registration.
+            Module: huawei-u2020-augmentation
+            Prefix: hu2020
+            Namespace: urn:unified-oss:vendor:huawei:u2020";
+
+          leaf module-name {
+            type string;
+            default "huawei-u2020-augmentation";
+            config false;
+          }
+
+          leaf augment-target {
+            type string;
+            default "/unified-oss-core-nrm:network-elements/unified-oss-core-nrm:network-element";
+            config false;
+            description "XPath target of the augmentation.";
+          }
+
+          uses tree-branch-summary;
+        }
+      }
+
+      container 5g-nsa {
+        if-feature 5g-nsa-support;
+        description
+          "5G Non-Standalone (NSA) extensions.
+
+          Aggregates augmentations from:
+          - 5g-nsa-augmentation (General MeNB/SgNB, EN-DC)
+          - 5g-nsa-enb-augmentation (eNodeB-specific)
+          - 5g-nsa-gnb-augmentation (gNodeB-specific)
+          - 5g-nsa-dual-connectivity (EN-DC session management)
+
+          Reference: 3GPP TS 37.340, TS 38.401";
+
+        container augmentation-general {
+          description
+            "General 5G NSA augmentation.
+            Module: 5g-nsa-augmentation
+            Prefix: nsa
+            Namespace: urn:unified-oss:5g-nsa";
+
+          leaf module-name {
+            type string;
+            default "5g-nsa-augmentation";
+            config false;
+          }
+
+          leaf augment-target {
+            type string;
+            default "/unified-oss-core-nrm:network-elements/unified-oss-core-nrm:network-element";
+            config false;
+            description "XPath target of the augmentation.";
+          }
+
+          uses tree-branch-summary;
+        }
+
+        container augmentation-enb {
+          description
+            "5G NSA eNodeB augmentation.
+            Module: 5g-nsa-enb-augmentation
+            Prefix: nsa-enb
+            Namespace: urn:unified-oss:5g-nsa:enb";
+
+          leaf module-name {
+            type string;
+            default "5g-nsa-enb-augmentation";
+            config false;
+          }
+
+          leaf augment-target {
+            type string;
+            default "/unified-oss-core-nrm:network-elements/unified-oss-core-nrm:network-element";
+            config false;
+            description "XPath target of the augmentation.";
+          }
+
+          uses tree-branch-summary;
+        }
+
+        container augmentation-gnb {
+          description
+            "5G NSA gNodeB augmentation.
+            Module: 5g-nsa-gnb-augmentation
+            Prefix: nsa-gnb
+            Namespace: urn:unified-oss:5g-nsa:gnb";
+
+          leaf module-name {
+            type string;
+            default "5g-nsa-gnb-augmentation";
+            config false;
+          }
+
+          leaf augment-target {
+            type string;
+            default "/unified-oss-core-nrm:network-elements/unified-oss-core-nrm:network-element";
+            config false;
+            description "XPath target of the augmentation.";
+          }
+
+          uses tree-branch-summary;
+        }
+
+        container dual-connectivity {
+          description
+            "5G NSA Dual Connectivity standalone container.
+            Module: 5g-nsa-dual-connectivity
+            Prefix: nsa-dc
+            Namespace: urn:unified-oss:5g-nsa:dc
+
+            This module defines its own top-level containers
+            (en-dc-management, dc-alarms, dc-kpis) rather than
+            using augmentations.";
+
+          leaf module-name {
+            type string;
+            default "5g-nsa-dual-connectivity";
+            config false;
+          }
+
+          leaf-list exported-containers {
+            type string;
+            config false;
+            description "Top-level containers exported by this module.";
+          }
+
+          uses tree-branch-summary;
+        }
+      }
+
+      container ims-volte {
+        if-feature ims-volte-support;
+        description
+          "IMS/VoLTE extensions.
+
+          Aggregates the augmentation from:
+          - ims-volte-augmentation (P-CSCF, I-CSCF, S-CSCF, TAS, VoLTE AS)
+
+          Reference: 3GPP TS 23.228, GSMA IR.92";
+
+        container augmentation-ims {
+          description
+            "IMS/VoLTE augmentation registration.
+            Module: ims-volte-augmentation
+            Prefix: ims-volte
+            Namespace: urn:unified-oss:ims-volte
+
+            This module provides augmentations for:
+            - IMS Core: P-CSCF, I-CSCF, S-CSCF configuration
+            - TAS: Supplementary services, codec config
+            - VoLTE AS: Service config, session management";
+
+          leaf module-name {
+            type string;
+            default "ims-volte-augmentation";
+            config false;
+          }
+
+          leaf augment-target {
+            type string;
+            default "/unified-oss-core-nrm:network-elements/unified-oss-core-nrm:network-element";
+            config false;
+            description "XPath target of the augmentation.";
+          }
+
+          leaf-list supported-ne-types {
+            type string;
+            config false;
+            description "Network element types augmented by this module.";
+          }
+
+          container capabilities {
+            config false;
+            description "IMS/VoLTE augmentation capabilities.";
+
+            leaf sip-session-management {
+              type boolean;
+              description "SIP session management capability available.";
+            }
+
+            leaf volte-service-management {
+              type boolean;
+              description "VoLTE service management capability available.";
+            }
+
+            leaf supplementary-services {
+              type boolean;
+              description "Supplementary services configuration available.";
+            }
+          }
+
+          uses tree-branch-summary;
+        }
+      }
+    }
+  }
+
+  /***********************************************************************
+   * RPC DEFINITIONS
+   *
+   * Remote Procedure Calls for unified tree model introspection,
+   * module management, and schema mapping.
+   ***********************************************************************/
+
+  rpc get-yang-tree {
+    if-feature schema-introspection;
+    description
+      "Retrieve the complete unified YANG tree structure.
+
+       Returns a hierarchical representation of all containers, lists,
+       leafs, and their types from the unified model. Supports optional
+       depth limiting and subtree filtering.
+
+       This RPC provides the same information as RFC 8340 YANG Tree
+       Diagrams but in structured data format for programmatic access.";
+
+    input {
+      leaf root-path {
+        type tree-node-path;
+        default "/unified-oss";
+        description
+          "Starting path for the tree traversal.
+           Use default '/' to get the entire tree.";
+      }
+
+      leaf max-depth {
+        type uint8 {
+          range "1..20";
+        }
+        default 10;
+        description
+          "Maximum depth to traverse from the root path.
+           Limits output size for very large trees.";
+      }
+
+      leaf include-config-false {
+        type boolean;
+        default true;
+        description
+          "Include config false (operational) nodes in the output.";
+      }
+
+      leaf include-types {
+        type boolean;
+        default true;
+        description
+          "Include type information for each leaf node.";
+      }
+
+      leaf include-descriptions {
+        type boolean;
+        default true;
+        description
+          "Include description text for each node.";
+      }
+    }
+
+    output {
+      leaf tree-version {
+        type schema-version-type;
+        description "Tree version at the time of query.";
+      }
+
+      leaf total-nodes-returned {
+        type uint32;
+        description "Total number of nodes in the response.";
+      }
+
+      leaf truncated {
+        type boolean;
+        description
+          "True if the tree was truncated due to max-depth or size limits.";
+      }
+
+      list tree-node {
+        description "Hierarchical tree node entries.";
+
+        leaf path {
+          type tree-node-path;
+          description "Full path to this node.";
+        }
+
+        leaf node-type {
+          type enumeration {
+            enum CONTAINER;
+            enum LIST;
+            enum LEAF;
+            enum LEAF_LIST;
+            enum CHOICE;
+            enum CASE;
+            enum RPC;
+            enum NOTIFICATION;
+            enum ANYDATA;
+            enum ANYXML;
+          }
+          description "Type of this YANG node.";
+        }
+
+        leaf yang-type {
+          type string;
+          description "Data type for leaf nodes (e.g., string, uint32).";
+        }
+
+        leaf is-config {
+          type boolean;
+          description "Whether this node is configurable.";
+        }
+
+        leaf module-name {
+          type module-name-type;
+          description "Module that defines this node.";
+        }
+
+        leaf description {
+          type string;
+          description "Node description text.";
+        }
+
+        leaf children-count {
+          type uint16;
+          description "Number of child nodes.";
+        }
+      }
+    }
+  }
+
+  rpc get-module-list {
+    if-feature schema-introspection;
+    description
+      "Retrieve the list of all loaded YANG modules with their
+       metadata, dependencies, and status information.
+
+       This RPC provides a comprehensive view of the module
+       ecosystem within the unified tree, including import
+       relationships and exported definitions.";
+
+    input {
+      leaf include-dependencies {
+        type boolean;
+        default true;
+        description
+          "Include module dependency information (imports/imported-by).";
+      }
+
+      leaf include-statistics {
+        type boolean;
+        default true;
+        description
+          "Include per-module tree statistics.";
+      }
+
+      leaf filter-category {
+        type identityref {
+          base module-category-base;
+        }
+        description
+          "Filter modules by category. If not specified, all categories.";
+      }
+
+      leaf filter-status {
+        type module-status-type;
+        description
+          "Filter modules by status. If not specified, all statuses.";
+      }
+    }
+
+    output {
+      leaf total-modules {
+        type uint16;
+        description "Total number of modules matching the filter.";
+      }
+
+      leaf query-timestamp {
+        type yang:date-and-time;
+        description "Timestamp of this query.";
+      }
+
+      list module-info {
+        description "Module information entries.";
+
+        leaf module-name {
+          type module-name-type;
+          description "YANG module name.";
+        }
+
+        leaf namespace {
+          type namespace-type;
+          description "Module namespace URI.";
+        }
+
+        leaf revision {
+          type string;
+          description "Module revision date.";
+        }
+
+        leaf category {
+          type identityref {
+            base module-category-base;
+          }
+          description "Module category.";
+        }
+
+        leaf status {
+          type module-status-type;
+          description "Module status.";
+        }
+
+        leaf-list imports {
+          type module-name-type;
+          description "Direct import dependencies.";
+        }
+
+        container statistics {
+          description "Module tree statistics.";
+          uses tree-branch-summary;
+        }
+      }
+    }
+  }
+
+  rpc get-schema-mapping {
+    if-feature schema-introspection;
+    description
+      "Retrieve the schema mapping table between vendor-specific
+       and normalized (CIM) data models.
+
+       This RPC provides the semantic mapping rules used to
+       translate between Ericsson ENM and Huawei U2000 data
+       models and the unified CIM-based model.
+
+       Reference: TM Forum SID (Shared Information/Data) Model";
+
+    input {
+      leaf source-vendor {
+        type enumeration {
+          enum ERICSSON;
+          enum HUAWEI;
+          enum ALL;
+        }
+        default ALL;
+        description
+          "Vendor to show mappings for.";
+      }
+
+      leaf mapping-type {
+        type enumeration {
+          enum ALARM_SEVERITY;
+          enum ALARM_TYPE;
+          enum RESOURCE_TYPE;
+          enum PERFORMANCE_METRIC;
+          enum CONFIGURATION;
+          enum ALL;
+        }
+        default ALL;
+        description
+          "Type of mapping to retrieve.";
+      }
+
+      leaf include-examples {
+        type boolean;
+        default false;
+        description
+          "Include example mapping values in the output.";
+      }
+    }
+
+    output {
+      leaf mapping-version {
+        type schema-version-type;
+        description "Schema mapping table version.";
+      }
+
+      leaf total-mappings {
+        type uint32;
+        description "Total number of mapping entries returned.";
+      }
+
+      list mapping-entry {
+        description "Individual schema mapping entry.";
+
+        leaf mapping-id {
+          type string;
+          description "Unique mapping identifier.";
+        }
+
+        leaf source-vendor {
+          type string;
+          description "Source vendor system.";
+        }
+
+        leaf source-value {
+          type string;
+          description "Vendor-specific value (original).";
+        }
+
+        leaf target-value {
+          type string;
+          description "Normalized CIM value (target).";
+        }
+
+        leaf mapping-type {
+          type string;
+          description "Category of this mapping.";
+        }
+
+        leaf confidence {
+          type decimal64 {
+            fraction-digits 2;
+            range "0.00..1.00";
+          }
+          description
+            "Mapping confidence score.
+             1.00 = exact match, lower values indicate approximation.";
+        }
+
+        leaf description {
+          type string;
+          description "Human-readable mapping description.";
+        }
+      }
+    }
+  }
+
+  /***********************************************************************
+   * NOTIFICATION DEFINITIONS
+   *
+   * Real-time notifications for tree change events, module lifecycle,
+   * and system health monitoring.
+   ***********************************************************************/
+
+  notification unified-tree-change {
+    if-feature change-notification;
+    description
+      "Notification emitted when the unified YANG tree structure
+       or data changes. Provides real-time visibility into model
+       modifications for monitoring and audit purposes.
+
+       Subscribe to this notification for:
+       - Module load/unload events
+       - Data container creation/deletion
+       - Configuration changes
+       - Augmentation application/removal
+       - Schema validation errors";
+
+    leaf event-id {
+      type string {
+        length "36..36";
+        pattern "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+      }
+      description "Unique event identifier (UUID v4).";
+    }
+
+    leaf event-type {
+      type change-event-type;
+      description "Type of change event.";
+    }
+
+    leaf timestamp {
+      type yang:date-and-time;
+      description "When the change event occurred.";
+    }
+
+    leaf affected-path {
+      type tree-node-path;
+      description "Path to the affected node in the tree.";
+    }
+
+    leaf affected-module {
+      type module-name-type;
+      description "Module that owns the affected node.";
+    }
+
+    leaf previous-value {
+      type string;
+      description "Value before the change (for leaf modifications).";
+    }
+
+    leaf new-value {
+      type string;
+      description "Value after the change (for leaf modifications).";
+    }
+
+    leaf changed-by {
+      type string;
+      description
+        "User ID or system component that initiated the change.
+         System users: 'MODULE_LOADER', 'NETCONF_SERVER', 'REST_API'
+         Human users: Active Directory user ID.";
+    }
+
+    leaf change-reason {
+      type string;
+      description "Explanation for the change, if available.";
+    }
+  }
+
+  notification module-status-change {
+    if-feature change-notification;
+    description
+      "Notification emitted when a module's operational status changes.
+       Tracks the lifecycle of modules from load through active use.";
+
+    leaf module-name {
+      type module-name-type;
+      description "Name of the affected module.";
+    }
+
+    leaf previous-status {
+      type module-status-type;
+      description "Module status before the change.";
+    }
+
+    leaf new-status {
+      type module-status-type;
+      description "Module status after the change.";
+    }
+
+    leaf timestamp {
+      type yang:date-and-time;
+      description "When the status change occurred.";
+    }
+
+    leaf reason {
+      type string;
+      description
+        "Reason for the status change (e.g., 'Schema validation passed',
+         'Import dependency missing', 'Administrator disabled').";
+    }
+
+    leaf error-details {
+      type string;
+      description "Error details if status changed to ERROR.";
+    }
+  }
+
+  notification tree-integrity-event {
+    if-feature change-notification;
+    description
+      "Notification emitted when a tree integrity check detects
+       an anomaly or violation. Used for monitoring schema
+       consistency across module versions.";
+
+    leaf severity {
+      type enumeration {
+        enum CRITICAL;
+        enum WARNING;
+        enum INFO;
+      }
+      description "Severity of the integrity event.";
+    }
+
+    leaf timestamp {
+      type yang:date-and-time;
+      description "When the integrity event was detected.";
+    }
+
+    leaf check-type {
+      type enumeration {
+        enum SCHEMA_VALIDATION;
+        enum CROSS_REFERENCE;
+        enum TYPE_COMPATIBILITY;
+        enum IMPORT_INTEGRITY;
+        enum AUGMENT_TARGET;
+        enum DATA_CONSISTENCY;
+      }
+      description "Type of integrity check that triggered the event.";
+    }
+
+    leaf affected-modules {
+      type string;
+      description "Comma-separated list of affected module names.";
+    }
+
+    leaf description {
+      type string;
+      description "Detailed description of the integrity issue.";
+    }
+
+    leaf recommended-action {
+      type string;
+      description "Recommended action to resolve the issue.";
+    }
+  }
+
+  notification unified-system-health {
+    description
+      "Periodic system health notification for the unified tree.
+       Provides aggregated health status across all modules and domains.";
+
+    leaf timestamp {
+      type yang:date-and-time;
+      description "Health check timestamp.";
+    }
+
+    leaf overall-status {
+      type enumeration {
+        enum HEALTHY;
+        enum DEGRADED;
+        enum UNHEALTHY;
+        enum UNKNOWN;
+      }
+      description "Overall unified tree health status.";
+    }
+
+    leaf modules-healthy {
+      type uint8;
+      description "Number of modules in HEALTHY status.";
+    }
+
+    leaf modules-degraded {
+      type uint8;
+      description "Number of modules in DEGRADED status.";
+    }
+
+    leaf modules-unhealthy {
+      type uint8;
+      description "Number of modules in UNHEALTHY/ERROR status.";
+    }
+
+    leaf fcaps-domain-status {
+      type enumeration {
+        enum OPERATIONAL;
+        enum PARTIALLY_OPERATIONAL;
+        enum NON_OPERATIONAL;
+      }
+      description "Status of the FCAPS management domain.";
+    }
+
+    leaf inventory-domain-status {
+      type enumeration {
+        enum OPERATIONAL;
+        enum PARTIALLY_OPERATIONAL;
+        enum NON_OPERATIONAL;
+      }
+      description "Status of the Network Inventory domain.";
+    }
+
+    leaf vendor-extension-status {
+      type enumeration {
+        enum OPERATIONAL;
+        enum PARTIALLY_OPERATIONAL;
+        enum NON_OPERATIONAL;
+      }
+      description "Status of the Vendor Extensions domain.";
+    }
+
+    leaf active-datastore-size {
+      type uint64;
+      units "bytes";
+      description "Approximate size of the active configuration datastore.";
+    }
+  }
+}

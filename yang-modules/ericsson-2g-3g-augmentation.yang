@@ -1,0 +1,737 @@
+module ericsson-2g-3g-augmentation {
+  yang-version 1.1;
+  namespace "urn:unified-oss:vendor:ericsson:2g-3g";
+  prefix eric-2g3g;
+  
+  import unified-oss-core-nrm { prefix uoss-nrm; }
+  import ietf-inet-types { prefix inet; }
+  import ietf-yang-types { prefix yang; }
+  
+  organization "Unified OSS Framework - Ericsson 2G/3G Network Support";
+  contact "Dr. Houda Chihi - IEEE Member, TechWomen 2019 Fellow";
+  description 
+    "YANG augmentation for Ericsson 2G GSM and 3G UMTS Network Elements.
+     
+     This module provides vendor-specific augmentations for:
+     - BSC (Base Station Controller) - 2G GSM
+     - MSC (Mobile Switching Center) - 2G/3G Circuit Switched
+     - RNC (Radio Network Controller) - 3G UMTS
+     - BTS (Base Transceiver Station) - 2G Radio
+     - NodeB (3G Base Station) - 3G Radio
+     
+     Multi-generation network support is critical for ISPs managing
+     legacy 2G/3G alongside 4G LTE and 5G networks.
+     
+     Reference: 3GPP TS 23.002, TS 48.008, TS 25.4xx";
+  
+  revision 2026-03-21 {
+    description "Initial version for Unified OSS Framework v1.0.0 - Per Dr. Chihi request";
+    reference "IEEE TNSM Submission - Multi-Generation OSS Integration";
+  }
+
+  // =============================================================
+  // Identities for 2G/3G Network Elements
+  // =============================================================
+  
+  identity gsm-element {
+    base uoss-nrm:network-element-type;
+    description "Base identity for 2G GSM network elements";
+  }
+  
+  identity umts-element {
+    base uoss-nrm:network-element-type;
+    description "Base identity for 3G UMTS network elements";
+  }
+  
+  identity bsc {
+    base gsm-element;
+    description "Base Station Controller - 2G GSM";
+  }
+  
+  identity msc {
+    base gsm-element;
+    description "Mobile Switching Center - 2G/3G Circuit Switched Core";
+  }
+  
+  identity rnc {
+    base umts-element;
+    description "Radio Network Controller - 3G UMTS";
+  }
+  
+  identity bts {
+    base gsm-element;
+    description "Base Transceiver Station - 2G GSM Radio";
+  }
+  
+  identity nodeb {
+    base umts-element;
+    description "NodeB - 3G UMTS Base Station";
+  }
+
+  // =============================================================
+  // Type Definitions for 2G/3G
+  // =============================================================
+  
+  typedef gsm-band {
+    type enumeration {
+      enum gsm-850 { description "GSM 850 MHz band"; }
+      enum gsm-900 { description "GSM 900 MHz band"; }
+      enum gsm-1800 { description "GSM 1800 MHz (DCS) band"; }
+      enum gsm-1900 { description "GSM 1900 MHz (PCS) band"; }
+    }
+    description "GSM frequency band";
+  }
+  
+  typedef umts-band {
+    type enumeration {
+      enum band-i { description "UMTS 2100 MHz (IMT-2000)"; }
+      enum band-ii { description "UMTS 1900 MHz (PCS)"; }
+      enum band-iv { description "UMTS 1700/2100 MHz (AWS)"; }
+      enum band-v { description "UMTS 850 MHz"; }
+      enum band-viii { description "UMTS 900 MHz"; }
+    }
+    description "UMTS frequency band";
+  }
+  
+  typedef bsc-state {
+    type enumeration {
+      enum uninitialized;
+      enum initialized;
+      enum operational;
+      enum degraded;
+      enum locked;
+      enum failed;
+    }
+    description "BSC operational state";
+  }
+  
+  typedef msc-state {
+    type enumeration {
+      enum offline;
+      enum online;
+      enum overloaded;
+      enum maintenance;
+      enum failed;
+    }
+    description "MSC operational state";
+  }
+  
+  typedef circuit-type {
+    type enumeration {
+      enum e1 { description "E1 (2.048 Mbps) circuit"; }
+      enum t1 { description "T1 (1.544 Mbps) circuit"; }
+      enum j1 { description "J1 (2.048 Mbps - Japan) circuit"; }
+      enum stm-1 { description "STM-1 (155 Mbps) circuit"; }
+      enum oc-3 { description "OC-3 (155 Mbps) circuit"; }
+    }
+    description "Circuit-switched trunk type";
+  }
+
+  // =============================================================
+  // Common 2G/3G Attributes Grouping
+  // =============================================================
+  
+  grouping gsm-common-attributes {
+    description "Common attributes for GSM network elements";
+    
+    leaf gsm-band {
+      type gsm-band;
+      description "Operating GSM frequency band";
+    }
+    
+    leaf arfcn-list {
+      type string;
+      description "Comma-separated list of ARFCN (Absolute Radio Frequency Channel Number)";
+    }
+    
+    leaf bsic {
+      type uint8 {
+        range "0..63";
+      }
+      description "Base Station Identity Code (NCC + BCC)";
+    }
+    
+    leaf lac {
+      type uint16 {
+        range "1..65533";
+      }
+      description "Location Area Code";
+    }
+    
+    leaf rac {
+      type uint8 {
+        range "0..255";
+      }
+      description "Routing Area Code for GPRS";
+    }
+  }
+  
+  grouping umts-common-attributes {
+    description "Common attributes for UMTS network elements";
+    
+    leaf umts-band {
+      type umts-band;
+      description "Operating UMTS frequency band";
+    }
+    
+    leaf uarfcn-list {
+      type string;
+      description "Comma-separated list of UARFCN (UTRA Absolute Radio Frequency Channel Number)";
+    }
+    
+    leaf psc {
+      type uint16 {
+        range "0..511";
+      }
+      description "Primary Scrambling Code";
+    }
+    
+    leaf lac {
+      type uint16 {
+        range "1..65533";
+      }
+      description "Location Area Code";
+    }
+    
+    leaf rac {
+      type uint8 {
+        range "0..255";
+      }
+      description "Routing Area Code";
+    }
+    
+    leaf sac {
+      type uint16 {
+        range "0..65535";
+      }
+      description "Service Area Code";
+    }
+  }
+
+  // =============================================================
+  // 2G/3G Alarm Definitions
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'ericsson' and 
+          (uoss-nrm:ne-type = 'bsc' or uoss-nrm:ne-type = 'msc' or 
+           uoss-nrm:ne-type = 'rnc')";
+    description "2G/3G alarm augmentations";
+    
+    container gsm-umts-alarms {
+      description "2G/3G specific alarm definitions";
+      
+      list legacy-alarm {
+        key "alarm-id";
+        description "2G/3G network alarm";
+        
+        leaf alarm-id {
+          type string;
+          description "Unique alarm identifier";
+        }
+        
+        leaf alarm-type {
+          type enumeration {
+            enum abis-link-failure { description "Abis interface link failure"; }
+            enum a-interface-failure { description "A interface failure"; }
+            enum iucs-failure { description "Iu-CS interface failure"; }
+            enum iups-failure { description "Iu-PS interface failure"; }
+            enum cell-unavailable { description "Cell unavailable"; }
+            enum handover-failure { description "Handover procedure failure"; }
+            enum circuit-congestion { description "Circuit congestion detected"; }
+            enum signaling-link-failure { description "SS7 signaling link failure"; }
+            enum trx-failure { description "TRX hardware failure"; }
+            enum power-amplifier-fault { description "Power amplifier fault"; }
+            enum clock-sync-loss { description "Clock synchronization loss"; }
+            enum bts-connection-loss { description "BTS connection lost"; }
+            enum rnc-connection-loss { description "RNC connection lost"; }
+            enum vlr-failure { description "VLR communication failure"; }
+            enum hlr-failure { description "HLR communication failure"; }
+          }
+          description "2G/3G specific alarm types";
+        }
+        
+        leaf severity {
+          type uoss-nrm:severity-level;
+          description "Alarm severity per ITU-T X.733";
+        }
+        
+        leaf affected-cells {
+          type string;
+          description "List of affected cell IDs";
+        }
+        
+        leaf probable-cause {
+          type string;
+          description "Probable cause per ITU-T X.733";
+        }
+        
+        leaf timestamp {
+          type yang:date-and-time;
+          description "Alarm occurrence timestamp";
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // 2G/3G Performance Metrics
+  // =============================================================
+  
+  augment "/uoss-nrm:network-elements/uoss-nrm:network-element" {
+    when "uoss-nrm:vendor = 'ericsson' and 
+          (uoss-nrm:ne-type = 'bsc' or uoss-nrm:ne-type = 'msc' or 
+           uoss-nrm:ne-type = 'rnc')";
+    description "2G/3G performance metrics augmentations";
+    
+    container gsm-umts-performance {
+      description "2G/3G performance KPIs";
+      
+      container gsm-kpis {
+        description "GSM specific KPIs";
+        
+        leaf tch-availability {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "TCH (Traffic Channel) availability rate";
+        }
+        
+        leaf sdcch-blocking-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "SDCCH blocking rate";
+        }
+        
+        leaf tch-blocking-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "TCH blocking rate";
+        }
+        
+        leaf handover-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "Handover success rate";
+        }
+        
+        leaf call-setup-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "Call setup success rate";
+        }
+        
+        leaf call-drop-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "Call drop rate";
+        }
+        
+        leaf erlang-traffic {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          description "Carried traffic in Erlangs";
+        }
+      }
+      
+      container umts-kpis {
+        description "UMTS specific KPIs";
+        
+        leaf rrc-connection-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "RRC connection setup success rate";
+        }
+        
+        leaf rab-setup-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "RAB setup success rate";
+        }
+        
+        leaf soft-handover-success-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "Soft handover success rate";
+        }
+        
+        leaf softer-handover-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "Softer handover rate";
+        }
+        
+        leaf cs-voice-drop-rate {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "percent";
+          description "CS voice call drop rate";
+        }
+        
+        leaf ps-throughput {
+          type uint32;
+          units "kbps";
+          description "Packet Switched throughput";
+        }
+      }
+      
+      container circuit-kpis {
+        description "Circuit utilization KPIs";
+        
+        list circuit-group {
+          key "group-name";
+          description "Circuit group utilization";
+          
+          leaf group-name {
+            type string;
+            description "Circuit group name";
+          }
+          
+          leaf total-circuits {
+            type uint16;
+            description "Total circuits in group";
+          }
+          
+          leaf used-circuits {
+            type uint16;
+            description "Currently used circuits";
+          }
+          
+          leaf utilization-percent {
+            type uint8 {
+              range "0..100";
+            }
+            description "Circuit utilization percentage";
+          }
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // 2G/3G Configuration Container
+  // =============================================================
+  
+  container legacy-network-config {
+    description "2G/3G legacy network configuration";
+    
+    container gsm-config {
+      description "GSM network configuration";
+      
+      list bsc-list {
+        key "bsc-id";
+        description "List of BSCs in the network";
+        
+        leaf bsc-id {
+          type string;
+          description "BSC identifier";
+        }
+        
+        leaf bsc-name {
+          type string;
+          description "BSC name";
+        }
+        
+        leaf location {
+          type string;
+          description "Physical location";
+        }
+        
+        uses gsm-common-attributes;
+      }
+    }
+    
+    container umts-config {
+      description "UMTS network configuration";
+      
+      list rnc-list {
+        key "rnc-id";
+        description "List of RNCs in the network";
+        
+        leaf rnc-id {
+          type string;
+          description "RNC identifier";
+        }
+        
+        leaf rnc-name {
+          type string;
+          description "RNC name";
+        }
+        
+        leaf location {
+          type string;
+          description "Physical location";
+        }
+        
+        uses umts-common-attributes;
+      }
+    }
+    
+    container msc-config {
+      description "MSC network configuration";
+      
+      list msc-list {
+        key "msc-id";
+        description "List of MSCs in the network";
+        
+        leaf msc-id {
+          type string;
+          description "MSC identifier";
+        }
+        
+        leaf msc-name {
+          type string;
+          description "MSC name";
+        }
+        
+        leaf msc-pool-member {
+          type boolean;
+          default false;
+          description "Whether MSC is part of MSC pool";
+        }
+        
+        leaf location {
+          type string;
+          description "Physical location";
+        }
+      }
+    }
+  }
+
+  // =============================================================
+  // Notifications
+  // =============================================================
+  
+  notification gsm-alarm-notification {
+    description "GSM network alarm notification";
+    
+    leaf alarm-id {
+      type string;
+    }
+    
+    leaf bsc-id {
+      type string;
+      description "Affected BSC";
+    }
+    
+    leaf alarm-type {
+      type enumeration {
+        enum cell-outage;
+        enum abis-link-down;
+        enum trx-failure;
+        enum handover-failure-spike;
+        enum congestion-alert;
+      }
+    }
+    
+    leaf severity {
+      type uoss-nrm:severity-level;
+    }
+    
+    leaf affected-cells {
+      type string;
+    }
+    
+    leaf timestamp {
+      type yang:date-and-time;
+    }
+  }
+  
+  notification umts-alarm-notification {
+    description "UMTS network alarm notification";
+    
+    leaf alarm-id {
+      type string;
+    }
+    
+    leaf rnc-id {
+      type string;
+      description "Affected RNC";
+    }
+    
+    leaf alarm-type {
+      type enumeration {
+        enum nodeb-outage;
+        enum iu-link-down;
+        enum rab-setup-failure;
+        enum soft-handover-degradation;
+        enum carrier-power-warning;
+      }
+    }
+    
+    leaf severity {
+      type uoss-nrm:severity-level;
+    }
+    
+    leaf affected-nodebs {
+      type string;
+    }
+    
+    leaf timestamp {
+      type yang:date-and-time;
+    }
+  }
+  
+  notification msc-alarm-notification {
+    description "MSC network alarm notification";
+    
+    leaf alarm-id {
+      type string;
+    }
+    
+    leaf msc-id {
+      type string;
+      description "Affected MSC";
+    }
+    
+    leaf alarm-type {
+      type enumeration {
+        enum circuit-congestion;
+        enum signaling-link-failure;
+        enum vlr-unreachable;
+        enum hlr-unreachable;
+        enum processor-overload;
+      }
+    }
+    
+    leaf severity {
+      type uoss-nrm:severity-level;
+    }
+    
+    leaf timestamp {
+      type yang:date-and-time;
+    }
+  }
+
+  // =============================================================
+  // RPC Operations for 2G/3G
+  // =============================================================
+  
+  rpc lock-bsc {
+    description "Lock BSC for maintenance";
+    input {
+      leaf bsc-id {
+        type string;
+        mandatory true;
+      }
+      leaf reason {
+        type string;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+          enum already-locked;
+        }
+      }
+    }
+  }
+  
+  rpc unlock-bsc {
+    description "Unlock BSC after maintenance";
+    input {
+      leaf bsc-id {
+        type string;
+        mandatory true;
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+          enum not-locked;
+        }
+      }
+    }
+  }
+  
+  rpc reset-msc-circuits {
+    description "Reset circuits on MSC";
+    input {
+      leaf msc-id {
+        type string;
+        mandatory true;
+      }
+      leaf circuit-group {
+        type string;
+        description "Specific circuit group to reset (optional)";
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum partial;
+          enum failed;
+        }
+      }
+      leaf circuits-reset {
+        type uint16;
+      }
+    }
+  }
+  
+  rpc query-cell-status {
+    description "Query status of cells under BSC/RNC";
+    input {
+      leaf ne-id {
+        type string;
+        mandatory true;
+        description "BSC or RNC identifier";
+      }
+      leaf cell-id {
+        type string;
+        description "Specific cell ID (optional, all cells if not specified)";
+      }
+    }
+    output {
+      leaf result {
+        type enumeration {
+          enum success;
+          enum failed;
+        }
+      }
+      list cell-status {
+        key "cell-id";
+        leaf cell-id {
+          type string;
+        }
+        leaf status {
+          type enumeration {
+            enum operational;
+            enum locked;
+            enum failed;
+            enum degraded;
+          }
+        }
+        leaf active-trx {
+          type uint8;
+        }
+      }
+    }
+  }
+}
